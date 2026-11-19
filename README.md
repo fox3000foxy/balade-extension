@@ -167,13 +167,16 @@ Identical results, cheaper computations (measured with `node /tmp/opencode/bench
   once per gesture (64 entries, `q` is fixed per gesture) instead of `Math.pow` per
   frame — same curve within 5e-4, indexed read per frame.
 - **Swarm steering** (`behaviors/Swarm.js`): `sin(3θ+φ)` expanded by triple-angle from
-  the already-known `(cos θ, sin θ)` (exact, no `atan2`→`sin` round-trip); per-frame
-  time oscillations computed once and shared by all cursors; neighbor scan uses
-  squared distances (`sqrt` only for the close few).
-- **Prediction** (`world/Predictor.js`): candidates pre-filtered by cosine comparison
-  (`cos < cos(tol·2.5)`, no `acos`); only survivors pay for the exact weight.
-- **Flee** (`behaviors/Flee.js`): `(1−d/m)²` written out (`Math.pow(x,2)` has call
-  overhead for a square); crowd separation tested on squared distances.
+  the already-known `(cos θ, sin θ)` — no `atan2` at all (3x faster: 34 vs 100 ms
+  per 1M evals); per-frame time oscillations computed once and shared by all
+  cursors; neighbor scan uses squared distances, `sqrt` only for the close few
+  (2x faster: 65 vs 121 ms per 2M scans).
+- **Prediction** (`world/Predictor.js`): a cosine pre-filter was benchmarked and
+  *rejected* — `Math.cos` costs about as much as `Math.acos`, and survivors pay
+  for both (48 vs 38 ms per 500k candidates: slower). Plain `acos` kept.
+- **Flee** (`behaviors/Flee.js`): crowd separation tested on squared distances
+  (~2x, same family as above); `(1−d/m)²` written out — `Math.pow(x,2)` measured
+  identical (45 vs 43 ms per 2M), kept as `k*k` for readability, not speed.
 
 Deliberately *not* optimized: Fitts's law (`Math.log2` once per gesture) — nanoseconds
 on a 16 ms frame budget, and the formula stays readable.

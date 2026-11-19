@@ -15,7 +15,7 @@
       this.cfg = config.sound;
       this.ctx = null;
       this.out = null;
-      this.muted = !this.cfg.enabled;
+      this.muted = !this.cfg.enabled || this.cfg.volume <= 0;
       this.suppressed = false; // plein écran
       this._recent = [];
       this._unlock = () => this._resume();
@@ -24,7 +24,7 @@
     // ---------- Cycle de vie ----------
 
     start() {
-      if (this.ctx || !this.cfg.enabled) return;
+      if (this.ctx) return;
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         this.ctx = new Ctx({ latencyHint: "interactive" });
@@ -72,6 +72,13 @@
 
     setMuted(muted) {
       this.muted = muted;
+    }
+
+    /** Volume de 0 à ~0,45 (réglage du menu, déjà converti). */
+    setVolume(volume) {
+      this.cfg.volume = volume;
+      this.muted = volume <= 0;
+      if (this.ctx && this.out) this.out.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.05);
     }
 
     setSuppressed(suppressed) {

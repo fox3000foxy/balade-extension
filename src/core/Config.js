@@ -5,8 +5,10 @@
     dtMax: 0.05,
 
     population: {
-      min: 4,
-      max: 8,
+      // Effectif visé et bornes de ses variations (réglage « Curseurs » du menu).
+      target: 6,
+      min: 5,
+      max: 7,
       // Toutes les 6 à 14 s, l'effectif voulu change de ±1 : des curseurs arrivent ou repartent.
       changeEvery: [6, 14],
       // Écart moyen entre deux arrivées (s).
@@ -16,6 +18,8 @@
     motion: {
       // Loi de Fitts : durée = a + b · log2(1 + distance / largeur de la cible), en s.
       fitts: { a: 0.08, b: 0.085, min: 0.12, max: 0.75 },
+      // Multiplicateur global de vitesse (réglage « Allure » du menu).
+      speedMul: 1,
       // Largeur de cible supposée quand on vise un simple point (px).
       defaultWidth: 24,
       // Déformation du temps t^q : le pic de vitesse arrive à 0,5^(1/q) du trajet
@@ -54,6 +58,9 @@
       longStroll: 0.45,
       nearRadius: 260,
       pause: [0.4, 1.4],
+      pauseMul: 1,
+      // Chance qu'une pause soit une « réflexion » (pointeur d'attente).
+      waitChance: 0.1,
       // Probabilités de base des humeurs (la curiosité du curseur s'y ajoute).
       inspect: 0.35,
       fidget: 0.2,
@@ -91,6 +98,20 @@
       strength: 4500
     },
 
+    // Défilement : chaque curseur vous rattrape après un temps de réaction.
+    scroll: {
+      reaction: [0.3, 1.5],      // délai habituel (s), multiplié par la patience
+      distracted: 0.12,          // chance de traîner ailleurs un moment
+      distractedFor: [2.5, 6],   // durée de ce moment (s)
+      followUp: [0.08, 0.3],     // délai quand on vient déjà de vous suivre
+      duration: [0.3, 1.1]       // durée du défilement lui-même (s)
+    },
+
+    // Thème et options d'affichage (remplacés par les réglages du menu).
+    theme: "classique",
+    showNames: true,
+    hideFullscreen: true,
+
     sound: {
       enabled: true,
       volume: 0.22,
@@ -100,10 +121,6 @@
       bumpCooldown: 0.7
     },
 
-    palette: [
-      "#E5484D", "#F76B15", "#E2A300", "#30A46C", "#12A594",
-      "#0090FF", "#3E63DD", "#8E4EC6", "#D6409F", "#AD7F58"
-    ],
     names: [
       "Alix", "Bastien", "Chloé", "Diego", "Élise", "Farah", "Gaspard", "Hana",
       "Iris", "Jules", "Kenji", "Léa", "Malo", "Nora", "Oscar", "Paz"

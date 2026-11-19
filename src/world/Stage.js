@@ -107,20 +107,33 @@
     }
 
     /**
+     * Rectangle d'un élément dans la vue d'un curseur (et non sur l'écran de l'utilisateur) :
+     * le curseur peut avoir un temps de retard sur votre défilement.
+     */
+    rectInView(el, cursor) {
+      const r = el.getBoundingClientRect();
+      const dx = window.scrollX - cursor.viewX;
+      const dy = window.scrollY - cursor.viewY;
+      return { left: r.left + dx, top: r.top + dy, right: r.right + dx, bottom: r.bottom + dy, width: r.width, height: r.height };
+    }
+
+    /**
      * Tire un élément visible, au hasard mais pas uniformément :
      * poids = attrait de sa catégorie / (1 + distance / 400).
      * Les champs de saisie et les éléments proches sont nettement favorisés.
+     * @param {Balade.Cursor} cursor
+     * @param {number} now
      * @param {Element} [exclude] élément à ignorer (le dernier visité)
      * @param {Set<Element>} [busy] éléments déjà regardés par d'autres curseurs
      */
-    pickElement(near, now, exclude, busy) {
+    pickElement(cursor, now, exclude, busy) {
       const list = this.visibleElements(now);
       if (list.length === 0) return null;
       let total = 0;
       const weights = list.map((el) => {
-        if (el === exclude) return 0;
-        const r = el.getBoundingClientRect();
-        const d = Math.hypot(r.left + r.width / 2 - near.x, r.top + r.height / 2 - near.y);
+        if (el === exclude || !this.isInView(el, cursor)) return 0;
+        const r = this.rectInView(el, cursor);
+        const d = Math.hypot(r.left + r.width / 2 - cursor.x, r.top + r.height / 2 - cursor.y);
         let w = (this.interest[this.kindOf(el)] || 1) / (1 + d / 400);
         // Déjà regardé par un autre curseur : beaucoup moins tentant (évite les attroupements).
         if (busy && busy.has(el)) w *= 0.1;
@@ -131,22 +144,23 @@
       let r = Math.random() * total;
       for (let i = 0; i < list.length; i++) {
         r -= weights[i];
-        if (r <= 0) return list[i];
+        if (r <= 0 && weights[i] > 0) return list[i];
       }
-      return list[list.length - 1];
+      return null;
     }
 
     /**
      * Où un humain viserait sur cet élément : près du début si l'élément est grand,
-     * jamais au centre exact. Le décalage est tiré une fois pour toutes.
+     * jamais au centre exact. Le décalage est tiré une fois pour toutes ; le point est
+     * recalculé à chaque appel, dans la vue du curseur (il suit le défilement).
      */
-    aimOn(el) {
+    aimOn(el, cursor) {
       const fx = M.rand(40, 60);
       const fy = M.rand(14, 22);
       const jx = M.rand(-5, 5);
       const jy = M.rand(-3, 3);
       return () => {
-        const r = el.getBoundingClientRect();
+        const r = this.rectInView(el, cursor);
         return {
           x: M.clamp(r.left + Math.min(r.width * 0.5, fx) + jx, r.left + 2, r.right - 2),
           y: M.clamp(r.top + Math.min(r.height * 0.5, fy) + jy, r.top + 2, r.bottom - 2)
@@ -154,10 +168,27 @@
       };
     }
 
-    isOnScreen(el) {
+    /** L'élément est-il visible dans la vue du curseur ? */
+    isInView(el, cursor) {
       if (!el.isConnected) return false;
-      const r = el.getBoundingClientRect();
+      const r = this.rectInView(el, cursor);
       return r.bottom > 0 && r.top < this.height && r.right > 0 && r.left < this.width;
+    }
+
+    /** La pointe du curseur est-elle au-dessus de l'élément ? */
+    contains(el, cursor) {
+      const r = this.rectInView(el, cursor);
+      return cursor.x >= r.left && cursor.x <= r.right && cursor.y >= r.top && cursor.y <= r.bottom;
+    }
+
+    /** Pointeur adapté à l'élément survolé, comme le ferait le navigateur. */
+    shapeFor(el) {
+      if (this.isTextField(el)) return "ibeam";
+      const kind = this.kindOf(el);
+      if (kind === "link" || kind === "button") return "hand";
+      if (kind === "media") return "crosshair";
+      if (el.localName === "select") return "hand";
+      return "arrow";
     }
 
     // ---------- Plein écran ----------

@@ -62,7 +62,7 @@
       }
 
       const c = this.cfg;
-      const speed = (opts.speed || 1) * cursor.temperament.pace;
+      const speed = (opts.speed || 1) * cursor.temperament.pace * (c.speedMul || 1);
       const width = opts.width || c.defaultWidth;
       const precise = opts.precise !== false;
 
@@ -143,5 +143,6 @@
     }
   }
 
+  Motion.minimumJerk = minimumJerk;
   window.Balade.Motion = Motion;
 })();

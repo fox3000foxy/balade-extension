@@ -1,6 +1,13 @@
 // Un curseur : sa position, son tempérament, ses micro-signaux (pression, inclinaison,
-// bousculade) et le comportement qu'il exécute. Il ne décide de rien lui-même :
-// ce sont les comportements (src/behaviors) qui le déplacent.
+// bousculade), sa « vue » de la page, et le comportement qu'il exécute.
+// Il ne décide de rien lui-même : ce sont les comportements (src/behaviors) qui le déplacent.
+//
+// Trois repères de coordonnées :
+//  - vue du curseur : (x, y), ce qu'écrivent les comportements, comme sur SON écran ;
+//  - page           : vue + (viewX, viewY), son propre défilement ;
+//  - écran de l'utilisateur : page − défilement de l'utilisateur (screenX, screenY).
+// Quand vous faites défiler, le curseur reste accroché à la page ; il « défile » ensuite
+// lui-même pour vous rattraper (voir Engine._followScroll).
 (() => {
   const { M } = window.Balade;
 
@@ -8,19 +15,29 @@
     /**
      * @param {object} o
      * @param {number} o.id
-     * @param {number} o.x  position de départ (px, repère de l'écran)
+     * @param {number} o.x  position de départ, dans sa vue
      * @param {number} o.y
-     * @param {string} o.color
+     * @param {number} o.viewX  défilement initial de sa vue (celui de l'utilisateur)
+     * @param {number} o.viewY
+     * @param {number} o.colorIndex  rang de sa couleur dans la palette du thème
      * @param {string} o.name
      */
-    constructor({ id, x, y, color, name }) {
+    constructor({ id, x, y, viewX, viewY, colorIndex, name }) {
       this.id = id;
-      this.color = color;
+      this.colorIndex = colorIndex;
       this.name = name;
 
-      // Position « voulue », écrite par les comportements.
       this.x = x;
       this.y = y;
+      this.viewX = viewX;
+      this.viewY = viewY;
+
+      // Position affichée sur l'écran de l'utilisateur (calculée à chaque image).
+      this.screenX = x;
+      this.screenY = y;
+
+      // Rattrapage du défilement : { phase, wait, from, to, t, dur, q }.
+      this.scroll = { phase: "idle", wait: 0, recentUntil: -Infinity };
 
       // Décalage dû aux bousculades, ramené à 0 par un ressort amorti.
       this.offsetX = 0;
@@ -28,24 +45,18 @@
       this.offsetVX = 0;
       this.offsetVY = 0;
 
-      // Vitesse estimée à partir des positions successives (px/s).
+      // Vitesse estimée à partir des positions successives sur l'écran (px/s).
       this.vx = 0;
       this.vy = 0;
-      this._prevX = x;
-      this._prevY = y;
+      this._prevX = null;
+      this._prevY = null;
 
       this.pressure = 0; // 1 au moment du clic, retombe à 0
       this.angle = 0;    // inclinaison en degrés
 
-      // Élément que le curseur « regarde » (affiché en surbrillance), ou null.
-      this.focus = null;
-
-      // Forme affichée : "arrow" ou "ibeam" (au-dessus d'un champ de texte).
-      this.shape = "arrow";
-
-      // Texte fantôme en cours de frappe : { el, text } ou null. Purement visuel :
-      // le vrai champ de la page n'est jamais modifié.
-      this.ghost = null;
+      this.focus = null;   // élément regardé (surbrillance)
+      this.shape = "arrow"; // arrow | hand | ibeam | crosshair | wait
+      this.ghost = null;   // texte fantôme { el, text } — purement visuel
 
       // Hauteur de « voix » propre à ce curseur (en degrés de gamme) pour les sons.
       this.voice = Math.floor(M.rand(0, 5));
@@ -54,22 +65,22 @@
       // Tempérament : chaque curseur a sa façon de bouger.
       this.temperament = {
         pace: M.rand(0.8, 1.25),     // multiplicateur de vitesse
-        patience: M.rand(0.6, 1.6),  // multiplicateur des pauses
+        patience: M.rand(0.6, 1.6),  // multiplicateur des pauses et du temps de réaction
         curiosity: M.rand(0, 0.3)    // envie en plus d'inspecter la page
       };
 
-      this.behavior = null; // instance de Behavior
-      this.routine = null;  // générateur en cours (behavior.run(this))
+      this.behavior = null;
+      this.routine = null;
       this.leaving = false;
     }
 
-    /** Position affichée = position voulue + décalage de bousculade. */
-    get screenX() {
-      return this.x + this.offsetX;
+    /** Position dans la page (coordonnées du document). */
+    get pageX() {
+      return this.x + this.viewX;
     }
 
-    get screenY() {
-      return this.y + this.offsetY;
+    get pageY() {
+      return this.y + this.viewY;
     }
 
     press() {
@@ -82,14 +93,12 @@
       this.offsetVY += iy;
     }
 
-    /** Démarre un nouveau comportement. */
     setBehavior(behavior) {
       this.behavior = behavior;
       this.routine = behavior.run(this);
       this._resetPose();
     }
 
-    /** Remet le curseur « au repos » : flèche, rien en surbrillance, pas de texte fantôme. */
     _resetPose() {
       this.focus = null;
       this.ghost = null;
@@ -117,13 +126,21 @@
       return false;
     }
 
+    /** Calcule la position sur l'écran de l'utilisateur. */
+    updateScreen(scrollX, scrollY) {
+      this.screenX = this.x + this.viewX - scrollX + this.offsetX;
+      this.screenY = this.y + this.viewY - scrollY + this.offsetY;
+    }
+
     /** Met à jour les micro-signaux après le déplacement de l'image. */
     updateSignals(dt, cfg) {
-      // Vitesse estimée, légèrement lissée.
-      const ivx = (this.x - this._prevX) / dt;
-      const ivy = (this.y - this._prevY) / dt;
-      this.vx = M.damp(this.vx, ivx, 25, dt);
-      this.vy = M.damp(this.vy, ivy, 25, dt);
+      // Vitesse estimée dans SA vue (le défilement ne fait pas pencher le curseur).
+      if (this._prevX == null) {
+        this._prevX = this.x;
+        this._prevY = this.y;
+      }
+      this.vx = M.damp(this.vx, (this.x - this._prevX) / dt, 25, dt);
+      this.vy = M.damp(this.vy, (this.y - this._prevY) / dt, 25, dt);
       this._prevX = this.x;
       this._prevY = this.y;
 
@@ -135,15 +152,10 @@
       this.offsetX += this.offsetVX * dt;
       this.offsetY += this.offsetVY * dt;
 
-      // Pression qui retombe.
       this.pressure = Math.max(0, this.pressure - cfg.pressDecay * dt);
 
       // Inclinaison : le curseur penche dans le sens où il va, puis se redresse.
-      const tiltTarget = M.clamp(
-        (this.vx + this.offsetVX) * cfg.tiltPerPxPerS,
-        -cfg.tiltMax,
-        cfg.tiltMax
-      );
+      const tiltTarget = M.clamp((this.vx + this.offsetVX) * cfg.tiltPerPxPerS, -cfg.tiltMax, cfg.tiltMax);
       this.angle = M.damp(this.angle, tiltTarget, cfg.tiltRate, dt);
     }
   }

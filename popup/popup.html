@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balade</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body data-theme="classique">
+  <main class="card">
+    <div class="perfo" aria-hidden="true"></div>
+
+    <header class="head">
+      <div class="brand">
+        <span class="logo" id="logo" aria-hidden="true"></span>
+        <div class="brand-text">
+          <h1>Balade</h1>
+          <p class="status" id="status" aria-live="polite">…</p>
+        </div>
+      </div>
+      <button class="main-btn" id="toggle" type="button" disabled>…</button>
+    </header>
+
+    <section class="block" aria-labelledby="t-theme">
+      <h2 id="t-theme" data-label="theme">Thème</h2>
+      <div class="themes" id="themes" role="radiogroup" aria-labelledby="t-theme"></div>
+    </section>
+
+    <section class="block" aria-labelledby="t-crowd">
+      <h2 id="t-crowd" data-label="crowd">Foule</h2>
+      <label class="slider">
+        <span class="row"><span data-label="count">Curseurs</span><output id="count-out">6</output></span>
+        <input type="range" id="count" min="2" max="12" step="1">
+      </label>
+      <label class="slider">
+        <span class="row"><span data-label="pace">Allure</span><span class="hint" data-label="paceHint">calme → vive</span></span>
+        <input type="range" id="pace" min="0" max="100" step="1">
+      </label>
+      <label class="slider">
+        <span class="row"><span data-label="curiosity">Curiosité</span><span class="hint" data-label="curiosityHint">rêveurs → fouineurs</span></span>
+        <input type="range" id="curiosity" min="0" max="100" step="1">
+      </label>
+    </section>
+
+    <section class="block" aria-labelledby="t-sound">
+      <h2 id="t-sound" data-label="sound">Son</h2>
+      <label class="slider">
+        <span class="row"><span>Volume</span><output id="volume-out">40 %</output></span>
+        <input type="range" id="volume" min="0" max="100" step="1">
+      </label>
+    </section>
+
+    <section class="block toggles" aria-labelledby="t-habits">
+      <h2 id="t-habits" data-label="habits">Comportements</h2>
+      <label class="switch"><span data-label="ghostTyping">Écrire dans les champs</span><input type="checkbox" id="ghostTyping"></label>
+      <label class="switch"><span data-label="showNames">Afficher les prénoms</span><input type="checkbox" id="showNames"></label>
+      <label class="switch"><span data-label="hideFullscreen">Se cacher en plein écran</span><input type="checkbox" id="hideFullscreen"></label>
+    </section>
+
+    <footer class="foot">
+      <span class="keys" id="keys"><kbd>Alt</kbd>+<kbd>B</kbd></span>
+      <span data-label="shortcut">lance ou range les curseurs</span>
+      <button type="button" class="link" id="shortcuts">Modifier</button>
+    </footer>
+  </main>
+
+  <script src="../src/core/namespace.js"></script>
+  <script src="../src/core/Settings.js"></script>
+  <script src="../src/render/Themes.js"></script>
+  <script src="../lib/inject.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

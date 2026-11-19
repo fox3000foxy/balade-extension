@@ -7,9 +7,11 @@
   <style>
     body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; color: #1d1d1f; background: #fafafa; }
     header { display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; background: #fff; border-bottom: 1px solid #e6e6e6; }
+    nav { display: flex; align-items: center; }
     nav a { margin-left: 22px; color: #333; text-decoration: none; }
-    main { max-width: 980px; margin: 0 auto; padding: 48px 40px 120px; }
+    main { max-width: 860px; margin: 0 0 0 40px; padding: 48px 0 120px; }
     h1 { font-size: 44px; line-height: 1.1; margin: 0 0 16px; }
+    h2 { font-size: 28px; margin: 72px 0 16px; }
     .lead { font-size: 19px; color: #555; max-width: 640px; }
     .actions { margin: 28px 0 56px; display: flex; gap: 12px; }
     button { font: inherit; padding: 10px 18px; border-radius: 8px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
@@ -17,10 +19,10 @@
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .card { background: #fff; border: 1px solid #e6e6e6; border-radius: 12px; padding: 20px; }
     .card h3 { margin: 0 0 8px; }
-    form { margin-top: 56px; display: grid; gap: 12px; max-width: 420px; }
+    .photo { height: 220px; border-radius: 12px; background: #dfe7f1; display: flex; align-items: center; justify-content: center; color: #567; }
+    form { display: grid; gap: 12px; max-width: 420px; }
     input, select, textarea { font: inherit; padding: 9px 12px; border: 1px solid #ccc; border-radius: 8px; }
-    .hint { position: fixed; right: 16px; bottom: 16px; background: #1d1d1f; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 13px; }
-    .hint button { padding: 4px 10px; margin-left: 8px; font-size: 13px; }
+    .menu { position: fixed; right: 20px; top: 84px; width: 340px; height: calc(100vh - 104px); border: 0; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,.18); background: #fff; }
   </style>
 </head>
 <body>
@@ -30,31 +32,50 @@
   </header>
   <main>
     <h1>Une page pour regarder les curseurs se balader</h1>
-    <p class="lead">Les curseurs flânent, gigotent, et viennent parfois inspecter un lien, un bouton ou un titre. Passez votre souris près d'eux : ils s'écartent.</p>
+    <p class="lead">Faites défiler : les curseurs restent sur la page, puis vous rattrapent. Ceux qui traînent apparaissent au bord de l'écran. Le menu à droite est celui de l'extension.</p>
     <div class="actions">
       <button class="primary">Commencer</button>
       <button>En savoir plus</button>
     </div>
     <div class="grid">
-      <div class="card"><h3>Trajets en arc</h3><p>Durée en racine de la distance, easing cubique, courbure tirée au hasard.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Trajets en arcs</h3><p>Arcs de cercle enchaînés, loi de Fitts, visée puis correction.</p><a href="#">Détails</a></div>
       <div class="card"><h3>Pauses et humeurs</h3><p>Flâner, gigoter, inspecter : chaque curseur a son tempérament.</p><a href="#">Détails</a></div>
       <div class="card"><h3>Bousculade</h3><p>Votre souris pousse les curseurs ; un ressort amorti les ramène.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Défilement</h3><p>Les curseurs vivent sur la page et vous rattrapent quand vous défilez.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Thèmes</h3><p>Classique, Zine, Galets ou Carnet, au choix dans le menu.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Petits bruits</h3><p>Une voix par curseur, dans une gamme qui ne sonne jamais faux.</p><a href="#">Détails</a></div>
     </div>
+    <h2>Une image</h2>
+    <img class="photo" alt="Paysage de démonstration" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='860' height='220'%3E%3Crect width='860' height='220' fill='%23dfe7f1'/%3E%3Cpath d='M0 180 L200 90 L340 160 L520 60 L860 170 L860 220 L0 220Z' fill='%23b6c7dc'/%3E%3C/svg%3E" style="width:100%">
+    <h2>Écrivez-nous</h2>
     <form onsubmit="return false">
       <label>Nom <input placeholder="Votre nom"></label>
+      <label>Courriel <input type="email" placeholder="vous@exemple.fr"></label>
       <label>Sujet
         <select><option>Question</option><option>Suggestion</option></select>
       </label>
       <textarea rows="3" placeholder="Message"></textarea>
       <button class="primary">Envoyer</button>
     </form>
+    <h2>Encore un peu de page</h2>
+    <div class="grid">
+      <div class="card"><h3>Trajets en arcs</h3><p>Arcs de cercle enchaînés, loi de Fitts, visée puis correction.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Pauses et humeurs</h3><p>Flâner, gigoter, inspecter : chaque curseur a son tempérament.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Bousculade</h3><p>Votre souris pousse les curseurs ; un ressort amorti les ramène.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Défilement</h3><p>Les curseurs vivent sur la page et vous rattrapent quand vous défilez.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Thèmes</h3><p>Classique, Zine, Galets ou Carnet, au choix dans le menu.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Petits bruits</h3><p>Une voix par curseur, dans une gamme qui ne sonne jamais faux.</p><a href="#">Détails</a></div>
+    </div>
   </main>
-  <div class="hint">Échap ou <button id="toggle">Lancer / arrêter</button></div>
 
-  <!-- Mêmes fichiers, dans le même ordre que dans background.js -->
+  <!-- Le menu de l'extension, affiché à côté pour l'essayer sans installer. -->
+  <iframe class="menu" src="popup/popup.html" title="Menu de Balade"></iframe>
+
+  <!-- Mêmes fichiers, dans le même ordre que dans lib/inject.js -->
   <script src="src/core/namespace.js"></script>
   <script src="src/core/MathUtils.js"></script>
   <script src="src/core/Config.js"></script>
+  <script src="src/core/Settings.js"></script>
   <script src="src/entities/Cursor.js"></script>
   <script src="src/motion/Path.js"></script>
   <script src="src/motion/Motion.js"></script>
@@ -63,12 +84,13 @@
   <script src="src/behaviors/Arrive.js"></script>
   <script src="src/behaviors/Leave.js"></script>
   <script src="src/behaviors/Wander.js"></script>
+  <script src="src/render/Themes.js"></script>
+  <script src="src/render/FontLoader.js"></script>
   <script src="src/render/Renderer.js"></script>
   <script src="src/audio/Sound.js"></script>
   <script src="src/engine/Engine.js"></script>
   <script src="src/main.js"></script>
   <script>
-    document.getElementById("toggle").addEventListener("click", () => Balade.toggle());
     Balade.toggle();
   </script>
 </body>

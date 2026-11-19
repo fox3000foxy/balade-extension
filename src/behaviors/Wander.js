@@ -4,6 +4,8 @@
 //  - inspecter   : aller sur un élément de la page (les champs de saisie en priorité),
 //                  le survoler, parfois cliquer, et dans un champ vide, écrire un mot
 //                  fantôme puis l'effacer. Rien n'est réellement cliqué ni écrit.
+// Le pointeur change de forme en entrant sur un élément, comme le vrai :
+// main sur les liens et boutons, barre en I sur les champs, viseur sur les images.
 (() => {
   const { Behavior, M } = window.Balade;
 
@@ -20,7 +22,20 @@
         } else {
           yield* this.stroll(cursor);
         }
-        yield* this.motion.wait(M.rand(w.pause[0], w.pause[1]) * cursor.temperament.patience);
+        yield* this.pause(cursor);
+      }
+    }
+
+    /** Une pause ; de temps en temps, le curseur « réfléchit » (pointeur d'attente). */
+    *pause(cursor) {
+      const w = this.config.wander;
+      const d = M.rand(w.pause[0], w.pause[1]) * cursor.temperament.patience * (w.pauseMul || 1);
+      if (M.chance(w.waitChance)) {
+        cursor.shape = "wait";
+        yield* this.motion.wait(d + M.rand(0.6, 1.4));
+        cursor.shape = "arrow";
+      } else {
+        yield* this.motion.wait(d);
       }
     }
 
@@ -59,10 +74,19 @@
       this._last = el;
 
       // Cible-fonction : si la page défile, le curseur suit l'élément.
-      const aim = this.stage.aimOn(el);
+      const aim = this.stage.aimOn(el, cursor);
       const r = el.getBoundingClientRect();
-      yield* this.motion.moveTo(cursor, aim, { speed: 0.75, width: Math.min(r.width, r.height) });
-      if (!this.stage.isOnScreen(el)) return;
+      const hoverShape = this.stage.shapeFor(el);
+      yield* this.motion.moveTo(cursor, aim, {
+        speed: 0.75,
+        width: Math.min(r.width, r.height),
+        // Le pointeur change de forme dès qu'il passe au-dessus de l'élément.
+        onStep: () => {
+          cursor.shape = this.stage.contains(el, cursor) ? hoverShape : "arrow";
+        }
+      });
+      if (!this.stage.isInView(el, cursor)) return;
+      cursor.shape = hoverShape;
 
       if (this.stage.isTextField(el)) {
         yield* this.visitField(cursor, el, aim);
@@ -71,13 +95,12 @@
       }
 
       cursor.focus = null;
-      cursor.shape = "arrow";
-      yield* this.stepAside(cursor);
+      yield* this.stepAside(cursor, el, hoverShape);
     }
 
     // ---------- Détails des visites ----------
 
-    /** Survol + clic éventuel sur un lien, un bouton, un titre… */
+    /** Survol + clic éventuel sur un lien, un bouton, un titre, une image… */
     *visitElement(cursor, el, aim) {
       const w = this.config.wander;
       cursor.focus = el;
@@ -92,10 +115,9 @@
       yield* this.motion.wait(M.rand(0.15, 0.3));
     }
 
-    /** Un champ de texte : curseur en I, clic, et parfois un mot fantôme. */
+    /** Un champ de texte : clic, et parfois un mot fantôme. */
     *visitField(cursor, el, aim) {
       const w = this.config.wander;
-      cursor.shape = "ibeam";
       cursor.focus = el;
       yield* this.hover(cursor, aim, M.rand(0.15, 0.4));
       yield* this.motion.click(cursor);
@@ -110,80 +132,84 @@
 
       // Le pointeur s'écarte un peu pour ne pas masquer ce qu'il « écrit ».
       const off = { x: M.rand(-20, 10), y: M.rand(12, 24) };
-      yield* this.motion.moveTo(
-        cursor,
-        () => {
-          const p = aim();
-          return { x: p.x + off.x, y: p.y + off.y };
-        },
-        { speed: 1.4, precise: false, calm: 0.4 }
-      );
+      const aside = () => {
+        const p = aim();
+        return { x: p.x + off.x, y: p.y + off.y };
+      };
+      yield* this.motion.moveTo(cursor, aside, { speed: 1.4, precise: false, calm: 0.4 });
 
-      const word = M.pick(w.ghostWords);
       cursor.ghost = { el, text: "" };
-      const ok = yield* this.typeGhost(cursor, el, word);
+      const ok = yield* this.typeGhost(cursor, el, M.pick(w.ghostWords), aside);
 
       if (ok) {
-        yield* this.motion.wait(M.rand(0.5, 1.1)); // on admire
+        yield* this.hover(cursor, aside, M.rand(0.5, 1.1)); // on admire
         if (M.chance(0.6)) {
-          yield* this.eraseGhost(cursor, el); // touche par touche
+          yield* this.eraseGhost(cursor, el, aside); // touche par touche
         } else {
           // Tout sélectionner et supprimer d'un coup.
-          yield* this.motion.wait(M.rand(0.15, 0.3));
+          yield* this.hover(cursor, aside, M.rand(0.15, 0.3));
           if (this.engine.sound) this.engine.sound.erase(cursor);
         }
       }
       cursor.ghost = null;
-      yield* this.motion.wait(M.rand(0.2, 0.4));
+      yield* this.hover(cursor, aside, M.rand(0.2, 0.4));
     }
 
     /**
-     * Frappe irrégulière, caractère par caractère.
-     * @returns {boolean} false si le champ a quitté l'écran en route.
+     * Frappe irrégulière, caractère par caractère, en restant à côté du champ.
+     * @returns {boolean} false si le champ a quitté la vue en route.
      */
-    *typeGhost(cursor, el, word) {
+    *typeGhost(cursor, el, word, anchor) {
       const sound = this.engine.sound;
       for (let i = 0; i < word.length; i++) {
         const ch = word[i];
         let d = M.rand(0.07, 0.15);
         if (ch === " ") d += M.rand(0.05, 0.12);
         if (M.chance(0.05)) d += M.rand(0.2, 0.4); // hésitation
-        yield* this.motion.wait(d);
-        if (!this.stage.isOnScreen(el)) return false;
+        yield* this.hover(cursor, anchor, d);
+        if (!this.stage.isInView(el, cursor)) return false;
         cursor.ghost.text += ch;
         if (sound) sound.key(cursor, i);
       }
       return true;
     }
 
-    *eraseGhost(cursor, el) {
+    *eraseGhost(cursor, el, anchor) {
       const sound = this.engine.sound;
       while (cursor.ghost.text.length > 0) {
-        yield* this.motion.wait(M.rand(0.04, 0.075));
-        if (!this.stage.isOnScreen(el)) return;
+        yield* this.hover(cursor, anchor, M.rand(0.04, 0.075));
+        if (!this.stage.isInView(el, cursor)) return;
         cursor.ghost.text = cursor.ghost.text.slice(0, -1);
         if (sound) sound.backspace(cursor);
       }
     }
 
-    /** Reste sur l'élément pendant `seconds`, en le suivant s'il défile. */
-    *hover(cursor, aim, seconds) {
+    /** Reste accroché à un point (souvent sur un élément) pendant `seconds`. */
+    *hover(cursor, anchor, seconds) {
       let t = seconds;
       while (t > 0) {
         t -= yield;
-        const p = aim();
+        const p = anchor();
         cursor.x = p.x;
         cursor.y = p.y;
       }
     }
 
     /** Se pousser un peu, pour laisser voir ce qu'on vient de regarder. */
-    *stepAside(cursor) {
+    *stepAside(cursor, el, hoverShape) {
       const target = this.stage.clampToScreen({
         x: cursor.x + M.rand(14, 30) * M.sign(),
         y: cursor.y + M.rand(10, 24)
       });
-      yield* this.motion.moveTo(cursor, target, { speed: 1.2, precise: false, calm: 0.5 });
+      yield* this.motion.moveTo(cursor, target, {
+        speed: 1.2,
+        precise: false,
+        calm: 0.5,
+        onStep: () => {
+          cursor.shape = el.isConnected && this.stage.contains(el, cursor) ? hoverShape : "arrow";
+        }
+      });
+      cursor.shape = "arrow";
     }
   }
 

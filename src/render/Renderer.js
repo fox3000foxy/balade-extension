@@ -1,55 +1,40 @@
 // Le rendu : un overlay plein écran, isolé du site par un Shadow DOM,
 // qui ne capte jamais la souris (pointer-events: none).
+// L'apparence (pointeurs, étiquettes, surbrillances) vient du thème actif (Themes.js).
 (() => {
+  const { Themes, FontLoader } = window.Balade;
   const HOST_TAG = "balade-overlay";
 
-  // Formes dessinées pour ce projet. hot = point chaud (là où « pointe » le curseur).
-  const SHAPES = {
-    arrow: {
-      hot: { x: 3, y: 2 },
-      svg: (color) =>
-        `<path d="M3 2 L3 18.5 L7.4 14.3 L10.3 20.9 L13.2 19.7 L10.4 13.2 L16.6 13.2 Z" ` +
-        `fill="${color}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>`
-    },
-    ibeam: {
-      hot: { x: 7, y: 11 },
-      svg: (color) => {
-        const d = "M4 2.5 Q7 2.5 7 4.5 Q7 2.5 10 2.5 M7 4.5 V17.5 M4 19.5 Q7 19.5 7 17.5 Q7 19.5 10 19.5";
-        return (
-          `<path d="${d}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>` +
-          `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/>`
-        );
-      }
-    }
-  };
-
-  const STYLE = `
+  const BASE_STYLE = `
     :host { all: initial; }
     .layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden;
              opacity: 0; transition: opacity .4s ease; }
     .layer.on { opacity: 1; }
     .layer.on.hidden { opacity: 0; transition: opacity .2s ease; }
     .cur { position: absolute; left: 0; top: 0; will-change: transform; }
-    .cur svg { position: absolute; overflow: visible;
-               filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.25)); }
-    .tag { position: absolute; left: 13px; top: 17px; padding: 2px 7px;
-           border-radius: 9px 9px 9px 3px; color: #fff; white-space: nowrap;
-           font: 600 11px/16px system-ui, -apple-system, "Segoe UI", sans-serif;
-           box-shadow: 0 1px 3px rgba(0,0,0,.2); }
-    .focus { position: absolute; left: 0; top: 0; border: 1.5px solid; border-radius: 5px;
-             opacity: 0; transition: opacity .2s ease; box-sizing: border-box; }
+    .cur svg { position: absolute; left: 0; top: 0; overflow: visible; }
+    .tag { position: absolute; white-space: nowrap; }
+    .layer.nonames .cur:not(.pip) .tag { display: none; }
+    .cur.pip svg { display: none; }
+    .cur.pip .tag { left: 0 !important; top: 0 !important; transform: translateX(-50%); }
+    .focus { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .2s ease; box-sizing: border-box; }
     .focus.on { opacity: 1; }
     .ghost { position: absolute; left: 0; top: 0; display: none; overflow: hidden;
              white-space: pre; box-sizing: border-box; }
     .ghost.on { display: flex; }
     .ghost .caret { display: inline-block; width: 1.5px; height: 1.15em; margin-left: 1px;
                     animation: blink 1s steps(1) infinite; }
+    .spin { animation: spin 1.1s linear infinite; }
     @keyframes blink { 50% { opacity: 0; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) {
       .layer { transition: none; }
-      .ghost .caret { animation: none; }
+      .ghost .caret, .spin { animation: none; }
     }
   `;
+
+  // Marge au-delà de laquelle un curseur est considéré hors de l'écran (px).
+  const OFF_MARGIN = 6;
 
   class Renderer {
     constructor() {
@@ -57,6 +42,9 @@
       this.layer = null;
       this.views = new Map(); // id du curseur → éléments DOM de sa vue
       this.hidden = false;
+      this.theme = Themes.classique;
+      this.themeId = "classique";
+      this.showNames = true;
     }
 
     static get hostTag() {
@@ -69,10 +57,10 @@
         "position:fixed;inset:0;z-index:2147483647;pointer-events:none;display:block;";
       const shadow = this.host.attachShadow({ mode: "open" });
       const style = document.createElement("style");
-      style.textContent = STYLE;
+      style.textContent = BASE_STYLE + Object.values(Themes).map((t) => t.css).join("\n");
       this.layer = document.createElement("div");
-      this.layer.className = "layer";
       shadow.append(style, this.layer);
+      this._applyLayerClass();
       document.documentElement.appendChild(this.host);
       // Laisse le navigateur peindre l'état initial avant le fondu d'entrée.
       requestAnimationFrame(() => this.layer && this.layer.classList.add("on"));
@@ -89,59 +77,95 @@
       this.views.clear();
     }
 
+    /** Change de thème ; la police du thème est chargée à la volée. */
+    setTheme(id) {
+      if (!Themes[id]) id = "classique";
+      this.themeId = id;
+      this.theme = Themes[id];
+      FontLoader.load(this.theme.font);
+      for (const v of this.views.values()) v.key = null; // force le redessin des pointeurs
+      this._applyLayerClass();
+    }
+
+    setShowNames(show) {
+      this.showNames = show;
+      this._applyLayerClass();
+    }
+
     /** Cache ou montre tous les curseurs (plein écran). */
     setHidden(hidden) {
       this.hidden = hidden;
-      if (this.layer) this.layer.classList.toggle("hidden", hidden);
+      this._applyLayerClass();
+    }
+
+    _applyLayerClass() {
+      if (!this.layer) return;
+      const on = this.layer.classList.contains("on");
+      this.layer.className =
+        `layer theme-${this.themeId}` +
+        (on ? " on" : "") +
+        (this.hidden ? " hidden" : "") +
+        (this.showNames ? "" : " nonames");
     }
 
     _create(cursor) {
       const root = document.createElement("div");
       root.className = "cur";
-      root.innerHTML = `<svg width="20" height="22" viewBox="0 0 20 22"></svg><div class="tag"></div>`;
-      const tag = root.querySelector(".tag");
-      tag.textContent = cursor.name;
-      tag.style.background = cursor.color;
+      root.innerHTML = `<svg></svg><div class="tag"></div>`;
 
       const focus = document.createElement("div");
       focus.className = "focus";
-      focus.style.borderColor = cursor.color;
 
       const ghost = document.createElement("div");
       ghost.className = "ghost";
       ghost.innerHTML = `<span class="txt"></span><span class="caret"></span>`;
-      ghost.querySelector(".caret").style.background = cursor.color;
 
       this.layer.append(focus, ghost, root);
       const view = {
         root,
         svg: root.firstChild,
+        tag: root.lastChild,
         focus,
         ghost,
         ghostText: ghost.firstChild,
+        caret: ghost.lastChild,
         ghostFor: null,
-        shape: null
+        key: null,
+        tagText: null
       };
       this.views.set(cursor.id, view);
       return view;
     }
 
-    _applyShape(v, cursor) {
-      const s = SHAPES[cursor.shape] || SHAPES.arrow;
-      v.svg.innerHTML = s.svg(cursor.color);
-      v.svg.style.left = `${-s.hot.x}px`;
-      v.svg.style.top = `${-s.hot.y}px`;
-      v.svg.style.transformOrigin = `${s.hot.x}px ${s.hot.y}px`;
-      v.shape = cursor.shape;
+    /** Redessine le pointeur quand la forme, la couleur ou le thème changent. */
+    _applyShape(v, c, color) {
+      const t = this.theme;
+      const size = t.size;
+      const hot = t.hot[c.shape] || t.hot.arrow;
+      const k = size / 24;
+      v.svg.setAttribute("width", size);
+      v.svg.setAttribute("height", size);
+      v.svg.setAttribute("viewBox", "0 0 24 24");
+      v.svg.innerHTML = t.svg(c.shape, color);
+      v.svg.style.left = `${-hot.x * k}px`;
+      v.svg.style.top = `${-hot.y * k}px`;
+      v.svg.style.transformOrigin = `${hot.x * k}px ${hot.y * k}px`;
+      // L'étiquette se place sous la pointe de la flèche, quelle que soit la forme.
+      v.tag.style.left = `${size * 0.48}px`;
+      v.tag.style.top = `${size * 0.66}px`;
+      v.root.style.setProperty("--c", color);
+      v.root.style.setProperty("--c2", t.second ? t.second(color) : color);
+      // Curseur de texte : à la couleur du curseur (au crayon rouge dans le carnet).
+      v.caret.style.background = this.themeId === "carnet" ? "#C2412D" : this.themeId === "classique" ? "#1B1D21" : color;
     }
 
     /** Copie la typographie et la boîte de contenu du champ, une fois par mot fantôme. */
-    _styleGhost(v, el, color) {
+    _styleGhost(v, el) {
       const cs = getComputedStyle(el);
       const g = v.ghost;
       g.style.font = cs.font;
       g.style.letterSpacing = cs.letterSpacing;
-      g.style.color = color;
+      g.style.color = this.theme.text;
       // Couvre le placeholder avec le fond du champ, comme quand on tape vraiment.
       const bg = cs.backgroundColor;
       g.style.background = bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent" ? bg : "transparent";
@@ -155,22 +179,71 @@
       v.ghostFor = el;
     }
 
+    /**
+     * Range les repères de bord de gauche à droite sans chevauchement :
+     * chacun reste au plus près de l'abscisse de son curseur, et passe à la rangée
+     * suivante quand il n'y a plus de place.
+     */
+    _layoutPips(pips, W, H) {
+      for (const above of [true, false]) {
+        const row = pips.filter((p) => p.above === above).sort((a, b) => a.x - b.x);
+        let line = 0;
+        let right = -Infinity;
+        for (const p of row) {
+          const w = p.v.tag.offsetWidth || 90;
+          let left = Math.max(p.x - w / 2, right + 6, 8);
+          if (left + w > W - 8) {
+            line++;
+            left = Math.max(8, Math.min(p.x - w / 2, W - 8 - w));
+          }
+          right = left + w;
+          const y = above ? 10 + line * 26 : H - 30 - line * 26;
+          p.v.root.style.transform = `translate(${(left + w / 2).toFixed(1)}px, ${y}px)`;
+        }
+      }
+    }
+
     render(cursors, squash) {
       if (!this.layer) return;
+      const t = this.theme;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
       const seen = new Set();
+      const pips = [];
 
       for (const c of cursors) {
         seen.add(c.id);
         const v = this.views.get(c.id) || this._create(c);
-        if (v.shape !== c.shape) this._applyShape(v, c);
+        const color = t.palette[c.colorIndex % t.palette.length];
+        const key = `${this.themeId}|${c.shape}|${color}`;
+        if (v.key !== key) {
+          this._applyShape(v, c, color);
+          v.key = key;
+        }
 
-        const x = Math.round(c.screenX * 10) / 10;
-        const y = Math.round(c.screenY * 10) / 10;
-        v.root.style.transform = `translate(${x}px, ${y}px)`;
-        const s = 1 - c.pressure * squash;
-        v.svg.style.transform = `rotate(${c.angle.toFixed(1)}deg) scale(${s.toFixed(3)})`;
+        // Hors de l'écran (au-dessus ou en dessous) : un repère au bord, avec le prénom.
+        const above = c.screenY < -OFF_MARGIN;
+        const below = c.screenY > H + OFF_MARGIN;
+        const pip = (above || below) && !c.leaving;
+        v.root.classList.toggle("pip", pip);
 
-        if (c.focus) {
+        let text = t.tag(c);
+        if (pip) text = `${above ? "↑" : "↓"} ${text}`;
+        if (v.tagText !== text) {
+          v.tag.textContent = text;
+          v.tagText = text;
+        }
+
+        if (pip) {
+          // Placé après la boucle, pour que les repères ne se chevauchent pas.
+          pips.push({ v, x: c.screenX, above });
+        } else {
+          v.root.style.transform = `translate(${c.screenX.toFixed(1)}px, ${c.screenY.toFixed(1)}px)`;
+          const s = 1 - c.pressure * squash;
+          v.svg.style.transform = `rotate(${c.angle.toFixed(1)}deg) scale(${s.toFixed(3)})`;
+        }
+
+        if (c.focus && c.focus.isConnected) {
           const r = c.focus.getBoundingClientRect();
           const pad = 3;
           v.focus.style.transform = `translate(${r.left - pad}px, ${r.top - pad}px)`;
@@ -181,8 +254,8 @@
           v.focus.classList.remove("on");
         }
 
-        if (c.ghost) {
-          if (v.ghostFor !== c.ghost.el) this._styleGhost(v, c.ghost.el, c.color);
+        if (c.ghost && c.ghost.el.isConnected) {
+          if (v.ghostFor !== c.ghost.el) this._styleGhost(v, c.ghost.el);
           const r = c.ghost.el.getBoundingClientRect();
           const p = v.ghostPad;
           v.ghost.style.transform = `translate(${r.left + p.l}px, ${r.top + p.t}px)`;
@@ -196,6 +269,8 @@
           v.ghostFor = null;
         }
       }
+
+      this._layoutPips(pips, W, H);
 
       for (const [id, v] of this.views) {
         if (!seen.has(id)) {

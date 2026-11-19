@@ -186,7 +186,7 @@
      * @param {Element} [exclude] element to skip (the last visited)
      * @param {Set<Element>} [busy] elements already watched by other cursors
      */
-    pickElement(cursor, now, exclude, busy) {
+    pickElement(cursor, now, exclude, busy, habits) {
       const list = this.visibleElements(now);
       if (list.length === 0) return null;
       let total = 0;
@@ -201,6 +201,15 @@
         else if (this._kind === "form" && kind === "field") w *= 1.5;
         // Already watched by another cursor: much less tempting (avoids clustering).
         if (busy && busy.has(el)) w *= 0.1;
+        // R&D axis 2: satiety (visited gets boring, down to 20%) and novelty
+        // (unseen elements get a bonus while much of the page is unexplored).
+        if (habits) {
+          const key = window.Balade.Habits.keyOf(el);
+          if (key) {
+            w *= 1 - 0.8 * habits.satiety(key, now);
+            if (!habits._sessionSeen.has(key)) w *= 1 + habits.noveltyPressure(list.length);
+          }
+        }
         total += w;
         return w;
       });

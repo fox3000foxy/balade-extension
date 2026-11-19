@@ -55,9 +55,11 @@
         if (verdict === "right") {
           engine.predictionHits++;
           cursor.wiggle(engine.time);
+          cursor.setMood("proud", engine.time, 10); // nailed it: shows for a while
           if (engine.sound) engine.sound.greet(cursor);
           if (social && M.chance(0.45)) cursor.say(M.pick(bubbles.right), engine.time);
         } else if (verdict === "wrong" && social && M.chance(0.2)) {
+          cursor.setMood("grumpy", engine.time, 8);
           cursor.say(M.pick(bubbles.wrong), engine.time, 1.2);
         }
         yield* this.motion.wait(M.rand(0.2, 0.5));

@@ -66,7 +66,7 @@
 
     *inspect(cursor) {
       const busy = new Set(this.engine.cursors.map((c) => c.focus).filter(Boolean));
-      const el = this.stage.pickElement(cursor, this.engine.time, this._last, busy);
+      const el = this.stage.pickElement(cursor, this.engine.time, this._last, busy, this.engine.habits);
       if (!el) {
         yield* this.stroll(cursor);
         return;
@@ -88,6 +88,22 @@
       if (!this.stage.isInView(el, cursor)) return;
       cursor.shape = hoverShape;
       const social = this.config.social;
+      // R&D: satiated cursors say "seen it" and move on instead of marveling.
+      const vkey = window.Balade.Habits.keyOf(el);
+      if (vkey) {
+        const sat = this.engine.habits.satiety(vkey, this.engine.time);
+        this.engine.habits.visit(vkey, this.engine.time);
+        this.engine.habits.markSeen(vkey);
+        if (sat > 0.6) {
+          if (social && social.enabled && M.chance(0.5)) {
+            cursor.say(M.pick(this.config.bubbles.seen), this.engine.time);
+            yield* this.hover(cursor, aim, M.rand(0.3, 0.6));
+          }
+          cursor.focus = null;
+          yield* this.stepAside(cursor, el, hoverShape);
+          return;
+        }
+      }
       if (social && social.enabled && M.chance(social.sayOnInspect)) {
         cursor.say(M.pick(this.config.bubbles.inspect), this.engine.time);
       }
@@ -169,7 +185,16 @@
       yield* this.motion.moveTo(cursor, aside, { speed: 1.4, precise: false, calm: 0.4 });
 
       cursor.ghost = { el, text: "" };
-      const ok = yield* this.typeGhost(cursor, el, M.pick(w.ghostWords), aside);
+      // R&D: sometimes type a word from the page's own heading — it looks
+      // like the cursor actually read something. Read locally, stays in the
+      // overlay, never touches the field value.
+      let word = M.pick(w.ghostWords);
+      if (M.chance(0.3)) {
+        const h1 = document.querySelector("h1");
+        const pageWord = h1 && h1.textContent.trim().split(/\s+/).find((s) => /^[A-Za-zÀ-ÿ]{3,12}$/.test(s));
+        if (pageWord) word = pageWord.toLowerCase();
+      }
+      const ok = yield* this.typeGhost(cursor, el, word, aside);
 
       if (ok) {
         yield* this.hover(cursor, aside, M.rand(0.5, 1.1)); // admire the result

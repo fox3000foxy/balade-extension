@@ -71,10 +71,22 @@
       this.lastBumpSound = -Infinity;
 
       // Temperament: each cursor has its own way of moving.
+      // R&D axis 1: motor signatures. Each cursor keeps its own time warp
+      // (speed-peak position) and first-try precision for life, so a cursor
+      // is recognizable by how it moves. Patient cursors aim true;
+      // impatient ones overshoot and correct.
+      // R&D axis 3: social roles. leader follows its own nose, follower tags
+      // along after greetings, loner avoids other cursors. Re-drawn rarely
+      // so roles feel stable but not frozen.
+      const patience = M.rand(0.6, 1.6);
+      const roleDraw = Math.random();
       this.temperament = {
         pace: M.rand(0.8, 1.25),     // speed multiplier
-        patience: M.rand(0.6, 1.6),  // pause and reaction time multiplier
-        curiosity: M.rand(0, 0.3)    // extra urge to inspect the page
+        patience,                     // pause and reaction time multiplier
+        curiosity: M.rand(0, 0.3),    // extra urge to inspect the page
+        peakWarp: M.rand(0.68, 0.85), // own speed-peak position
+        precise: Math.random() < M.clamp(1.4 - patience, 0.15, 0.95),
+        role: roleDraw < 0.15 ? "leader" : roleDraw < 0.45 ? "follower" : roleDraw < 0.6 ? "loner" : "plain"
       };
 
       this.behavior = null;
@@ -98,6 +110,44 @@
     /** Shows a small speech bubble for `duration` seconds. */
     say(text, now, duration = 1.6) {
       this.bubble = { text, until: now + duration };
+      this.lastSaidAt = now;
+    }
+
+    // ---------- R&D: mood and teasing ----------
+
+    /** Current mood, from temperament + recent events. */
+    currentMood(now) {
+      if (this._mood && now < this._moodUntil) return this._mood;
+      // Baseline from temperament.
+      if (this.temperament.patience > 1.2) return "chill";
+      if (this.temperament.patience < 0.8) return "grumpy";
+      return "playful";
+    }
+
+    /** Sets a temporary mood for `duration` seconds (engine time). */
+    setMood(mood, now, duration = 8) {
+      this._mood = mood;
+      this._moodUntil = now + duration;
+    }
+
+    /**
+     * Says a line picked for this mood from weighted lists.
+     * `pools` maps mood -> array of lines; falls back to "playful" then first pool.
+     */
+    sayAs(pools, now, duration = 1.6) {
+      const lines = pools[this.currentMood(now)] || pools.playful || Object.values(pools)[0];
+      if (lines && lines.length) this.say(lines[Math.floor(Math.random() * lines.length)], now, duration);
+    }
+
+    /** Teases another cursor: short jab, then a cooldown so it stays rare. */
+    tease(other, now, lines) {
+      if (!other || !lines || !lines.length) return;
+      if (this._teaseUntil && now < this._teaseUntil) return;
+      if (other._teasedAt && now - other._teasedAt < 20) return; // don't pile on
+      this._teaseUntil = now + 45 + Math.random() * 45; // once a minute or so
+      other._teasedAt = now;
+      other.setMood("grumpy", now, 6); // the teased one sulks a little
+      this.say(lines[Math.floor(Math.random() * lines.length)], now, 1.4);
     }
 
     /** Small wiggle (for greeting). */

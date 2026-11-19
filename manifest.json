@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "Balade",
   "version": "0.8.0",
-  "description": "Des curseurs qui se baladent sur la page, comme une équipe en ligne.",
+  "default_locale": "en",
+  "description": "__MSG_ext_description__",
   "permissions": [
     "activeTab",
     "scripting",
@@ -35,7 +36,7 @@
       "suggested_key": {
         "default": "Alt+B"
       },
-      "description": "Lancer ou ranger les curseurs"
+      "description": "__MSG_cmd_toggle__"
     }
   },
   "web_accessible_resources": [

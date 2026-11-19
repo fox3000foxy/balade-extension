@@ -35,7 +35,7 @@ async function ensureOffscreen() {
   await chrome.offscreen.createDocument({
     url: "offscreen/offscreen.html",
     reasons: ["USER_MEDIA"],
-    justification: "Enregistrer l'onglet en vidéo, à votre demande."
+    justification: chrome.i18n.getMessage("rec_justification")
   });
 }
 

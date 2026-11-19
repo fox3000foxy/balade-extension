@@ -1,7 +1,7 @@
 // Le moteur : la boucle d'animation, la population de curseurs, le défilement,
 // la souris de l'utilisateur, le plein écran, et le choix du comportement suivant.
 (() => {
-  const { M, Cursor, Motion, Stage, Renderer, Sound, Settings, Habits, Predictor, Arrive, Leave, Wander, Gather, Follow, Swarm, Anticipate, Flee } = window.Balade;
+  const { M, Cursor, Motion, Stage, Renderer, Sound, Settings, Habits, Predictor, Arrive, Leave, Wander, Gather, Follow, Swarm, Anticipate, Flee, I18n } = window.Balade;
 
   class Engine {
     constructor(config) {
@@ -600,14 +600,14 @@
       const best = await Engine.bestTime(t);
       const record = best == null || t <= best;
       if (this.game === g) {
-        this.renderer.setHud("top", `Tous attrapés en ${Engine.fmt(t)} !` + (record ? " Nouveau record !" : ` Record : ${Engine.fmt(best)}`));
+        this.renderer.setHud("top", `${I18n.t("hud_game_done", Engine.fmt(t))} ${record ? I18n.t("hud_game_record") : I18n.t("hud_game_best", Engine.fmt(best))}`);
       }
     }
 
     _hudGame() {
       const g = this.game;
       this._hudAt = this.time;
-      this.renderer.setHud("top", `Chat · ${g.caught} / ${g.total} · ${Engine.fmt(this.time - g.start)} · Échap pour arrêter`);
+      this.renderer.setHud("top", I18n.t("hud_game", g.caught, g.total, Engine.fmt(this.time - g.start)));
     }
 
     static fmt(seconds) {
@@ -665,7 +665,7 @@
       if (force || this.time - this._hudAt > 0.5) {
         this._hudAt = this.time;
         const left = (f.until - now) / 1000;
-        this.renderer.setHud("corner", `${f.phase === "focus" ? "Concentration" : "Pause"} · ${Engine.fmt(left)}`);
+        this.renderer.setHud("corner", I18n.t(f.phase === "focus" ? "hud_focus" : "hud_break", Engine.fmt(left)));
       }
     }
 

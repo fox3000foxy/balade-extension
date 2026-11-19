@@ -1,35 +1,18 @@
 // Le menu : lit et enregistre les réglages (appliqués en direct sur la page),
 // lance ou range la balade dans l'onglet actif, et prend l'apparence du thème choisi.
 (() => {
-  const { Settings, Themes, makePerso } = window.Balade;
+  const { Settings, Themes, makePerso, I18n } = window.Balade;
   const $ = (id) => document.getElementById(id);
 
   const inExtension = typeof chrome !== "undefined" && chrome.tabs && chrome.scripting;
 
-  // Petits mots propres à chaque thème (le reste du texte est commun).
-  const WORDING = {
-    classique: { crowd: "Foule", count: "Curseurs", habits: "Comportements", sound: "Son",
-      running: (n) => `${n} curseur${n > 1 ? "s" : ""} actif${n > 1 ? "s" : ""}`, stopped: "Rangés" },
-    zine: { crowd: "La foule", count: "Curseurs", habits: "Habitudes", sound: "Le son",
-      running: (n) => `Tirage n°02 · ${n} en balade`, stopped: "Tirage n°02 · rangés" },
-    galets: { crowd: "La foule", count: "Curseurs", habits: "Habitudes", sound: "Le son",
-      running: (n) => `${n} curseur${n > 1 ? "s" : ""} en promenade`, stopped: "Tout le monde dort" },
-    carnet: { crowd: "Population", count: "Spécimens", habits: "Mœurs observées", sound: "Chants",
-      ghostTyping: "Écrivent dans les champs", showNames: "Portent leur prénom", hideFullscreen: "Se cachent en plein écran",
-      social: "Bavardent entre eux", reactive: "Réagissent à vos gestes", swarmHint: "rassembler les spécimens",
-      adaptDark: "S'adaptent à la nuit", site: "Terrain", siteExclude: "Zone protégée", siteAuto: "Lâcher dès l'arrivée",
-      anticipate: "Devinent vos gestes", learn: "Retiennent vos habitudes", extras: "Expériences",
-      running: (n) => `Relevé du jour · ${n} spécimen${n > 1 ? "s" : ""}`, stopped: "Relevé du jour · aucun spécimen" }
-  };
-  const DEFAULT_WORDS = {
-    theme: "Thème", pace: "Allure", paceHint: "calme → vive", curiosity: "Curiosité",
-    curiosityHint: "rêveurs → fouineurs", ghostTyping: "Écrire dans les champs",
-    showNames: "Afficher les prénoms", hideFullscreen: "Se cacher en plein écran",
-    social: "Bavarder entre eux", reactive: "Réagir à ce que je fais", swarmHint: "appeler l'essaim autour du pointeur",
-    adaptDark: "Adapter aux pages sombres", site: "Ce site", siteExclude: "Ne jamais lancer ici",
-    siteAuto: "Lancer automatiquement ici",
-    anticipate: "Deviner mes gestes", learn: "Apprendre mes habitudes",
-    shortcut: "lance ou range les curseurs", extras: "Jeux et outils"
+  // Textes : chaque thème peut avoir ses propres mots (clé « <thème>_label_… » dans
+  // _locales), sinon le texte commun (« label_… »).
+  const word = (key) => I18n.first([`${skin()}_label_${key}`, `label_${key}`]);
+  const themeWord = (key, ...args) => I18n.first([`${skin()}_${key}`, key], ...args);
+  const themePlural = (key, n) => {
+    const form = new Intl.PluralRules(I18n.lang).select(n) === "one" ? "one" : "other";
+    return themeWord(`${key}_${form}`, n);
   };
 
   const TOGGLES = ["ghostTyping", "showNames", "social", "reactive", "anticipate", "learn", "adaptDark", "hideFullscreen"];
@@ -104,20 +87,20 @@
     const g = $("gameBtn");
     g.disabled = !ok;
     g.setAttribute("aria-pressed", String(!!game));
-    g.textContent = game ? `Arrêter le jeu (${game.caught} / ${game.total})` : "Jouer au chat";
+    g.textContent = game ? I18n.t("game_stop", game.caught, game.total) : I18n.t("game_start");
     const f = $("focusBtn");
     f.disabled = !ok;
     f.setAttribute("aria-pressed", String(!!focus));
     const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
     f.textContent = focus
-      ? `${focus.phase === "focus" ? "Finir la concentration" : "Finir la pause"} (${mmss(focus.left)})`
-      : "Concentration · 25 min";
+      ? I18n.t(focus.phase === "focus" ? "focus_stop" : "break_stop", mmss(focus.left))
+      : I18n.t("focus_start");
     const r = $("recBtn");
     const rec = await recState();
     r.hidden = !inExtension || !chrome.tabCapture;
     r.disabled = !rec && state.state === "unavailable";
     r.setAttribute("aria-pressed", String(!!rec));
-    r.textContent = rec ? `Arrêter l'enregistrement (${mmss(Math.round((Date.now() - rec.startedAt) / 1000))})` : "Enregistrer une vidéo de l'onglet";
+    r.textContent = rec ? I18n.t("rec_stop", mmss(Math.round((Date.now() - rec.startedAt) / 1000))) : I18n.t("rec_start");
   }
 
   function bindExtras() {
@@ -140,7 +123,7 @@
       // L'identifiant du flux doit être demandé pendant le clic, depuis le menu.
       chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, (streamId) => {
         if (chrome.runtime.lastError || !streamId) {
-          $("status").textContent = "Enregistrement impossible sur cette page";
+          $("status").textContent = I18n.t("rec_failed");
           return;
         }
         chrome.runtime.sendMessage({ type: "rec-start", streamId, tabId, host: state.host }, () => setTimeout(renderExtras, 300));
@@ -170,29 +153,24 @@
     return id === "perso" ? makePerso(settings.custom) : Themes[id];
   }
 
-  function words() {
-    return { ...DEFAULT_WORDS, ...WORDING[skin()] };
-  }
-
   function renderStatus() {
-    const w = words();
     const btn = $("toggle");
     if (state.state === "excluded") {
-      $("status").textContent = "Exclu sur ce site";
-      btn.textContent = "Lancer";
+      $("status").textContent = I18n.t("status_excluded");
+      btn.textContent = I18n.t("btn_start");
       btn.disabled = true;
       return;
     }
     if (state.state === "unavailable") {
-      $("status").textContent = "Indisponible sur cette page";
-      btn.textContent = "Lancer";
+      $("status").textContent = I18n.t("status_unavailable");
+      btn.textContent = I18n.t("btn_start");
       btn.disabled = true;
       return;
     }
     btn.disabled = false;
     const on = state.state === "running";
-    btn.textContent = on ? "Ranger" : "Lancer";
-    $("status").textContent = on ? w.running(Math.max(state.count, 1)) : w.stopped;
+    btn.textContent = I18n.t(on ? "btn_put_away" : "btn_start");
+    $("status").textContent = on ? themePlural("status_running", Math.max(state.count, 1)) : themeWord("status_stopped");
   }
 
   function iconSvg(themeId, size) {
@@ -225,14 +203,12 @@
 
     for (const id of ["count", "pace", "curiosity", "volume"]) $(id).value = settings[id];
     $("count-out").textContent = settings.count;
-    $("volume-out").textContent = settings.volume === 0 ? "muet" : `${settings.volume} %`;
+    $("volume-out").textContent = volumeText(settings.volume);
     for (const id of TOGGLES) $(id).checked = settings[id];
     document.querySelector(".swarm-hint").hidden = !settings.reactive;
 
-    const w = words();
     document.querySelectorAll("[data-label]").forEach((el) => {
-      const v = w[el.dataset.label];
-      if (typeof v === "string") el.textContent = v;
+      el.textContent = word(el.dataset.label);
     });
     renderStatus();
     renderSite();
@@ -256,18 +232,18 @@
     const ex = settings.excludedSites;
     const au = settings.autoSites;
     $("sites").hidden = ex.length + au.length === 0;
-    $("sitesSummary").textContent = `Sites exclus : ${ex.length} · automatiques : ${au.length}`;
+    $("sitesSummary").textContent = I18n.t("sites_summary", ex.length, au.length);
     const list = $("sitesList");
     list.innerHTML = "";
     const add = (h2, kind) => {
       const li = document.createElement("li");
       const label = document.createElement("span");
-      label.textContent = `${kind === "ex" ? "Exclu" : "Auto"} · ${h2}`;
+      label.textContent = I18n.t(kind === "ex" ? "site_excluded_item" : "site_auto_item", h2);
       const rm = document.createElement("button");
       rm.type = "button";
       rm.className = "remove";
       rm.textContent = "×";
-      rm.setAttribute("aria-label", `Retirer ${h2}`);
+      rm.setAttribute("aria-label", I18n.t("site_remove", h2));
       rm.addEventListener("click", () =>
         update(kind === "ex" ? { excludedSites: without(settings.excludedSites, h2) } : { autoSites: without(settings.autoSites, h2) })
       );
@@ -283,7 +259,7 @@
   async function renderLearned(h) {
     const n = await window.Balade.Habits.count(h);
     $("learned").hidden = n === 0;
-    $("learnedText").textContent = `${n} clic${n > 1 ? "s" : ""} appris ici, gardés sur cet ordinateur.`;
+    $("learnedText").textContent = I18n.plural("learned", n);
   }
 
   function bindSite() {
@@ -335,7 +311,7 @@
         .map((k) => `<kbd>${k.replace(/[<>&]/g, "")}</kbd>`)
         .join("+");
     } else {
-      keys.textContent = "Aucun raccourci";
+      keys.textContent = I18n.t("shortcut_none");
     }
   }
 
@@ -349,7 +325,7 @@
       // Pendant le glissement : affichage immédiat ; au relâchement : enregistrement.
       $(id).addEventListener("input", (e) => {
         if (id === "count") $("count-out").textContent = e.target.value;
-        if (id === "volume") $("volume-out").textContent = +e.target.value === 0 ? "muet" : `${e.target.value} %`;
+        if (id === "volume") $("volume-out").textContent = volumeText(+e.target.value);
       });
       $(id).addEventListener("change", (e) => update({ [id]: +e.target.value }));
     }
@@ -366,7 +342,10 @@
     if (!inExtension) $("shortcuts").hidden = true;
   }
 
+  const volumeText = (v) => (v === 0 ? I18n.t("volume_muted") : I18n.t("volume_value", v));
+
   (async () => {
+    I18n.apply();
     settings = await Settings.load();
     bind();
     render();

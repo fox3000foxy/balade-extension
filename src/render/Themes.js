@@ -4,6 +4,7 @@
 // Pointeurs : arrow (flèche), hand (main, sur les liens et boutons), ibeam (texte),
 // crosshair (viseur, sur les images), wait (attente, pendant certaines pauses).
 (() => {
+  const tr = (key, ...args) => window.Balade.I18n.t(key, ...args);
   // Silhouettes communes. La flèche suit les proportions d'un pointeur système :
   // bord gauche vertical, pointe à 45°, queue fine et inclinée.
   const ARROW = "M4 2.5 L4 18 L7.6 14.6 L10.2 20.1 L12.8 18.9 L10.3 13.6 L15 13.5 Z";
@@ -23,7 +24,7 @@
   const THEMES = {
     // ---------------------------------------------------------------- Classique
     classique: {
-      label: "Classique",
+      label: tr("theme_classique"),
       size: 26,
       font: null, // police du système
       palette: ["#E5484D", "#F76B15", "#30A46C", "#0090FF", "#8E4EC6", "#D6409F", "#12A594", "#AD7F58"],
@@ -62,7 +63,7 @@
 
     // ---------------------------------------------------------------- Zine risographié
     zine: {
-      label: "Zine",
+      label: tr("theme_zine"),
       size: 26,
       font: { family: "Balade Chivo Mono", file: "ChivoMono.ttf" },
       palette: ["#2B59C3", "#FF4FA3", "#00A95C", "#FF6C2F", "#765BA7", "#1E1C1A"],
@@ -87,7 +88,7 @@
           default: return two((c) => `<path d="${ARROW}" fill="${c}"/>`);
         }
       },
-      tag: (c) => `${c.name} · n°${String(c.id + 1).padStart(2, "0")}`,
+      tag: (c) => `${c.name} · ${tr("tag_number", String(c.id + 1).padStart(2, "0"))}`,
       css: `
         .theme-zine .tag { background: var(--c); color: var(--ct, #F3EEE4); border-radius: 0; padding: 3px 8px;
           font: 600 11px/14px "Balade Chivo Mono", ui-monospace, monospace; box-shadow: 3px 3px 0 var(--c2); }
@@ -100,7 +101,7 @@
 
     // ---------------------------------------------------------------- Galets d'argile
     galets: {
-      label: "Galets",
+      label: tr("theme_galets"),
       size: 28,
       font: { family: "Balade Fredoka", file: "Fredoka.ttf" },
       palette: ["#D9785A", "#7FA27C", "#A592D8", "#E0A93A", "#6F9FC0", "#C4687E"],
@@ -139,7 +140,7 @@
 
     // ---------------------------------------------------------------- Carnet de terrain
     carnet: {
-      label: "Carnet",
+      label: tr("theme_carnet"),
       size: 26,
       font: { family: "Balade Spline Sans Mono", file: "SplineSansMono.ttf" },
       // Ici la couleur est celle du surligneur de l'étiquette ; le trait reste à l'encre.
@@ -165,7 +166,7 @@
             return `<path d="${ARROW}" ${ink}/><path d="M4.3 2.9 L4.2 17.6 L7.6 14.3 M10.6 13.3 L14.6 13.2" fill="none" stroke="#1F2B44" stroke-width=".6" stroke-linecap="round" opacity=".6"/>`;
         }
       },
-      tag: (c) => `n°${String(c.id + 1).padStart(2, "0")} · ${c.name}`,
+      tag: (c) => `${tr("tag_number", String(c.id + 1).padStart(2, "0"))} · ${c.name}`,
       css: `
         .theme-carnet .tag { background: #F6F1E3; color: #1F2B44; border: 1px solid #1F2B44; border-radius: 0;
           padding: 2px 6px; font: 400 11px/15px "Balade Spline Sans Mono", ui-monospace, monospace;
@@ -188,7 +189,7 @@
   function makePerso(custom) {
     const base = THEMES[(custom && custom.base) || "classique"] || THEMES.classique;
     const t = Object.create(base);
-    t.label = "Perso";
+    t.label = tr("theme_perso");
     t.cssId = (custom && custom.base) || "classique";
     if (custom && custom.palette) t.palette = custom.palette;
     let p = custom && custom.pointer;

@@ -1,7 +1,7 @@
 // Page de personnalisation : prénoms, thème perso (habillage, couleurs, pointeur importé).
 // Chaque modification est enregistrée aussitôt et s'applique en direct sur les pages ouvertes.
 (() => {
-  const { Settings, Themes, SvgSanitizer, makePerso } = window.Balade;
+  const { Settings, Themes, SvgSanitizer, makePerso, I18n } = window.Balade;
   const $ = (id) => document.getElementById(id);
   const BASES = ["classique", "zine", "galets", "carnet"];
   const SAMPLE_NAMES = ["Alix", "Bastien", "Chloé", "Diego"];
@@ -18,7 +18,7 @@
   async function save(patch) {
     s = await Settings.save(patch);
     custom = s.custom || defaultCustom();
-    $("saved").textContent = "Enregistré";
+    $("saved").textContent = I18n.t("opt_saved");
     clearTimeout(savedTimer);
     savedTimer = setTimeout(() => ($("saved").textContent = ""), 1600);
     render();
@@ -46,7 +46,7 @@
       save({ names: [] });
     });
   }
-  const countText = (n) => (n ? `${n} prénom${n > 1 ? "s" : ""}${n > 40 ? " (seuls les 40 premiers seront gardés)" : ""}` : "Liste par défaut");
+  const countText = (n) => (n ? I18n.plural("opt_names_count", n) + (n > 40 ? I18n.t("opt_names_over") : "") : I18n.t("opt_names_default"));
 
   // ---------- Thème perso ----------
 
@@ -76,7 +76,7 @@
       const input = document.createElement("input");
       input.type = "color";
       input.value = c;
-      input.setAttribute("aria-label", `Couleur ${i + 1}`);
+      input.setAttribute("aria-label", I18n.t("opt_color_n", i + 1));
       input.addEventListener("change", () => {
         const next = [...palette()];
         next[i] = input.value;
@@ -90,7 +90,7 @@
         rm.type = "button";
         rm.className = "rm";
         rm.textContent = "×";
-        rm.setAttribute("aria-label", `Retirer la couleur ${c}`);
+        rm.setAttribute("aria-label", I18n.t("opt_color_remove", c));
         rm.addEventListener("click", () => saveCustom({ palette: palette().filter((_, j) => j !== i) }));
         w.appendChild(rm);
       }
@@ -212,6 +212,7 @@
   }
 
   (async () => {
+    I18n.apply();
     s = await Settings.load();
     custom = s.custom || defaultCustom();
     $("names").value = s.names.join("\n");

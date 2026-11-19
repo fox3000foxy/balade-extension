@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,10 +22,10 @@
     </header>
 
     <section class="block site" id="site" aria-labelledby="t-site" hidden>
-      <h2 id="t-site"><span data-label="site">Ce site</span> · <span id="host"></span></h2>
-      <label class="switch"><span data-label="siteExclude">Ne jamais lancer ici</span><input type="checkbox" id="siteExclude"></label>
-      <label class="switch"><span data-label="siteAuto">Lancer automatiquement ici</span><input type="checkbox" id="siteAuto"></label>
-      <p class="learned" id="learned" hidden><span id="learnedText"></span> <button type="button" class="link" id="forget">Oublier</button></p>
+      <h2 id="t-site"><span data-label="site"></span> · <span id="host"></span></h2>
+      <label class="switch"><span data-label="siteExclude"></span><input type="checkbox" id="siteExclude"></label>
+      <label class="switch"><span data-label="siteAuto"></span><input type="checkbox" id="siteAuto"></label>
+      <p class="learned" id="learned" hidden><span id="learnedText"></span> <button type="button" class="link" id="forget" data-i18n="forget"></button></p>
       <details class="sites" id="sites" hidden>
         <summary id="sitesSummary"></summary>
         <ul id="sitesList"></ul>
@@ -33,65 +33,66 @@
     </section>
 
     <section class="block" aria-labelledby="t-theme">
-      <h2 id="t-theme" data-label="theme">Thème</h2>
+      <h2 id="t-theme" data-label="theme"></h2>
       <div class="themes" id="themes" role="radiogroup" aria-labelledby="t-theme"></div>
     </section>
 
     <section class="block extras" aria-labelledby="t-extras">
-      <h2 id="t-extras" data-label="extras">Jeux et outils</h2>
+      <h2 id="t-extras" data-label="extras"></h2>
       <div class="extra-btns">
-        <button type="button" class="theme extra" id="gameBtn">Jouer au chat</button>
-        <button type="button" class="theme extra" id="focusBtn">Concentration · 25 min</button>
-        <button type="button" class="theme extra" id="recBtn">Enregistrer une vidéo de l'onglet</button>
+        <button type="button" class="theme extra" id="gameBtn"></button>
+        <button type="button" class="theme extra" id="focusBtn"></button>
+        <button type="button" class="theme extra" id="recBtn"></button>
       </div>
     </section>
 
     <section class="block" aria-labelledby="t-crowd">
-      <h2 id="t-crowd" data-label="crowd">Foule</h2>
+      <h2 id="t-crowd" data-label="crowd"></h2>
       <label class="slider">
-        <span class="row"><span data-label="count">Curseurs</span><output id="count-out">6</output></span>
+        <span class="row"><span data-label="count"></span><output id="count-out">6</output></span>
         <input type="range" id="count" min="2" max="12" step="1">
       </label>
       <label class="slider">
-        <span class="row"><span data-label="pace">Allure</span><span class="hint" data-label="paceHint">calme → vive</span></span>
+        <span class="row"><span data-label="pace"></span><span class="hint" data-label="paceHint"></span></span>
         <input type="range" id="pace" min="0" max="100" step="1">
       </label>
       <label class="slider">
-        <span class="row"><span data-label="curiosity">Curiosité</span><span class="hint" data-label="curiosityHint">rêveurs → fouineurs</span></span>
+        <span class="row"><span data-label="curiosity"></span><span class="hint" data-label="curiosityHint"></span></span>
         <input type="range" id="curiosity" min="0" max="100" step="1">
       </label>
     </section>
 
     <section class="block" aria-labelledby="t-sound">
-      <h2 id="t-sound" data-label="sound">Son</h2>
+      <h2 id="t-sound" data-label="sound"></h2>
       <label class="slider">
-        <span class="row"><span>Volume</span><output id="volume-out">40 %</output></span>
+        <span class="row"><span data-i18n="volume"></span><output id="volume-out"></output></span>
         <input type="range" id="volume" min="0" max="100" step="1">
       </label>
     </section>
 
     <section class="block toggles" aria-labelledby="t-habits">
-      <h2 id="t-habits" data-label="habits">Comportements</h2>
-      <label class="switch"><span data-label="ghostTyping">Écrire dans les champs</span><input type="checkbox" id="ghostTyping"></label>
-      <label class="switch"><span data-label="showNames">Afficher les prénoms</span><input type="checkbox" id="showNames"></label>
-      <label class="switch"><span data-label="social">Bavarder entre eux</span><input type="checkbox" id="social"></label>
-      <label class="switch"><span data-label="reactive">Réagir à ce que je fais</span><input type="checkbox" id="reactive"></label>
-      <p class="hint swarm-hint"><kbd>Maj</kbd> <kbd>Maj</kbd> maintenu : <span data-label="swarmHint">appeler l'essaim autour du pointeur</span></p>
-      <label class="switch"><span data-label="anticipate">Deviner mes gestes</span><input type="checkbox" id="anticipate"></label>
-      <label class="switch"><span data-label="learn">Apprendre mes habitudes</span><input type="checkbox" id="learn"></label>
-      <label class="switch"><span data-label="adaptDark">Adapter aux pages sombres</span><input type="checkbox" id="adaptDark"></label>
-      <label class="switch"><span data-label="hideFullscreen">Se cacher en plein écran</span><input type="checkbox" id="hideFullscreen"></label>
+      <h2 id="t-habits" data-label="habits"></h2>
+      <label class="switch"><span data-label="ghostTyping"></span><input type="checkbox" id="ghostTyping"></label>
+      <label class="switch"><span data-label="showNames"></span><input type="checkbox" id="showNames"></label>
+      <label class="switch"><span data-label="social"></span><input type="checkbox" id="social"></label>
+      <label class="switch"><span data-label="reactive"></span><input type="checkbox" id="reactive"></label>
+      <p class="hint swarm-hint"><kbd data-i18n="key_shift"></kbd> <kbd data-i18n="key_shift"></kbd> <span data-i18n="swarm_held"></span> <span data-label="swarmHint"></span></p>
+      <label class="switch"><span data-label="anticipate"></span><input type="checkbox" id="anticipate"></label>
+      <label class="switch"><span data-label="learn"></span><input type="checkbox" id="learn"></label>
+      <label class="switch"><span data-label="adaptDark"></span><input type="checkbox" id="adaptDark"></label>
+      <label class="switch"><span data-label="hideFullscreen"></span><input type="checkbox" id="hideFullscreen"></label>
     </section>
 
     <footer class="foot">
       <span class="keys" id="keys"><kbd>Alt</kbd>+<kbd>B</kbd></span>
-      <span data-label="shortcut">lance ou range les curseurs</span>
-      <button type="button" class="link" id="shortcuts">Modifier</button>
-      <button type="button" class="link customize" id="customize">Personnaliser prénoms, couleurs et pointeur…</button>
+      <span data-label="shortcut"></span>
+      <button type="button" class="link" id="shortcuts" data-i18n="shortcut_change"></button>
+      <button type="button" class="link customize" id="customize" data-i18n="customize_link"></button>
     </footer>
   </main>
 
   <script src="../src/core/namespace.js"></script>
+  <script src="../src/core/I18n.js"></script>
   <script src="../src/core/Settings.js"></script>
   <script src="../src/core/SvgSanitizer.js"></script>
   <script src="../src/render/Themes.js"></script>

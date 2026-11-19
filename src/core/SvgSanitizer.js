@@ -3,6 +3,7 @@
 // (liste blanche d'éléments et d'attributs), sans script, sans lien, sans style, sans
 // référence externe. « currentColor » est conservé : il prendra la couleur du curseur.
 (() => {
+  const tr = (key, ...args) => window.Balade.I18n.t(key, ...args);
   const B = window.Balade || (window.Balade = { ready: false });
   if (B.SvgSanitizer) return;
 
@@ -44,7 +45,7 @@
     const doc = new DOMParser().parseFromString(text, "image/svg+xml");
     const root = doc.documentElement;
     if (!root || root.localName !== "svg" || doc.querySelector("parsererror")) {
-      throw new Error("Ce fichier n'est pas un SVG lisible.");
+      throw new Error(tr("svg_unreadable"));
     }
 
     // viewBox : celle du fichier, sinon width/height.
@@ -52,7 +53,7 @@
     if (vb.length !== 4 || vb.some((n) => !Number.isFinite(n)) || vb[2] <= 0 || vb[3] <= 0) {
       const w = parseFloat(root.getAttribute("width"));
       const h = parseFloat(root.getAttribute("height"));
-      if (!(w > 0 && h > 0)) throw new Error("Le SVG doit avoir une viewBox ou une largeur et une hauteur.");
+      if (!(w > 0 && h > 0)) throw new Error(tr("svg_no_size"));
       vb = [0, 0, w, h];
     }
 
@@ -79,10 +80,10 @@
       }
     };
     copy(root, out);
-    if (nodes === 0) throw new Error("Aucune forme utilisable dans ce SVG (tracés, cercles, rectangles…).");
+    if (nodes === 0) throw new Error(tr("svg_no_shapes"));
 
     const markup = new XMLSerializer().serializeToString(out).replace(/^<g[^>]*>|<\/g>$/g, "");
-    if (markup.length > MAX_OUTPUT) throw new Error("Dessin trop lourd une fois nettoyé (20 Ko au plus).");
+    if (markup.length > MAX_OUTPUT) throw new Error(tr("svg_too_big"));
     return { markup, viewBox: vb };
   }
 

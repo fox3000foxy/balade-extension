@@ -1,0 +1,434 @@
+{
+  "ext_description": {
+    "message": "Des curseurs qui se baladent sur la page, comme une équipe en ligne."
+  },
+  "cmd_toggle": {
+    "message": "Lancer ou ranger les curseurs"
+  },
+  "rec_justification": {
+    "message": "Enregistrer l'onglet en vidéo, à votre demande."
+  },
+  "theme_classique": {
+    "message": "Classique"
+  },
+  "theme_zine": {
+    "message": "Zine"
+  },
+  "theme_galets": {
+    "message": "Galets"
+  },
+  "theme_carnet": {
+    "message": "Carnet"
+  },
+  "theme_perso": {
+    "message": "Perso"
+  },
+  "tag_number": {
+    "message": "n°$1"
+  },
+  "btn_start": {
+    "message": "Lancer"
+  },
+  "btn_put_away": {
+    "message": "Ranger"
+  },
+  "status_excluded": {
+    "message": "Exclu sur ce site"
+  },
+  "status_unavailable": {
+    "message": "Indisponible sur cette page"
+  },
+  "status_running_one": {
+    "message": "$1 curseur actif"
+  },
+  "status_running_other": {
+    "message": "$1 curseurs actifs"
+  },
+  "status_stopped": {
+    "message": "Rangés"
+  },
+  "zine_status_running_one": {
+    "message": "Tirage n°02 · $1 en balade"
+  },
+  "zine_status_running_other": {
+    "message": "Tirage n°02 · $1 en balade"
+  },
+  "zine_status_stopped": {
+    "message": "Tirage n°02 · rangés"
+  },
+  "galets_status_running_one": {
+    "message": "$1 curseur en promenade"
+  },
+  "galets_status_running_other": {
+    "message": "$1 curseurs en promenade"
+  },
+  "galets_status_stopped": {
+    "message": "Tout le monde dort"
+  },
+  "carnet_status_running_one": {
+    "message": "Relevé du jour · $1 spécimen"
+  },
+  "carnet_status_running_other": {
+    "message": "Relevé du jour · $1 spécimens"
+  },
+  "carnet_status_stopped": {
+    "message": "Relevé du jour · aucun spécimen"
+  },
+  "label_site": {
+    "message": "Ce site"
+  },
+  "label_siteExclude": {
+    "message": "Ne jamais lancer ici"
+  },
+  "label_siteAuto": {
+    "message": "Lancer automatiquement ici"
+  },
+  "label_theme": {
+    "message": "Thème"
+  },
+  "label_extras": {
+    "message": "Jeux et outils"
+  },
+  "label_crowd": {
+    "message": "Foule"
+  },
+  "label_count": {
+    "message": "Curseurs"
+  },
+  "label_pace": {
+    "message": "Allure"
+  },
+  "label_paceHint": {
+    "message": "calme → vive"
+  },
+  "label_curiosity": {
+    "message": "Curiosité"
+  },
+  "label_curiosityHint": {
+    "message": "rêveurs → fouineurs"
+  },
+  "label_sound": {
+    "message": "Son"
+  },
+  "label_habits": {
+    "message": "Comportements"
+  },
+  "label_ghostTyping": {
+    "message": "Écrire dans les champs"
+  },
+  "label_showNames": {
+    "message": "Afficher les prénoms"
+  },
+  "label_social": {
+    "message": "Bavarder entre eux"
+  },
+  "label_reactive": {
+    "message": "Réagir à ce que je fais"
+  },
+  "label_swarmHint": {
+    "message": "appeler l'essaim autour du pointeur"
+  },
+  "label_anticipate": {
+    "message": "Deviner mes gestes"
+  },
+  "label_learn": {
+    "message": "Apprendre mes habitudes"
+  },
+  "label_adaptDark": {
+    "message": "Adapter aux pages sombres"
+  },
+  "label_hideFullscreen": {
+    "message": "Se cacher en plein écran"
+  },
+  "label_shortcut": {
+    "message": "lance ou range les curseurs"
+  },
+  "zine_label_crowd": {
+    "message": "La foule"
+  },
+  "zine_label_habits": {
+    "message": "Habitudes"
+  },
+  "zine_label_sound": {
+    "message": "Le son"
+  },
+  "galets_label_crowd": {
+    "message": "La foule"
+  },
+  "galets_label_habits": {
+    "message": "Habitudes"
+  },
+  "galets_label_sound": {
+    "message": "Le son"
+  },
+  "carnet_label_crowd": {
+    "message": "Population"
+  },
+  "carnet_label_count": {
+    "message": "Spécimens"
+  },
+  "carnet_label_habits": {
+    "message": "Mœurs observées"
+  },
+  "carnet_label_sound": {
+    "message": "Chants"
+  },
+  "carnet_label_ghostTyping": {
+    "message": "Écrivent dans les champs"
+  },
+  "carnet_label_showNames": {
+    "message": "Portent leur prénom"
+  },
+  "carnet_label_hideFullscreen": {
+    "message": "Se cachent en plein écran"
+  },
+  "carnet_label_social": {
+    "message": "Bavardent entre eux"
+  },
+  "carnet_label_reactive": {
+    "message": "Réagissent à vos gestes"
+  },
+  "carnet_label_swarmHint": {
+    "message": "rassembler les spécimens"
+  },
+  "carnet_label_adaptDark": {
+    "message": "S'adaptent à la nuit"
+  },
+  "carnet_label_site": {
+    "message": "Terrain"
+  },
+  "carnet_label_siteExclude": {
+    "message": "Zone protégée"
+  },
+  "carnet_label_siteAuto": {
+    "message": "Lâcher dès l'arrivée"
+  },
+  "carnet_label_anticipate": {
+    "message": "Devinent vos gestes"
+  },
+  "carnet_label_learn": {
+    "message": "Retiennent vos habitudes"
+  },
+  "carnet_label_extras": {
+    "message": "Expériences"
+  },
+  "volume": {
+    "message": "Volume"
+  },
+  "volume_value": {
+    "message": "$1 %"
+  },
+  "volume_muted": {
+    "message": "muet"
+  },
+  "key_shift": {
+    "message": "Maj"
+  },
+  "swarm_held": {
+    "message": "maintenu :"
+  },
+  "forget": {
+    "message": "Oublier"
+  },
+  "learned_one": {
+    "message": "$1 clic appris ici, gardé sur cet ordinateur."
+  },
+  "learned_other": {
+    "message": "$1 clics appris ici, gardés sur cet ordinateur."
+  },
+  "sites_summary": {
+    "message": "Sites exclus : $1 · automatiques : $2"
+  },
+  "site_excluded_item": {
+    "message": "Exclu · $1"
+  },
+  "site_auto_item": {
+    "message": "Auto · $1"
+  },
+  "site_remove": {
+    "message": "Retirer $1"
+  },
+  "game_start": {
+    "message": "Jouer au chat"
+  },
+  "game_stop": {
+    "message": "Arrêter le jeu ($1 / $2)"
+  },
+  "focus_start": {
+    "message": "Concentration · 25 min"
+  },
+  "focus_stop": {
+    "message": "Finir la concentration ($1)"
+  },
+  "break_stop": {
+    "message": "Finir la pause ($1)"
+  },
+  "rec_start": {
+    "message": "Enregistrer une vidéo de l'onglet"
+  },
+  "rec_stop": {
+    "message": "Arrêter l'enregistrement ($1)"
+  },
+  "rec_failed": {
+    "message": "Enregistrement impossible sur cette page"
+  },
+  "shortcut_change": {
+    "message": "Modifier"
+  },
+  "shortcut_none": {
+    "message": "Aucun raccourci"
+  },
+  "customize_link": {
+    "message": "Personnaliser prénoms, couleurs et pointeur…"
+  },
+  "hud_game": {
+    "message": "Chat · $1 / $2 · $3 · Échap pour arrêter"
+  },
+  "hud_game_done": {
+    "message": "Tous attrapés en $1 !"
+  },
+  "hud_game_record": {
+    "message": "Nouveau record !"
+  },
+  "hud_game_best": {
+    "message": "Record : $1"
+  },
+  "hud_focus": {
+    "message": "Concentration · $1"
+  },
+  "hud_break": {
+    "message": "Pause · $1"
+  },
+  "ghost_words": {
+    "message": "coucou|miaou|hmm…|bonjour !|on teste|ok ok|salut|trop bien|ça marche ?|youpi|hello|piou piou|bip boup"
+  },
+  "bubbles_caught": {
+    "message": "attrapé !|zut|eh !|pas juste|bien joué"
+  },
+  "bubbles_break": {
+    "message": "pause !|on souffle ?|c'est l'heure|coucou, pause"
+  },
+  "bubbles_predict": {
+    "message": "par ici ?|c'est là ?|je parie…|ici, non ?"
+  },
+  "bubbles_right": {
+    "message": "je le savais !|bingo|tiens donc|on se connaît"
+  },
+  "bubbles_wrong": {
+    "message": "oups|raté|ah non"
+  },
+  "bubbles_greet": {
+    "message": "salut !|coucou|hé !|yo|bonjour|re !"
+  },
+  "bubbles_curious": {
+    "message": "hmm ?|oh|intéressant|qu'est-ce que c'est ?|je regarde"
+  },
+  "bubbles_inspect": {
+    "message": "oh !|hmm…|joli|tiens|ah, ça|pas mal"
+  },
+  "bubbles_click": {
+    "message": "!|oh|ah ?|hop"
+  },
+  "bubbles_cheer": {
+    "message": "bravo !|youpi !|hourra !|envoyé !|bien joué"
+  },
+  "svg_unreadable": {
+    "message": "Ce fichier n'est pas un SVG lisible."
+  },
+  "svg_no_size": {
+    "message": "Le SVG doit avoir une viewBox ou une largeur et une hauteur."
+  },
+  "svg_no_shapes": {
+    "message": "Aucune forme utilisable dans ce SVG (tracés, cercles, rectangles…)."
+  },
+  "svg_too_big": {
+    "message": "Dessin trop lourd une fois nettoyé (20 Ko au plus)."
+  },
+  "opt_title": {
+    "message": "Balade · Personnalisation"
+  },
+  "opt_h1": {
+    "message": "Personnalisation"
+  },
+  "opt_sub": {
+    "message": "Vos prénoms, votre palette et votre pointeur. Tout est enregistré au fur et à mesure."
+  },
+  "opt_saved": {
+    "message": "Enregistré"
+  },
+  "opt_names": {
+    "message": "Prénoms"
+  },
+  "opt_names_hint": {
+    "message": "Un prénom par ligne, 40 au plus. Laissez vide pour la liste par défaut. Les nouveaux prénoms s'appliquent aux curseurs qui arrivent."
+  },
+  "opt_names_label": {
+    "message": "Prénoms des curseurs"
+  },
+  "opt_names_reset": {
+    "message": "Rétablir la liste par défaut"
+  },
+  "opt_names_count_one": {
+    "message": "$1 prénom"
+  },
+  "opt_names_count_other": {
+    "message": "$1 prénoms"
+  },
+  "opt_names_over": {
+    "message": " (seuls les 40 premiers seront gardés)"
+  },
+  "opt_names_default": {
+    "message": "Liste par défaut"
+  },
+  "opt_theme": {
+    "message": "Mon thème"
+  },
+  "opt_theme_use": {
+    "message": "Utiliser mon thème"
+  },
+  "opt_theme_hint": {
+    "message": "Partez de l'habillage d'un thème (étiquettes, bulles, pointeurs), puis changez ses couleurs et, si vous voulez, sa flèche."
+  },
+  "opt_base": {
+    "message": "Habillage de départ"
+  },
+  "opt_colors": {
+    "message": "Couleurs"
+  },
+  "opt_color_add": {
+    "message": "+ Ajouter une couleur"
+  },
+  "opt_color_reset": {
+    "message": "Couleurs du thème de départ"
+  },
+  "opt_color_n": {
+    "message": "Couleur $1"
+  },
+  "opt_color_remove": {
+    "message": "Retirer la couleur $1"
+  },
+  "opt_pointer": {
+    "message": "Pointeur"
+  },
+  "opt_import": {
+    "message": "Importer un SVG"
+  },
+  "opt_import_hint": {
+    "message": "Formes simples uniquement : tout script, lien ou style est retiré à l'import. Utilisez <code>currentColor</code> dans le fichier pour reprendre la couleur de chaque curseur."
+  },
+  "opt_pointer_remove": {
+    "message": "Retirer mon pointeur"
+  },
+  "opt_hot_label": {
+    "message": "Cliquez pour placer la pointe du curseur"
+  },
+  "opt_hot_hint": {
+    "message": "Cliquez sur le dessin pour placer la pointe (le point qui « clique »)."
+  },
+  "opt_preview": {
+    "message": "Aperçu"
+  },
+  "opt_foot": {
+    "message": "Balade · les réglages restent sur votre navigateur."
+  }
+}

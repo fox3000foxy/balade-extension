@@ -1,5 +1,8 @@
 // Tous les réglages au même endroit, pour les ajuster à l'œil.
 (() => {
+  // Textes dans la langue du navigateur (_locales).
+  const L = (key) => window.Balade.I18n.list(key);
+
   window.Balade.Config = {
     // Pas de temps maximal : évite les sauts au retour d'un onglet en arrière-plan.
     dtMax: 0.05,
@@ -72,10 +75,7 @@
       interest: { field: 3, button: 1.5, link: 1, heading: 1, media: 0.6, other: 0.8 },
       // Chance d'écrire un texte fantôme dans un champ vide.
       ghostTypeChance: 0.75,
-      ghostWords: [
-        "coucou", "miaou", "hmm…", "bonjour !", "on teste", "ok ok", "salut",
-        "trop bien", "ça marche ?", "youpi", "hello", "piou piou", "bip boup"
-      ]
+      ghostWords: L("ghost_words")
     },
 
     cursor: {
@@ -165,16 +165,16 @@
     focus: { minutes: 25, breakMinutes: 5 },
 
     bubbles: {
-      caught: ["attrapé !", "zut", "eh !", "pas juste", "bien joué"],
-      breakTime: ["pause !", "on souffle ?", "c'est l'heure", "coucou, pause"],
-      predict: ["par ici ?", "c'est là ?", "je parie…", "ici, non ?"],
-      right: ["je le savais !", "bingo", "tiens donc", "on se connaît"],
-      wrong: ["oups", "raté", "ah non"],
-      greet: ["salut !", "coucou", "hé !", "yo", "bonjour", "re !"],
-      curious: ["hmm ?", "oh", "intéressant", "qu'est-ce que c'est ?", "je regarde"],
-      inspect: ["oh !", "hmm…", "joli", "tiens", "ah, ça", "pas mal"],
-      click: ["!", "oh", "ah ?", "hop"],
-      cheer: ["bravo !", "youpi !", "hourra !", "envoyé !", "bien joué"]
+      caught: L("bubbles_caught"),
+      breakTime: L("bubbles_break"),
+      predict: L("bubbles_predict"),
+      right: L("bubbles_right"),
+      wrong: L("bubbles_wrong"),
+      greet: L("bubbles_greet"),
+      curious: L("bubbles_curious"),
+      inspect: L("bubbles_inspect"),
+      click: L("bubbles_click"),
+      cheer: L("bubbles_cheer")
     },
 
     // Thème et options d'affichage (remplacés par les réglages du menu).

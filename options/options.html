@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Balade · Personnalisation</title>
+<title data-i18n="opt_title">Balade</title>
 <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -13,68 +13,66 @@
         <svg width="34" height="34" viewBox="0 0 24 24"><path d="M4 2.5 L4 18 L7.6 14.6 L10.2 20.1 L12.8 18.9 L10.3 13.6 L15 13.5 Z" fill="#fff" stroke="#1B1D21" stroke-width="1.2" stroke-linejoin="round"/></svg>
       </span>
       <div>
-        <h1>Personnalisation</h1>
-        <p class="sub">Vos prénoms, votre palette et votre pointeur. Tout est enregistré au fur et à mesure.</p>
+        <h1 data-i18n="opt_h1"></h1>
+        <p class="sub" data-i18n="opt_sub"></p>
       </div>
       <p class="saved" id="saved" aria-live="polite"></p>
     </header>
 
     <section class="card" aria-labelledby="t-names">
-      <h2 id="t-names">Prénoms</h2>
-      <p class="hint">Un prénom par ligne, 40 au plus. Laissez vide pour la liste par défaut. Les nouveaux prénoms
-        s'appliquent aux curseurs qui arrivent.</p>
-      <label class="sr-only" for="names">Prénoms des curseurs</label>
+      <h2 id="t-names" data-i18n="opt_names"></h2>
+      <p class="hint" data-i18n="opt_names_hint"></p>
+      <label class="sr-only" for="names" data-i18n="opt_names_label"></label>
       <textarea id="names" rows="8" spellcheck="false" placeholder="Alix&#10;Bastien&#10;Chloé"></textarea>
       <div class="row">
         <span class="hint" id="namesCount"></span>
-        <button type="button" class="ghost-btn" id="namesReset">Rétablir la liste par défaut</button>
+        <button type="button" class="ghost-btn" id="namesReset" data-i18n="opt_names_reset"></button>
       </div>
     </section>
 
     <section class="card" aria-labelledby="t-theme">
       <div class="row">
-        <h2 id="t-theme">Mon thème</h2>
-        <label class="switch"><span>Utiliser mon thème</span><input type="checkbox" id="customOn"></label>
+        <h2 id="t-theme" data-i18n="opt_theme"></h2>
+        <label class="switch"><span data-i18n="opt_theme_use"></span><input type="checkbox" id="customOn"></label>
       </div>
-      <p class="hint">Partez de l'habillage d'un thème (étiquettes, bulles, pointeurs), puis changez ses couleurs
-        et, si vous voulez, sa flèche.</p>
+      <p class="hint" data-i18n="opt_theme_hint"></p>
 
-      <h3>Habillage de départ</h3>
-      <div class="bases" id="bases" role="radiogroup" aria-label="Habillage de départ"></div>
+      <h3 data-i18n="opt_base"></h3>
+      <div class="bases" id="bases" role="radiogroup" data-i18n-attr="aria-label: opt_base"></div>
 
-      <h3>Couleurs</h3>
+      <h3 data-i18n="opt_colors"></h3>
       <div class="palette" id="palette"></div>
       <div class="row">
-        <button type="button" class="ghost-btn" id="addColor">+ Ajouter une couleur</button>
-        <button type="button" class="ghost-btn" id="resetColors">Couleurs du thème de départ</button>
+        <button type="button" class="ghost-btn" id="addColor" data-i18n="opt_color_add"></button>
+        <button type="button" class="ghost-btn" id="resetColors" data-i18n="opt_color_reset"></button>
       </div>
 
-      <h3>Pointeur</h3>
+      <h3 data-i18n="opt_pointer"></h3>
       <div class="pointer">
         <div class="drop">
-          <label class="file-btn">Importer un SVG<input type="file" id="svgFile" accept=".svg,image/svg+xml"></label>
-          <p class="hint">Formes simples uniquement : tout script, lien ou style est retiré à l'import.
-            Utilisez <code>currentColor</code> dans le fichier pour reprendre la couleur de chaque curseur.</p>
+          <label class="file-btn"><span data-i18n="opt_import"></span><input type="file" id="svgFile" accept=".svg,image/svg+xml"></label>
+          <p class="hint" data-i18n-html="opt_import_hint"></p>
           <p class="error" id="svgError" role="alert"></p>
-          <button type="button" class="ghost-btn" id="svgRemove" hidden>Retirer mon pointeur</button>
+          <button type="button" class="ghost-btn" id="svgRemove" hidden data-i18n="opt_pointer_remove"></button>
         </div>
         <figure class="stage-box" id="hotBox" hidden>
-          <div class="checker" id="hotArea" role="button" tabindex="0" aria-label="Cliquez pour placer la pointe du curseur">
+          <div class="checker" id="hotArea" role="button" tabindex="0" data-i18n-attr="aria-label: opt_hot_label">
             <svg id="hotSvg" width="160" height="160"></svg>
             <span class="hot" id="hotMark" aria-hidden="true"></span>
           </div>
-          <figcaption class="hint">Cliquez sur le dessin pour placer la pointe (le point qui « clique »).</figcaption>
+          <figcaption class="hint" data-i18n="opt_hot_hint"></figcaption>
         </figure>
       </div>
 
-      <h3>Aperçu</h3>
+      <h3 data-i18n="opt_preview"></h3>
       <div class="preview" id="preview"></div>
     </section>
 
-    <footer class="foot hint">Balade · les réglages restent sur votre navigateur.</footer>
+    <footer class="foot hint" data-i18n="opt_foot"></footer>
   </main>
 
   <script src="../src/core/namespace.js"></script>
+  <script src="../src/core/I18n.js"></script>
   <script src="../src/core/Settings.js"></script>
   <script src="../src/core/SvgSanitizer.js"></script>
   <script src="../src/render/Themes.js"></script>

@@ -1,0 +1,434 @@
+{
+  "ext_description": {
+    "message": "Cursors that stroll around the page, like a team working online."
+  },
+  "cmd_toggle": {
+    "message": "Start or put away the cursors"
+  },
+  "rec_justification": {
+    "message": "Record the tab as a video, at your request."
+  },
+  "theme_classique": {
+    "message": "Classic"
+  },
+  "theme_zine": {
+    "message": "Zine"
+  },
+  "theme_galets": {
+    "message": "Pebbles"
+  },
+  "theme_carnet": {
+    "message": "Notebook"
+  },
+  "theme_perso": {
+    "message": "Mine"
+  },
+  "tag_number": {
+    "message": "No. $1"
+  },
+  "btn_start": {
+    "message": "Start"
+  },
+  "btn_put_away": {
+    "message": "Put away"
+  },
+  "status_excluded": {
+    "message": "Excluded on this site"
+  },
+  "status_unavailable": {
+    "message": "Not available on this page"
+  },
+  "status_running_one": {
+    "message": "$1 cursor active"
+  },
+  "status_running_other": {
+    "message": "$1 cursors active"
+  },
+  "status_stopped": {
+    "message": "Put away"
+  },
+  "zine_status_running_one": {
+    "message": "Print run No. 02 · $1 out walking"
+  },
+  "zine_status_running_other": {
+    "message": "Print run No. 02 · $1 out walking"
+  },
+  "zine_status_stopped": {
+    "message": "Print run No. 02 · put away"
+  },
+  "galets_status_running_one": {
+    "message": "$1 cursor out for a stroll"
+  },
+  "galets_status_running_other": {
+    "message": "$1 cursors out for a stroll"
+  },
+  "galets_status_stopped": {
+    "message": "Everyone's asleep"
+  },
+  "carnet_status_running_one": {
+    "message": "Today's log · $1 specimen"
+  },
+  "carnet_status_running_other": {
+    "message": "Today's log · $1 specimens"
+  },
+  "carnet_status_stopped": {
+    "message": "Today's log · no specimens"
+  },
+  "label_site": {
+    "message": "This site"
+  },
+  "label_siteExclude": {
+    "message": "Never start here"
+  },
+  "label_siteAuto": {
+    "message": "Start automatically here"
+  },
+  "label_theme": {
+    "message": "Theme"
+  },
+  "label_extras": {
+    "message": "Games and tools"
+  },
+  "label_crowd": {
+    "message": "Crowd"
+  },
+  "label_count": {
+    "message": "Cursors"
+  },
+  "label_pace": {
+    "message": "Pace"
+  },
+  "label_paceHint": {
+    "message": "calm → lively"
+  },
+  "label_curiosity": {
+    "message": "Curiosity"
+  },
+  "label_curiosityHint": {
+    "message": "dreamers → snoopers"
+  },
+  "label_sound": {
+    "message": "Sound"
+  },
+  "label_habits": {
+    "message": "Behavior"
+  },
+  "label_ghostTyping": {
+    "message": "Type in fields"
+  },
+  "label_showNames": {
+    "message": "Show names"
+  },
+  "label_social": {
+    "message": "Chat with each other"
+  },
+  "label_reactive": {
+    "message": "React to what I do"
+  },
+  "label_swarmHint": {
+    "message": "call the swarm around the pointer"
+  },
+  "label_anticipate": {
+    "message": "Guess my moves"
+  },
+  "label_learn": {
+    "message": "Learn my habits"
+  },
+  "label_adaptDark": {
+    "message": "Adapt to dark pages"
+  },
+  "label_hideFullscreen": {
+    "message": "Hide in full screen"
+  },
+  "label_shortcut": {
+    "message": "starts or puts away the cursors"
+  },
+  "zine_label_crowd": {
+    "message": "The crowd"
+  },
+  "zine_label_habits": {
+    "message": "Habits"
+  },
+  "zine_label_sound": {
+    "message": "Sound"
+  },
+  "galets_label_crowd": {
+    "message": "The crowd"
+  },
+  "galets_label_habits": {
+    "message": "Habits"
+  },
+  "galets_label_sound": {
+    "message": "Sound"
+  },
+  "carnet_label_crowd": {
+    "message": "Population"
+  },
+  "carnet_label_count": {
+    "message": "Specimens"
+  },
+  "carnet_label_habits": {
+    "message": "Observed habits"
+  },
+  "carnet_label_sound": {
+    "message": "Calls"
+  },
+  "carnet_label_ghostTyping": {
+    "message": "Type in fields"
+  },
+  "carnet_label_showNames": {
+    "message": "Wear their names"
+  },
+  "carnet_label_hideFullscreen": {
+    "message": "Hide in full screen"
+  },
+  "carnet_label_social": {
+    "message": "Chat with each other"
+  },
+  "carnet_label_reactive": {
+    "message": "React to your moves"
+  },
+  "carnet_label_swarmHint": {
+    "message": "gather the specimens"
+  },
+  "carnet_label_adaptDark": {
+    "message": "Adapt to the night"
+  },
+  "carnet_label_site": {
+    "message": "Field site"
+  },
+  "carnet_label_siteExclude": {
+    "message": "Protected area"
+  },
+  "carnet_label_siteAuto": {
+    "message": "Release on arrival"
+  },
+  "carnet_label_anticipate": {
+    "message": "Guess your moves"
+  },
+  "carnet_label_learn": {
+    "message": "Remember your habits"
+  },
+  "carnet_label_extras": {
+    "message": "Experiments"
+  },
+  "volume": {
+    "message": "Volume"
+  },
+  "volume_value": {
+    "message": "$1%"
+  },
+  "volume_muted": {
+    "message": "muted"
+  },
+  "key_shift": {
+    "message": "Shift"
+  },
+  "swarm_held": {
+    "message": "held:"
+  },
+  "forget": {
+    "message": "Forget"
+  },
+  "learned_one": {
+    "message": "$1 click learned here, kept on this computer."
+  },
+  "learned_other": {
+    "message": "$1 clicks learned here, kept on this computer."
+  },
+  "sites_summary": {
+    "message": "Excluded sites: $1 · automatic: $2"
+  },
+  "site_excluded_item": {
+    "message": "Excluded · $1"
+  },
+  "site_auto_item": {
+    "message": "Auto · $1"
+  },
+  "site_remove": {
+    "message": "Remove $1"
+  },
+  "game_start": {
+    "message": "Play tag"
+  },
+  "game_stop": {
+    "message": "Stop the game ($1 / $2)"
+  },
+  "focus_start": {
+    "message": "Focus · 25 min"
+  },
+  "focus_stop": {
+    "message": "End focus ($1)"
+  },
+  "break_stop": {
+    "message": "End break ($1)"
+  },
+  "rec_start": {
+    "message": "Record a video of the tab"
+  },
+  "rec_stop": {
+    "message": "Stop recording ($1)"
+  },
+  "rec_failed": {
+    "message": "Can't record this page"
+  },
+  "shortcut_change": {
+    "message": "Change"
+  },
+  "shortcut_none": {
+    "message": "No shortcut"
+  },
+  "customize_link": {
+    "message": "Customize names, colors and pointer…"
+  },
+  "hud_game": {
+    "message": "Tag · $1 / $2 · $3 · Esc to stop"
+  },
+  "hud_game_done": {
+    "message": "All caught in $1!"
+  },
+  "hud_game_record": {
+    "message": "New record!"
+  },
+  "hud_game_best": {
+    "message": "Best: $1"
+  },
+  "hud_focus": {
+    "message": "Focus · $1"
+  },
+  "hud_break": {
+    "message": "Break · $1"
+  },
+  "ghost_words": {
+    "message": "hi|meow|hmm…|hello!|testing|ok ok|hey|so cool|does it work?|yay|bonjour|pew pew|beep boop"
+  },
+  "bubbles_caught": {
+    "message": "caught!|darn|hey!|not fair|well played"
+  },
+  "bubbles_break": {
+    "message": "break!|breather?|it's time|psst, break"
+  },
+  "bubbles_predict": {
+    "message": "over here?|is it here?|I bet…|here, right?"
+  },
+  "bubbles_right": {
+    "message": "knew it!|bingo|well well|we've met"
+  },
+  "bubbles_wrong": {
+    "message": "oops|missed|oh no"
+  },
+  "bubbles_greet": {
+    "message": "hi!|hey|oh hi!|yo|hello|hi again!"
+  },
+  "bubbles_curious": {
+    "message": "hmm?|oh|interesting|what's that?|let me see"
+  },
+  "bubbles_inspect": {
+    "message": "oh!|hmm…|nice|huh|ah, that|not bad"
+  },
+  "bubbles_click": {
+    "message": "!|oh|ah?|hup"
+  },
+  "bubbles_cheer": {
+    "message": "bravo!|yay!|hooray!|sent!|well done"
+  },
+  "svg_unreadable": {
+    "message": "This file isn't a readable SVG."
+  },
+  "svg_no_size": {
+    "message": "The SVG needs a viewBox, or a width and a height."
+  },
+  "svg_no_shapes": {
+    "message": "No usable shapes in this SVG (paths, circles, rectangles…)."
+  },
+  "svg_too_big": {
+    "message": "Drawing too heavy once cleaned (20 KB max)."
+  },
+  "opt_title": {
+    "message": "Balade · Customization"
+  },
+  "opt_h1": {
+    "message": "Customization"
+  },
+  "opt_sub": {
+    "message": "Your names, your palette and your pointer. Everything is saved as you go."
+  },
+  "opt_saved": {
+    "message": "Saved"
+  },
+  "opt_names": {
+    "message": "Names"
+  },
+  "opt_names_hint": {
+    "message": "One name per line, 40 at most. Leave empty for the default list. New names apply to cursors as they arrive."
+  },
+  "opt_names_label": {
+    "message": "Cursor names"
+  },
+  "opt_names_reset": {
+    "message": "Restore the default list"
+  },
+  "opt_names_count_one": {
+    "message": "$1 name"
+  },
+  "opt_names_count_other": {
+    "message": "$1 names"
+  },
+  "opt_names_over": {
+    "message": " (only the first 40 will be kept)"
+  },
+  "opt_names_default": {
+    "message": "Default list"
+  },
+  "opt_theme": {
+    "message": "My theme"
+  },
+  "opt_theme_use": {
+    "message": "Use my theme"
+  },
+  "opt_theme_hint": {
+    "message": "Start from a theme's style (tags, bubbles, pointers), then change its colors and, if you like, its arrow."
+  },
+  "opt_base": {
+    "message": "Starting style"
+  },
+  "opt_colors": {
+    "message": "Colors"
+  },
+  "opt_color_add": {
+    "message": "+ Add a color"
+  },
+  "opt_color_reset": {
+    "message": "Starting theme's colors"
+  },
+  "opt_color_n": {
+    "message": "Color $1"
+  },
+  "opt_color_remove": {
+    "message": "Remove color $1"
+  },
+  "opt_pointer": {
+    "message": "Pointer"
+  },
+  "opt_import": {
+    "message": "Import an SVG"
+  },
+  "opt_import_hint": {
+    "message": "Simple shapes only: any script, link or style is removed on import. Use <code>currentColor</code> in the file to pick up each cursor's color."
+  },
+  "opt_pointer_remove": {
+    "message": "Remove my pointer"
+  },
+  "opt_hot_label": {
+    "message": "Click to place the cursor's tip"
+  },
+  "opt_hot_hint": {
+    "message": "Click the drawing to place the tip (the point that “clicks”)."
+  },
+  "opt_preview": {
+    "message": "Preview"
+  },
+  "opt_foot": {
+    "message": "Balade · settings stay in your browser."
+  }
+}

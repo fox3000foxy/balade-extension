@@ -278,7 +278,18 @@
       return /^dark/.test(scheme) ? 0.05 : 1;
     }
 
-    /** WCAG relative luminance of a CSS rgb()/rgba() color; null if transparent or unparseable. */
+    /** WCAG contrast ratio of an element's text vs its background; null if undecidable. */
+    contrastOf(el) {
+      if (!el.isConnected) return null;
+      const fg = Stage.luminance(getComputedStyle(el).color);
+      if (fg == null) return null;
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return null;
+      const bg = this.luminanceAt(r.left + Math.min(r.width / 2, 8), r.top + Math.min(r.height / 2, 8));
+      if (bg == null) return null;
+      const [hi, lo] = fg > bg ? [fg, bg] : [bg, fg];
+      return (hi + 0.05) / (lo + 0.05);
+    }
     static luminance(color) {
       const m = /rgba?\(([^)]+)\)/.exec(color || "");
       if (!m) return null;

@@ -11,6 +11,10 @@
              opacity: 0; transition: opacity .4s ease; }
     .layer.on { opacity: 1; }
     .layer.on.hidden { opacity: 0; transition: opacity .2s ease; }
+    /* Dimmed behind native modals (dialog, popover): cursors stay perceptible
+       without polluting the modal. z-index can't help: the top layer paints
+       above any z-index by construction. */
+    .layer.on.dimmed { opacity: 0.18; transition: opacity .25s ease; }
     .cur { position: absolute; left: 0; top: 0; will-change: transform; }
     .cur svg { position: absolute; left: 0; top: 0; overflow: visible; }
     .tag { position: absolute; white-space: nowrap; }
@@ -146,6 +150,12 @@
       this._applyLayerClass();
     }
 
+    /** Dims cursors behind native modals (dialog, popover). */
+    setDimmed(dimmed) {
+      this.dimmed = dimmed;
+      this._applyLayerClass();
+    }
+
     _applyLayerClass() {
       if (!this.layer) return;
       const on = this.layer.classList.contains("on");
@@ -153,6 +163,7 @@
         `layer theme-${this.cssId || this.themeId}` +
         (on ? " on" : "") +
         (this.hidden ? " hidden" : "") +
+        (!this.hidden && this.dimmed ? " dimmed" : "") +
         (this.showNames ? "" : " nonames");
     }
 

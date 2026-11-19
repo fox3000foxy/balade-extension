@@ -97,6 +97,7 @@
       this._onSubmit = () => this._cheer();
       this._onFocusIn = (e) => {
         if (e.target && e.target.nodeType === 1 && this.stage.isTextField(e.target)) this._focusEl = e.target;
+        this._checkModal();
       };
       this._onFocusOut = () => {
         this._focusEl = null;
@@ -137,7 +138,12 @@
       window.addEventListener("resize", this._onFullscreenChange);
       window.addEventListener("scroll", this._onScroll, { passive: true, capture: true });
       window.addEventListener("resize", this._onScroll, { passive: true });
+      // Native modals (dialog.showModal, popover) paint in the top layer above
+      // any z-index: dim the cursors instead of fighting the stacking order.
+      this._modalObs = new MutationObserver(() => this._checkModal());
+      this._modalObs.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ["open"] });
       this._checkFullscreen();
+      this._checkModal();
       // Restore cursors from a previous page if a fresh snapshot was passed.
       if (snapshot && snapshot.cursors && snapshot.cursors.length) {
         const W = this.stage.width, H = this.stage.height;
@@ -186,6 +192,7 @@
       window.removeEventListener("resize", this._onFullscreenChange);
       window.removeEventListener("scroll", this._onScroll, { capture: true });
       window.removeEventListener("resize", this._onScroll);
+      if (this._modalObs) { this._modalObs.disconnect(); this._modalObs = null; }
       this.renderer.unmount();
       this.sound.close();
       // Habits.save is async: a rejection here must not block the teardown.
@@ -880,6 +887,18 @@
       this.fullscreen = fs;
       this.renderer.setHidden(fs);
       this.sound.setSuppressed(fs);
+    }
+
+    /** A native modal (dialog, popover) is open: dim cursors behind it. */
+    _checkModal() {
+      let open = false;
+      try {
+        open = !!document.querySelector("dialog[open], [popover]:not([hidden])");
+      } catch (_) {}
+      if (open !== this._modal) {
+        this._modal = open;
+        this.renderer.setDimmed(open);
+      }
     }
 
     // ---------- User's mouse ----------

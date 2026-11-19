@@ -430,5 +430,8 @@
   },
   "opt_foot": {
     "message": "Balade · settings stay in your browser."
+  },
+  "names_list": {
+    "message": "Ada|Grace|Alan|Linus|Tim|Brendan|Margaret|Vint|Doug|Ken|Dennis|Radia|Barbara|Guido|Bjarne|James"
   }
 }

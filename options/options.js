@@ -4,7 +4,7 @@
   const { Settings, Themes, SvgSanitizer, makePerso, I18n } = window.Balade;
   const $ = (id) => document.getElementById(id);
   const BASES = ["classique", "zine", "galets", "carnet"];
-  const SAMPLE_NAMES = ["Alix", "Bastien", "Chloé", "Diego"];
+  const SAMPLE_NAMES = I18n.list("names_list").slice(0, 4);
 
   let s = null;
   let custom = null;
@@ -213,6 +213,7 @@
 
   (async () => {
     I18n.apply();
+    $("names").placeholder = I18n.list("names_list").slice(0, 3).join("\n");
     s = await Settings.load();
     custom = s.custom || defaultCustom();
     $("names").value = s.names.join("\n");

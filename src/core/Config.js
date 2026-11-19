@@ -194,9 +194,6 @@
       bumpCooldown: 0.7
     },
 
-    names: [
-      "Alix", "Bastien", "Chloé", "Diego", "Élise", "Farah", "Gaspard", "Hana",
-      "Iris", "Jules", "Kenji", "Léa", "Malo", "Nora", "Oscar", "Paz"
-    ]
+    names: L("names_list")
   };
 })();

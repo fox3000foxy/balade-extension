@@ -107,6 +107,49 @@
       duration: [0.3, 1.1]       // durée du défilement lui-même (s)
     },
 
+    // Attention partagée : quand vous vous arrêtez quelque part, les curieux s'approchent.
+    attention: {
+      enabled: true,
+      stillSpeed: 80,      // souris « immobile » en dessous de cette vitesse (px/s)
+      stillFor: 1.0,       // durée d'immobilité avant que l'attention se pose (s)
+      leaveRadius: 140,    // s'éloigner de plus que ça défait l'attention (px)
+      maxAge: 14,          // l'attention s'éteint d'elle-même après ce délai (s)
+      share: 0.6,          // au plus cette part des curseurs vient voir
+      ring: [70, 130],     // distance polie au point regardé (px)
+      stay: [3, 8],        // durée de séjour maximale (s)
+      reaction: [0.2, 1.2],
+      bubbleChance: 0.25
+    },
+
+    // Vie sociale : rencontres, bulles, réactions à vos clics et formulaires.
+    social: {
+      enabled: true,       // rencontres et bulles
+      reactive: true,      // réactions à vos clics et formulaires, essaim à la demande
+      meetDistance: 42,    // deux curseurs plus proches que ça se saluent (px)
+      pairCooldown: 14,    // une même paire ne se resalue pas avant (s)
+      greetCooldown: 1.2,  // pas plus d'un salut par… (s)
+      followChance: 0.3,
+      sayOnGreet: 0.45,
+      sayOnInspect: 0.12,
+      clickRadius: 320,    // les curseurs à moins de cette distance réagissent à un clic (px)
+      clickLean: 170       // élan vers le clic (px/s) au plus près
+    },
+
+    // Essaim à la demande (deux appuis sur Maj, le second maintenu).
+    swarm: {
+      radius: 90,
+      doubleTap: 0.35,     // délai maximal entre les deux appuis (s)
+      holdBefore: 0.18     // maintien nécessaire avant de déclencher (s)
+    },
+
+    bubbles: {
+      greet: ["salut !", "coucou", "hé !", "yo", "bonjour", "re !"],
+      curious: ["hmm ?", "oh", "intéressant", "qu'est-ce que c'est ?", "je regarde"],
+      inspect: ["oh !", "hmm…", "joli", "tiens", "ah, ça", "pas mal"],
+      click: ["!", "oh", "ah ?", "hop"],
+      cheer: ["bravo !", "youpi !", "hourra !", "envoyé !", "bien joué"]
+    },
+
     // Thème et options d'affichage (remplacés par les réglages du menu).
     theme: "classique",
     showNames: true,

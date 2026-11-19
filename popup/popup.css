@@ -34,6 +34,8 @@ h2 { margin: 0; }
 .toggles h2 { margin-bottom: 6px; }
 .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; cursor: pointer; }
 .switch input { flex: none; margin: 0; cursor: pointer; }
+.swarm-hint { margin: 0 0 4px; font-size: 11px; }
+.swarm-hint kbd { font-size: 10px; }
 .foot { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; }
 kbd { font: inherit; }
 .link { background: none; border: 0; padding: 6px 4px; cursor: pointer; text-decoration: underline; font: inherit; }

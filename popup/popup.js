@@ -16,14 +16,18 @@
       running: (n) => `${n} curseur${n > 1 ? "s" : ""} en promenade`, stopped: "Tout le monde dort" },
     carnet: { crowd: "Population", count: "Spécimens", habits: "Mœurs observées", sound: "Chants",
       ghostTyping: "Écrivent dans les champs", showNames: "Portent leur prénom", hideFullscreen: "Se cachent en plein écran",
+      social: "Bavardent entre eux", reactive: "Réagissent à vos gestes", swarmHint: "rassembler les spécimens",
       running: (n) => `Relevé du jour · ${n} spécimen${n > 1 ? "s" : ""}`, stopped: "Relevé du jour · aucun spécimen" }
   };
   const DEFAULT_WORDS = {
     theme: "Thème", pace: "Allure", paceHint: "calme → vive", curiosity: "Curiosité",
     curiosityHint: "rêveurs → fouineurs", ghostTyping: "Écrire dans les champs",
     showNames: "Afficher les prénoms", hideFullscreen: "Se cacher en plein écran",
+    social: "Bavarder entre eux", reactive: "Réagir à ce que je fais", swarmHint: "appeler l'essaim autour du pointeur",
     shortcut: "lance ou range les curseurs"
   };
+
+  const TOGGLES = ["ghostTyping", "showNames", "social", "reactive", "hideFullscreen"];
 
   let settings = null;
   let tabId = null;
@@ -120,7 +124,8 @@
     for (const id of ["count", "pace", "curiosity", "volume"]) $(id).value = settings[id];
     $("count-out").textContent = settings.count;
     $("volume-out").textContent = settings.volume === 0 ? "muet" : `${settings.volume} %`;
-    for (const id of ["ghostTyping", "showNames", "hideFullscreen"]) $(id).checked = settings[id];
+    for (const id of TOGGLES) $(id).checked = settings[id];
+    document.querySelector(".swarm-hint").hidden = !settings.reactive;
 
     const w = words();
     document.querySelectorAll("[data-label]").forEach((el) => {
@@ -164,7 +169,7 @@
       });
       $(id).addEventListener("change", (e) => update({ [id]: +e.target.value }));
     }
-    for (const id of ["ghostTyping", "showNames", "hideFullscreen"]) {
+    for (const id of TOGGLES) {
       $(id).addEventListener("change", (e) => update({ [id]: e.target.checked }));
     }
     $("shortcuts").addEventListener("click", () => {

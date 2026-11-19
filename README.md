@@ -35,6 +35,16 @@ Chaque thème dessine cinq pointeurs (flèche, main, texte, viseur, attente), to
 Le pointeur change comme dans un vrai navigateur : main sur les liens et boutons,
 barre en I sur les champs, viseur sur les images, attente pendant certaines pauses.
 
+## Vie sociale et réactions
+
+- **Attention partagée** : souris immobile environ une seconde, ou saisie dans un champ, et les
+  curieux viennent voir ; ils repartent quand vous vous éloignez.
+- **Rencontres** : salut, petit son, parfois l'un suit l'autre.
+- **Réactions** : élan vers vos clics, hourra quand vous envoyez un formulaire.
+- **Essaim à la demande** : Maj, puis Maj maintenu.
+
+Deux interrupteurs du menu les règlent : « Bavarder entre eux » et « Réagir à ce que je fais ».
+
 ## Défilement
 
 Les curseurs vivent sur la page, pas sur l'écran. Quand vous faites défiler, ils partent avec le
@@ -58,7 +68,7 @@ dans l'ordre de `FILES` (`lib/inject.js`), qui est aussi celui des `<script>` de
 | `motion/Path.js` | trajets en arcs de cercle enchaînés |
 | `motion/Motion.js` | gestes : loi de Fitts, minimum jerk, visée + correction, clic |
 | `world/Stage.js` | écran, éléments de la page, où viser, plein écran |
-| `behaviors/*.js` | arrivée, départ, flânerie (se promener, gigoter, inspecter, mot fantôme) |
+| `behaviors/*.js` | arrivée, départ, flânerie, attention (`Gather`), suivre (`Follow`), essaim (`Swarm`) |
 | `render/Themes.js` | les quatre thèmes et leurs pointeurs |
 | `render/FontLoader.js` | polices embarquées pour l'overlay |
 | `render/Renderer.js` | overlay en Shadow DOM, étiquettes, repères de bord, texte fantôme |

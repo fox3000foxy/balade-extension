@@ -14,6 +14,12 @@
     .cur { position: absolute; left: 0; top: 0; will-change: transform; }
     .cur svg { position: absolute; left: 0; top: 0; overflow: visible; }
     .tag { position: absolute; white-space: nowrap; }
+    .bubble { position: absolute; white-space: nowrap; opacity: 0; transform: translateY(4px) scale(.9);
+              transform-origin: 0 100%; transition: opacity .18s ease, transform .18s ease; }
+    .bubble.on { opacity: 1; transform: none; }
+    .cur.pip .bubble { display: none; }
+    .cur.bub-left .bubble { left: auto !important; right: 6px; }
+    .cur.bub-below .bubble { bottom: auto !important; top: 44px; }
     .layer.nonames .cur:not(.pip) .tag { display: none; }
     .cur.pip svg { display: none; }
     .cur.pip .tag { left: 0 !important; top: 0 !important; transform: translateX(-50%); }
@@ -111,7 +117,7 @@
     _create(cursor) {
       const root = document.createElement("div");
       root.className = "cur";
-      root.innerHTML = `<svg></svg><div class="tag"></div>`;
+      root.innerHTML = `<svg></svg><div class="tag"></div><div class="bubble"></div>`;
 
       const focus = document.createElement("div");
       focus.className = "focus";
@@ -124,7 +130,9 @@
       const view = {
         root,
         svg: root.firstChild,
-        tag: root.lastChild,
+        tag: root.children[1],
+        bubble: root.children[2],
+        bubbleText: null,
         focus,
         ghost,
         ghostText: ghost.firstChild,
@@ -153,6 +161,8 @@
       // L'étiquette se place sous la pointe de la flèche, quelle que soit la forme.
       v.tag.style.left = `${size * 0.48}px`;
       v.tag.style.top = `${size * 0.66}px`;
+      v.bubble.style.left = `${size * 0.55}px`;
+      v.bubble.style.bottom = `${size * 0.35}px`;
       v.root.style.setProperty("--c", color);
       v.root.style.setProperty("--c2", t.second ? t.second(color) : color);
       // Curseur de texte : à la couleur du curseur (au crayon rouge dans le carnet).
@@ -240,7 +250,22 @@
         } else {
           v.root.style.transform = `translate(${c.screenX.toFixed(1)}px, ${c.screenY.toFixed(1)}px)`;
           const s = 1 - c.pressure * squash;
-          v.svg.style.transform = `rotate(${c.angle.toFixed(1)}deg) scale(${s.toFixed(3)})`;
+          const a = c.angle + (c.wiggle_ || 0);
+          v.svg.style.transform = `rotate(${a.toFixed(1)}deg) scale(${s.toFixed(3)})`;
+        }
+
+        if (c.bubble) {
+          // Près d'un bord, la bulle passe de l'autre côté pour rester lisible.
+          v.root.classList.toggle("bub-left", c.screenX > W - 160);
+          v.root.classList.toggle("bub-below", c.screenY < 48);
+          if (v.bubbleText !== c.bubble.text) {
+            v.bubble.textContent = c.bubble.text;
+            v.bubbleText = c.bubble.text;
+          }
+          v.bubble.classList.add("on");
+        } else if (v.bubbleText !== null) {
+          v.bubble.classList.remove("on");
+          v.bubbleText = null;
         }
 
         if (c.focus && c.focus.isConnected) {

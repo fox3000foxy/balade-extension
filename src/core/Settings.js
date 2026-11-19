@@ -17,7 +17,9 @@
     volume: 40,           // 0 à 100
     ghostTyping: true,    // écrire des mots fantômes dans les champs
     showNames: true,      // étiquettes avec les prénoms
-    hideFullscreen: true  // se cacher en plein écran
+    hideFullscreen: true, // se cacher en plein écran
+    social: true,         // rencontres et bulles
+    reactive: true        // attention partagée, réactions à vos gestes, essaim à la demande
   });
 
   const THEMES = ["classique", "zine", "galets", "carnet"];
@@ -35,6 +37,8 @@
     s.ghostTyping = !!s.ghostTyping;
     s.showNames = !!s.showNames;
     s.hideFullscreen = !!s.hideFullscreen;
+    s.social = !!s.social;
+    s.reactive = !!s.reactive;
     return s;
   }
 
@@ -116,6 +120,9 @@
       config.theme = s.theme;
       config.showNames = s.showNames;
       config.hideFullscreen = s.hideFullscreen;
+      config.social.enabled = s.social;
+      config.social.reactive = s.reactive;
+      config.attention.enabled = s.reactive;
       return config;
     }
   };

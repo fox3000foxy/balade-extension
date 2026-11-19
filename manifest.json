@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Balade",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Des curseurs qui se baladent sur la page, comme une équipe en ligne.",
   "permissions": ["activeTab", "scripting", "storage"],
   "background": {

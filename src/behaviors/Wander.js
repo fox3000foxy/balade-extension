@@ -87,6 +87,10 @@
       });
       if (!this.stage.isInView(el, cursor)) return;
       cursor.shape = hoverShape;
+      const social = this.config.social;
+      if (social && social.enabled && M.chance(social.sayOnInspect)) {
+        cursor.say(M.pick(this.config.bubbles.inspect), this.engine.time);
+      }
 
       if (this.stage.isTextField(el)) {
         yield* this.visitField(cursor, el, aim);

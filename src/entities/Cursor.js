@@ -57,6 +57,10 @@
       this.focus = null;   // élément regardé (surbrillance)
       this.shape = "arrow"; // arrow | hand | ibeam | crosshair | wait
       this.ghost = null;   // texte fantôme { el, text } — purement visuel
+      this.bubble = null;  // bulle { text, until } (en temps du moteur)
+      this.heading = null; // orientation imposée en degrés (vol en essaim), sinon null
+      this.wiggleAt = -Infinity; // début du dernier tortillement (salut)
+      this.gatherAngle = null;   // place prise autour d'un point d'attention
 
       // Hauteur de « voix » propre à ce curseur (en degrés de gamme) pour les sons.
       this.voice = Math.floor(M.rand(0, 5));
@@ -87,6 +91,16 @@
       this.pressure = 1;
     }
 
+    /** Affiche une petite bulle de texte pendant `duration` secondes. */
+    say(text, now, duration = 1.6) {
+      this.bubble = { text, until: now + duration };
+    }
+
+    /** Petit tortillement (pour saluer). */
+    wiggle(now) {
+      this.wiggleAt = now;
+    }
+
     /** Ajoute une impulsion (px/s) au décalage : le curseur est bousculé. */
     push(ix, iy) {
       this.offsetVX += ix;
@@ -94,6 +108,12 @@
     }
 
     setBehavior(behavior) {
+      // Termine proprement le comportement en cours (ses blocs finally s'exécutent).
+      if (this.routine) {
+        try {
+          this.routine.return();
+        } catch (err) { /* déjà terminé */ }
+      }
       this.behavior = behavior;
       this.routine = behavior.run(this);
       this._resetPose();
@@ -133,7 +153,7 @@
     }
 
     /** Met à jour les micro-signaux après le déplacement de l'image. */
-    updateSignals(dt, cfg) {
+    updateSignals(dt, cfg, now = 0) {
       // Vitesse estimée dans SA vue (le défilement ne fait pas pencher le curseur).
       if (this._prevX == null) {
         this._prevX = this.x;
@@ -154,9 +174,22 @@
 
       this.pressure = Math.max(0, this.pressure - cfg.pressDecay * dt);
 
-      // Inclinaison : le curseur penche dans le sens où il va, puis se redresse.
-      const tiltTarget = M.clamp((this.vx + this.offsetVX) * cfg.tiltPerPxPerS, -cfg.tiltMax, cfg.tiltMax);
-      this.angle = M.damp(this.angle, tiltTarget, cfg.tiltRate, dt);
+      // Orientation : en vol, la flèche regarde où elle va ; sinon elle penche
+      // légèrement dans le sens du mouvement, puis se redresse.
+      let target;
+      if (this.heading != null) {
+        target = this.angle + M.wrapDeg(this.heading - this.angle);
+      } else {
+        target = M.clamp((this.vx + this.offsetVX) * cfg.tiltPerPxPerS, -cfg.tiltMax, cfg.tiltMax);
+        if (Math.abs(this.angle) > 180) this.angle = M.wrapDeg(this.angle);
+      }
+      this.angle = M.damp(this.angle, target, this.heading != null ? 9 : cfg.tiltRate, dt);
+
+      // Tortillement : une oscillation rapide qui s'amortit en un demi-seconde.
+      const w = now - this.wiggleAt;
+      this.wiggle_ = w >= 0 && w < 0.5 ? Math.sin(w * 30) * 14 * (1 - w / 0.5) : 0;
+
+      if (this.bubble && now > this.bubble.until) this.bubble = null;
     }
   }
 

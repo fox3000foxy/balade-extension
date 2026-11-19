@@ -123,6 +123,19 @@
       this._tone({ c, freq: this._note(c, 0, 1), dur: 0.16, vol: 0.22, type: "sine", delay: 0.09 });
     }
 
+    /** Salut entre deux curseurs : deux notes rapides et légères. */
+    greet(c) {
+      this._tone({ c, freq: this._note(c, 2, 1), dur: 0.07, vol: 0.16, type: "sine" });
+      this._tone({ c, freq: this._note(c, 4, 1), dur: 0.09, vol: 0.16, type: "sine", delay: 0.06 });
+    }
+
+    /** Hourra collectif : un petit arpège qui monte. */
+    cheer() {
+      [0, 2, 4, 5, 7].forEach((deg, i) => {
+        this._tone({ c: null, freq: this._note(null, deg, 1), dur: 0.16, vol: 0.2, type: "triangle", delay: i * 0.07 });
+      });
+    }
+
     /** Bousculé par la souris : un petit « boing » qui tremble. */
     boing(c) {
       const f = this._note(c, 0, -1);

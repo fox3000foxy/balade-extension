@@ -1,109 +1,110 @@
-% Balade: lifelike cursor behavior from state machines and mathematics.
-% No neural networks: generators, steering, Fitts, minimum jerk.
-\documentclass[11pt,a4paper]{article}
+\documentclass[10pt,conference]{IEEEtran}
+\IEEEoverridecommandlockouts
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{amsmath,amssymb}
-\usepackage{hyperref}
 \usepackage{booktabs}
-\title{Balade: Lifelike Cursor Behavior from State Machines and Mathematics}
-\author{Balade contributors}
-\date{\today}
+\usepackage{hyperref}
 \begin{document}
+\title{Balade: Lifelike Cursor Behavior from State Machines and Mathematics}
+\author{\IEEEauthorblockN{Fox3000foxy}\IEEEauthorblockA{Independent Researcher\\fox3000foxy@users.noreply.github.com}}
 \maketitle
 \begin{abstract}
 Balade is a browser extension that places autonomous animated cursors on web
-pages. They wander, inspect elements, type ghost text, greet each other, and
-anticipate the user. No neural network is involved: every behavior is a
-coroutine (a generator used as a state machine) driven by classical
-mathematics: Fitts's law, minimum-jerk profiles, arc geometry, damped springs,
-Reynolds steering, Markov chains, and Bayesian-style scoring. This paper
-documents the formulas, the formula substitutions that made them fast, and the
-benchmarks that decided each substitution.
+pages. No neural network is involved: every behavior is a coroutine (a
+generator used as a state machine) driven by classical mathematics---Fitts's
+law, minimum-jerk profiles, arc geometry, damped springs, Reynolds steering,
+Markov chains. This paper documents the engine (I--II), the behaviors added
+from v0.1 to v1.3.1 (III--IV), the formula substitutions that made them fast
+(V), the negative results (VI), and the engineering lessons (VII).
 \end{abstract}
 
-\section{Behaviors as coroutines}
-Each cursor runs a generator \texttt{*run(cursor)} that yields the frame time
-step and resumes. One requestAnimationFrame loop pumps all cursors with a
-shared clock, so reads and writes stay batched. Composition uses
-\texttt{yield*}: \texttt{moveTo}, \texttt{wait}, \texttt{click} are reusable
-subroutines. State lives in generator locals, not in state fields.
+\section{Introduction}
+A cursor that slides in a straight line at constant speed is a robot. A human
+speeds up, slows down, curves, hesitates. Balade stacks four ingredients on
+every gesture: a curve, an easing, a duration that is not proportional to
+distance, and bounded randomness. Applied everywhere, they read as alive.
 
-\section{Movement mathematics}
+\section{Behaviors as Coroutines}
+Each cursor runs a generator \texttt{*run(cursor)} yielding the frame time
+step. One requestAnimationFrame loop pumps all cursors with a shared clock.
+Composition uses \texttt{yield*}; state lives in generator locals. One bad
+frame never kills the loop: try/catch around step and render, rAF always
+re-armed.
 
-\subsection{Duration: Fitts's law}
+\section{Movement Mathematics}
+Duration follows Fitts's law:
 \begin{equation}
-T = \frac{a + b \log_2(1 + D/W)}{v}, \quad \text{clamped to } [T_{\min}, T_{\max}]
+T = (a + b \log_2(1 + D/W))/v
 \end{equation}
-$D$ is the distance, $W$ the target width, $v$ a speed multiplier.
-
-\subsection{Profile: minimum jerk with time warp}
+The speed profile is minimum jerk with a per-cursor time warp:
 \begin{equation}
-s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q), \; q \in [0.68, 0.85]
+s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
 \end{equation}
-Each cursor keeps its own warp $q$ for life: a motor signature.
+Paths are traced turtle-style along circular arcs, mapped by a similarity
+onto the target. Settling uses a semi-implicit Euler spring $a = -k\,x - c\,v$.
+The swarm uses Reynolds steering: breathing orbit, 3-lobe rosace, swirl
+$\tanh(3\cos(0.11\,t))$, capped force. Sound is pentatonic synthesis panned by
+horizontal position.
 
-\subsection{Paths: turtle arcs and similarity}
-Traced turtle-style along circular arcs of constant curvature, then mapped by
-a similarity (rotation, scale, translation) onto the target. Short paths stay
-nearly straight; long ones curve up to full amplitude.
+\section{Behaviors v0.1 to v1.0}
+Wandering, ghost typing (never written into the page), per-cursor voices.
+Themes, shared attention (curious cursors gather around a still mouse),
+meetings with greetings, speech bubbles. Per-site settings, dark-page
+adaptation via WCAG luminance. Markov click chains per site, gesture
+anticipation. Custom names, palettes, sanitized SVG pointers. Tag game,
+focus mode, WebM recording. Ghost theme by default, EN/FR i18n.
+Cross-page persistence via storage snapshots and state messages.
 
-\subsection{Settling: semi-implicit Euler spring}
-\begin{equation}
-a = -k\,x - c\,v, \qquad v \mathrel{+}= a\,\Delta t, \quad x \mathrel{+}= v\,\Delta t
-\end{equation}
+\section{Behaviors v1.2 to v1.3.1}
+Reading ambiance, scroll hint, first-visit guided tour, focus companion,
+contrast inspector, site weather. Motor signatures (own warp, trait-driven
+correction), satiety with exponential decay, novelty pressure, social roles
+(leader 15\%, follower 30\%, loner 15\%), moods, teasing with cooldowns,
+heading-word ghost typing. Interaction freeze fixes and modal dimming.
 
-\subsection{Swarm: Reynolds steering}
-Orbit with breathing radius ($\pm 18\%$), a 3-lobe rosace, and a swirl factor
-$\mathrm{swirl}(t) = \tanh(3\cos(0.11\,t))$ that flips direction about every
-29~s. Desired velocity minus current velocity, capped force, Euler integration.
-Neighbor alignment blends 70/30 with the weighted mean of nearby velocities.
+\section{Formula Substitutions}
+All measured on 200\,000 gestures $\times$ 24 steps plus micro-benchmarks.
+\begin{table}[h]
+\centering
+\caption{Substitutions: keep or reject.}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Substitution & Result & Kept \\
+\midrule
+Iterative heading rotation & $4\times$, bit-exact & yes \\
+Sampled 64-entry curves & zero \texttt{pow}/frame & yes \\
+Triple-angle, no \texttt{atan2} & $3\times$ & yes \\
+Squared distances & $2\times$ & yes \\
+Sine table (256) & $3\times$ slower & no \\
+Taylor order 5 & wrong (err 0.5) & no \\
+Cosine pre-filter & slower & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+Deliberately not optimized: Fitts \texttt{log2} once per gesture.
 
-\section{Formula substitutions: same result, cheaper}
-Every substitution below was benchmarked (200\,000 gestures $\times$ 24 steps,
-plus targeted micro-benchmarks). Rejected alternatives are documented too.
+\section{Negative Results}
+The sine table was expected to win and lost $3\times$: memory access costs
+more than the FPU. Taylor-5 is both slower and wrong away from center. The
+cosine pre-filter lost because \texttt{cos} costs as much as \texttt{acos}.
+A satiety early-return made cursors look unable to click: reverted to a
+remark weight. Visits stored in the format-version field crashed every
+inspection: moved to a separate map.
 
-\subsection{Iterative heading rotation ($4\times$)}
-Tracing an arc needs $(\cos h, \sin h)$ per step. Instead of two transcendental
-calls per step, the heading unit vector is advanced by complex multiplication
-with the fixed per-arc rotation $(\cos \Delta h, \sin \Delta h)$: 2 calls per
-arc instead of 48. Bit-exact (drift $10^{-16}$ over 24 steps).
-Rejected: a 256-entry sine table ($3\times$ \emph{slower} than \texttt{cos}:
-memory access costs more than the FPU) and order-5 Taylor (slower \emph{and}
-wrong, error $0.5$ near $\pm\pi$).
-
-\subsection{Sampled progress curves (zero pow per frame)}
-Since $q$ is fixed per gesture, $u = \mathrm{minjerk}(t^q)$ is sampled once
-per gesture into 64 entries; each frame is an indexed read with linear
-interpolation. Maximum error $5 \times 10^{-4}$ on position: sub-pixel.
-
-\subsection{Triple-angle steering without atan2 ($3\times$)}
-The swarm needs $\sin(3\theta + \varphi)$ where $(\cos\theta, \sin\theta)$ are
-already known from normalization. The triple-angle expansion avoids the
-\texttt{atan2} round-trip entirely (34 vs 100~ms per million evaluations).
-Per-frame time oscillations are computed once and shared by all cursors;
-neighbor scans use squared distances with \texttt{sqrt} only for the close
-few ($2\times$).
-
-\subsection{Prediction: kept simple}
-A cosine pre-filter ($ \cos < \cos(\mathrm{tol}\cdot 2.5)$) was benchmarked and
-rejected: \texttt{cos} costs about as much as \texttt{acos}, and survivors pay
-for both (48 vs 38~ms per 500k candidates). Plain \texttt{acos} kept.
-
-\subsection{Deliberately not optimized}
-Fitts's \texttt{log2} runs once per gesture: nanoseconds on a 16~ms budget,
-and the formula stays readable. $(1-d/m)^2$ written out measured identical to
-\texttt{pow} (45 vs 43~ms per 2M); kept as $k\cdot k$ for readability.
-
-\section{Simulated cognition}
-First-order Markov chains learn click sequences per site; satiety grows with
-visits and decays exponentially over 10 minutes; novelty pressure favors
-unseen elements; gesture anticipation scores candidates by angle, distance, and
-habit priors; social roles (leader, follower, loner) and moods (chill, grumpy,
-playful, proud) make behavior readable.
+\section{Engineering Lessons}
+Cache poisoning (stale rects), double-injection races (shared promise),
+key collisions (read labels first), dead placeholders (reconcile each
+second), the loop must survive (re-arm always). Method: hypothesis,
+targeted benchmark, keep or reject with numbers, document both outcomes.
 
 \section{Conclusion}
-Lifelike behavior needs no learning: composable state machines plus the right
-classical formulas --- with exact, benchmarked substitutions --- are enough.
+Lifelike behavior needs no learning: composable state machines plus the
+right classical formulas---with exact, benchmarked substitutions---are
+enough.
+\begin{thebibliography}{9}
+\bibitem{fitts} P.~M.~Fitts, ``The information capacity of the human motor system,'' 1954.
+\bibitem{flash} T.~Flash and N.~Hogan, ``The coordination of arm movements,'' 1985.
+\bibitem{reynolds} C.~W.~Reynolds, ``Steering behaviors for autonomous characters,'' 1999.
+\end{thebibliography}
 \end{document}

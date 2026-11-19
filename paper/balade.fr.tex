@@ -1,109 +1,115 @@
-% Balade: lifelike cursor behavior from state machines and mathematics.
-% Pas de reseaux de neurones : generateurs, pilotage, Fitts, minimum jerk.
-\documentclass[11pt,a4paper]{article}
+\documentclass[10pt,conference]{IEEEtran}
+\IEEEoverridecommandlockouts
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{amsmath,amssymb}
-\usepackage{hyperref}
 \usepackage{booktabs}
-\title{Balade: Comportement de curseurs vivant par machines a etats et mathematiques}
-\author{Contributeurs Balade}
-\date{\today}
+\usepackage{hyperref}
 \begin{document}
+\title{Balade: Comportement de curseurs vivant par machines a etats et mathematiques}
+\author{\IEEEauthorblockN{Fox3000foxy}\IEEEauthorblockA{Independent Researcher\\fox3000foxy@users.noreply.github.com}}
 \maketitle
 \begin{abstract}
-Balade est une extension de navigateur qui pose des curseurs animes autonomes
-sur les pages web. Ils se baladent, inspectent les elements, tapent du texte
-fantome, se saluent et anticipent l'utilisateur. Aucun reseau de neurones :
-chaque comportement est une coroutine (un generateur utilise comme machine a
-etats) pilotee par des mathematiques classiques : loi de Fitts, profils a
-secousse minimale, geometrie des arcs, ressorts amortis, pilotage de Reynolds,
-chaines de Markov et scores de style bayesien. Cet article documente les
-formules, les substitutions qui les ont rendues rapides, et les bancs d'essai
-qui ont tranche chaque substitution.
+Balade is a browser extension that places autonomous animated cursors on web
+pages. No neural network is involved: chaque comportement est une coroutine (un
+generateur utilise comme machine a etats) pilotee par des mathematiques
+classiques --- loi de Fitts, profils a secousse minimale, geometrie des arcs,
+ressorts amortis, pilotage de Reynolds, chaines de Markov. Cet article
+documente le moteur (I--II), les comportements ajoutes de v0.1 a v1.3.1
+(III--IV), les substitutions qui les ont rendus rapides (V), les resultats
+negatifs (VI) et les lecons d'ingenierie (VII).
 \end{abstract}
+
+\section{Introduction}
+Un curseur qui glisse en ligne droite a vitesse constante est un robot. Un
+humain accelere, ralentit, courbe, hesite. Balade empile quatre ingredients sur
+chaque geste : une courbe, un assouplissement, une duree non proportionnelle a
+la distance et un alea borne. Appliques partout, ils se lisent comme vivants.
 
 \section{Comportements comme coroutines}
 Chaque curseur execute un generateur \texttt{*run(cursor)} qui rend la main
-avec le pas de temps et reprend ensuite. Une seule boucle requestAnimationFrame pompe tous les curseurs with a
-shared clock, so reads and writes stay batched. La composition utilise
-\texttt{yield*}: \texttt{moveTo}, \texttt{wait}, \texttt{click} are reusable
-subroutines. L'etat vit dans les variables locales du generateur, pas dans des champs d'etat.
+avec le pas de temps. Une seule boucle requestAnimationFrame pompe tous les
+curseurs avec une horloge partagee. La composition utilise \texttt{yield*} ;
+l'etat vit dans les variables locales du generateur. Une mauvaise image ne tue
+jamais la boucle : try/catch autour de step et render, rAF toujours re-arme.
 
 \section{Mathematiques du mouvement}
-
-\subsection{Duree : loi de Fitts}
+La duree suit la loi de Fitts :
 \begin{equation}
-T = \frac{a + b \log_2(1 + D/W)}{v}, \quad \text{clamped to } [T_{\min}, T_{\max}]
+T = (a + b \log_2(1 + D/W))/v
 \end{equation}
-$D$ est la distance, $W$ la largeur de la cible, $v$ un multiplicateur de vitesse.
-
-\subsection{Profil : secousse minimale avec deformation du temps}
+Le profil de vitesse est a secousse minimale avec deformation par curseur :
 \begin{equation}
-s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q), \; q \in [0.68, 0.85]
+s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
 \end{equation}
-Chaque curseur garde sa propre deformation $q$ a vie : une signature motrice.
+Les trajectoires sont tracees facon tortue le long d'arcs de cercle, projetees
+par une similitude sur la cible. La stabilisation utilise un ressort d'Euler
+semi-implicite $a = -k\,x - c\,v$. L'essaim utilise le pilotage de Reynolds :
+orbite respirante, rosace a 3 lobes, tourbillon
+$\tanh(3\cos(0.11\,t))$, force plafonnee. Le son est une synthese pentatonique panoramiquee par la
+position horizontale.
 
-\subsection{Trajectoires : arcs tortue et similitude}
-Tracees facon tortue le long d'arcs de cercle a courbure constante, puis projetees par
-une similitude (rotation, echelle, translation) sur la cible. Les trajectoires courtes restent
-presque droites ; les longues courbent jusqu'a pleine amplitude.
+\section{Comportements v0.1 a v1.0}
+Balade, frappe fantome (jamais ecrite dans la page), voix par curseur.
+Themes, attention partagee (les curseurs curieux se rassemblent autour d'une
+souris immobile),
+rencontres avec salutations, bulles. Reglages par site, pages sombres via
+luminance WCAG. Chaines de Markov par site, anticipation du geste. Noms et
+palettes perso, pointeurs SVG nettoyes. Jeu du chat, mode concentration,
+enregistrement WebM. Theme Ghost par defaut, i18n EN/FR. Persistance
+inter-pages via instantanes et messages d'etat.
 
-\subsection{Stabilisation : ressort d'Euler semi-implicite}
-\begin{equation}
-a = -k\,x - c\,v, \qquad v \mathrel{+}= a\,\Delta t, \quad x \mathrel{+}= v\,\Delta t
-\end{equation}
+\section{Comportements v1.2 a v1.3.1}
+Ambiance de lecture, indice de defilement, visite guidee, compagnon de
+concentration,
+inspecteur de contraste, meteo du site. Signatures motrices (deformation
+propre, correction par temperament),
+satiete a decroissance exponentielle, pression de nouveaute, roles sociaux
+(meneur 15\%, suiveur 30\%, solitaire 15\%), humeurs, taquineries avec delais,
+frappe par mot de titre. Correctifs de figement et attenutation des modales.
 
-\subsection{Essaim : pilotage de Reynolds}
-Orbite a rayon respirant ($\pm 18\%$), rosace a 3 lobes et facteur de tourbillon
-$\mathrm{swirl}(t) = \tanh(3\cos(0.11\,t))$ qui inverse la direction environ toutes les 29~s. Vitesse voulue moins vitesse actuelle, force plafonnee, integration d'Euler.
-L'alignement avec les voisins melange 70/30 avec la moyenne ponderee des vitesses proches.
+\section{Substitutions de formules}
+Tout mesure sur 200\,000 gestes $\times$ 24 pas plus micro-bancs.
+\begin{table}[h]
+\centering
+\caption{Substitutions : garder ou rejeter.}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Substitution & Resultat & Garde \\
+\midrule
+Rotation iterative du cap & $4\times$, exacte au bit & oui \\
+Courbes 64 entrees & zero \texttt{pow}/image & oui \\
+Triple-angle, sans \texttt{atan2} & $3\times$ & oui \\
+Distances au carre & $2\times$ & oui \\
+Table de sinus (256) & $3\times$ plus lente & non \\
+Taylor ordre 5 & faux (err 0.5) & non \\
+Pre-filtre cosinus & plus lent & non \\
+\bottomrule
+\end{tabular}
+\end{table}
+Deliberement non optimise : \texttt{log2} de Fitts une fois par geste.
 
-\section{Substitutions de formules : meme resultat, moins cher}
-Chaque substitution ci-dessous a ete mesuree (200\,000 gestures $\times$ 24 steps,
-et micro-bancs cibles). Les alternatives rejetees sont documentees aussi.
+\section{Resultats negatifs}
+La table de sinus devait gagner et a perdu $3\times$ : l'acces memoire coute
+plus que le FPU. Taylor-5 est a la fois plus lent et faux loin du centre. Le
+pre-filtre en cosinus a perdu car \texttt{cos} coute autant que \texttt{acos}.
+Un retour anticipe de satiete rendait les curseurs incapables de cliquer : revenu a une
+ponderation de remarque. Les visites stockees dans le champ de version plantaient chaque
+inspection : deplacees dans une carte separee.
 
-\subsection{Rotation iterative du cap ($4\times$)}
-Tracer un arc demande $(\cos h, \sin h)$ par pas. Au lieu de deux appels transcendants
-par pas, le vecteur de cap unitaire avance par multiplication complexe avec
-la rotation fixe $(\cos \Delta h, \sin \Delta h)$: 2 appels par
-arc au lieu de 48. Exact au bit (derive $10^{-16}$ sur 24 pas). Rejete : une
-table de sinus de 256 entrees ($3\times$ \emph{plus lente} que \texttt{cos} :
-l'acces memoire coute plus que le FPU) et Taylor ordre 5 (plus lent \emph{et}
-faux, erreur $0.5$ pres de $\pm\pi$).
-
-\subsection{Courbes de progression echantillonnees (zero pow par image)}
-Comme $q$ est fixe par geste, $u = \mathrm{minjerk}(t^q)$ est echantillonne une
-fois par geste en 64 entrees ; chaque image est une lecture indexee avec
-interpolation lineaire. Erreur maximale $5 \times 10^{-4}$ sur la position : sous-pixel.
-
-\subsection{Pilotage triple-angle sans atan2 ($3\times$)}
-L'essaim demande $\sin(3\theta + \varphi)$ ou $(\cos\theta, \sin\theta)$ sont
-deja connus par la normalisation. Le developpement triple-angle evite
-\texttt{atan2} completement (34 contre 100~ms par million d'evaluations).
-Les oscillations temporelles sont calculees une fois par image et partagees par tous les curseurs ;
-les balayages de voisins utilisent le carre des distances avec \texttt{sqrt} reserve aux proches
-($2\times$).
-
-\subsection{Prediction : rester simple}
-Un pre-filtre en cosinus ($ \cos < \cos(\mathrm{tol}\cdot 2.5)$) a ete mesure et
-rejete : \texttt{cos} coute a peu pres autant que \texttt{acos}, et les survivants paient
-les deux (48 contre 38~ms pour 500k candidats). \texttt{acos} direct conserve.
-
-\subsection{Deliberement non optimise}
-Fitts's \texttt{log2} tourne une fois par geste : des nanosecondes sur un budget de 16~ms,
-et la formule reste lisible. $(1-d/m)^2$ ecrit en toutes lettres mesure identique a
-\texttt{pow} (45 vs 43~ms per 2M); kept as $k\cdot k$ pour la lisibilite.
-
-\section{Cognition simulee}
-Des chaines de Markov d'ordre un apprennent les sequences de clics par site ; la satiete croit avec
-les visites et decroit exponentiellement sur 10 minutes ; la pression de nouveaute favorise
-les elements jamais vus ; l'anticipation du geste score les candidats par angle, distance et
-habitudes ; les roles sociaux (meneur, suiveur, solitaire) et les humeurs (calme, grognon,
-joueur, fier) rendent le comportement lisible.
+\section{Lecons d'ingenierie}
+Empoisonnement de cache (rects perimes), courses a la double injection (promesse partagee),
+collisions de cles (lire les labels d'abord), placeholders morts (reconcilier chaque
+seconde), la boucle doit survivre (toujours re-armer). Methode : hypothese,
+banc cible, garder ou rejeter avec des chiffres, documenter les deux issues.
 
 \section{Conclusion}
-Un comportement vivant n'a pas besoin d'apprentissage : des machines a etats composables et les bonnes
-formules classiques --- avec des substitutions exactes et mesurees --- suffisent.
+Un comportement vivant n'a pas besoin d'apprentissage : des machines a etats
+composables et les bonnes formules classiques --- avec des substitutions
+exactes et mesurees --- suffisent.
+\begin{thebibliography}{9}
+\bibitem{fitts} P.~M.~Fitts, ``The information capacity of the human motor system,'' 1954.
+\bibitem{flash} T.~Flash and N.~Hogan, ``The coordination of arm movements,'' 1985.
+\bibitem{reynolds} C.~W.~Reynolds, ``Steering behaviors for autonomous characters,'' 1999.
+\end{thebibliography}
 \end{document}

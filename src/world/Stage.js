@@ -131,6 +131,17 @@
       this._cacheAt = -Infinity;
     }
 
+    /** Rough page kind from element counts (cached per page): article, form, media, app. */
+    pageKind() {
+      if (this._kind) return this._kind;
+      const count = (sel) => document.querySelectorAll(sel).length;
+      const ps = count("article p, main p");
+      const fields = count("input, select, textarea");
+      const media = count("video, audio");
+      this._kind = ps >= 3 ? "article" : fields >= 3 ? "form" : media > 0 ? "media" : "app";
+      return this._kind;
+    }
+
     visibleElements(now) {
       if (now - this._cacheAt < 1) return this._cache;
       this._cacheAt = now;
@@ -139,6 +150,7 @@
       const all = document.querySelectorAll(INTERESTING);
       const W = this.width;
       const H = this.height;
+      this._kind = null; // recomputed lazily by pageKind() on this fresh scan
       for (let i = 0; i < all.length && out.length < 300; i++) {
         const el = all[i];
         // Our overlay lives in a shadow root, so querySelectorAll never returns
@@ -182,7 +194,11 @@
         if (el === exclude || !this.isInView(el, cursor)) return 0;
         const r = this.rectInView(el, cursor);
         const d = Math.hypot(r.left + r.width / 2 - cursor.x, r.top + r.height / 2 - cursor.y);
-        let w = (this.interest[this.kindOf(el)] || 1) / (1 + d / 400);
+        const kind = this.kindOf(el);
+        let w = (this.interest[kind] || 1) / (1 + d / 400);
+        // Reading ambiance: headings on articles, fields on forms are extra tempting.
+        if (this._kind === "article" && kind === "heading") w *= 2;
+        else if (this._kind === "form" && kind === "field") w *= 1.5;
         // Already watched by another cursor: much less tempting (avoids clustering).
         if (busy && busy.has(el)) w *= 0.1;
         total += w;

@@ -55,6 +55,14 @@
         <select><option>Question</option><option>Suggestion</option></select>
       </label>
       <textarea rows="3" placeholder="Message"></textarea>
+      <fieldset style="border:1px solid #ccc;border-radius:8px;padding:12px 16px;margin:0">
+        <legend style="padding:0 6px;font-weight:600">I am a</legend>
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><input type="radio" name="role" value="dev"> Developer</label>
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><input type="radio" name="role" value="design"> Designer</label>
+        <label style="display:flex;align-items:center;gap:8px"><input type="radio" name="role" value="other"> Other</label>
+      </fieldset>
+      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="newsletter"> Subscribe to updates</label>
+      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="agree"> I agree to the terms</label>
       <button class="primary">Send</button>
     </form>
     <section style="margin-top:72px;background:#14161a;color:#e8e8ea;padding:40px;border-radius:16px">

@@ -216,6 +216,15 @@
         : color;
     }
 
+    /** Injects a page-level <style> that hides the placeholder on tagged fields. */
+    _ensurePlaceholderStyle() {
+      if (document.getElementById("balade-ph")) return;
+      const s = document.createElement("style");
+      s.id = "balade-ph";
+      s.textContent = "[data-balade-typing]::placeholder { color: transparent !important; }";
+      (document.head || document.documentElement).appendChild(s);
+    }
+
     /** Copies the field's typography and content box, once per ghost word. */
     _styleGhost(v, el) {
       const cs = getComputedStyle(el);
@@ -224,9 +233,8 @@
       g.style.letterSpacing = cs.letterSpacing;
       const fieldLum = window.Balade.Stage.luminance(cs.backgroundColor);
       // Ghost theme: text in the cursor's own color; others: theme text color (dark/light).
-      if (this.theme.ghostColor === "cursor") {
-        g.style.color = this._ghostCursorColor || this.theme.text;
-      } else {
+      // Color is refreshed every frame for ghostColor:"cursor" (see render loop).
+      if (this.theme.ghostColor !== "cursor") {
         g.style.color = fieldLum != null && fieldLum < 0.3 ? cs.color : this.theme.text;
       }
       // Covers the placeholder with the field's background, as when actually typing.
@@ -239,6 +247,11 @@
         t: parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop),
         b: parseFloat(cs.borderBottomWidth) + parseFloat(cs.paddingBottom)
       };
+      // Hide the real field's placeholder while ghost text is shown.
+      if (this.theme.ghostColor === "cursor") {
+        this._ensurePlaceholderStyle();
+        el.setAttribute("data-balade-typing", "1");
+      }
       v.ghostFor = el;
     }
 
@@ -356,11 +369,9 @@
         }
 
         if (c.ghost && c.ghost.el.isConnected) {
-          if (v.ghostFor !== c.ghost.el) {
-            this._ghostCursorColor = c.color;
-            this._styleGhost(v, c.ghost.el);
-            this._ghostCursorColor = null;
-          }
+          if (v.ghostFor !== c.ghost.el) this._styleGhost(v, c.ghost.el);
+          // Ghost theme: live-update text color to the cursor's current color.
+          if (this.theme.ghostColor === "cursor") v.ghostText.style.color = c.color;
           const r = c.ghost.el.getBoundingClientRect();
           const p = v.ghostPad;
           v.ghost.style.transform = `translate(${r.left + p.l}px, ${r.top + p.t}px)`;
@@ -372,6 +383,8 @@
           v.ghost.classList.remove("on");
           v.ghostSel.classList.remove("on");
           v.ghostText.textContent = "";
+          // Restore the placeholder.
+          if (this.theme.ghostColor === "cursor") v.ghostFor.removeAttribute("data-balade-typing");
           v.ghostFor = null;
         }
       }
@@ -380,6 +393,7 @@
 
       for (const [id, v] of this.views) {
         if (!seen.has(id)) {
+          if (v.ghostFor && this.theme.ghostColor === "cursor") v.ghostFor.removeAttribute("data-balade-typing");
           v.root.remove();
           v.focus.remove();
           v.ghost.remove();

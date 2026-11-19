@@ -161,7 +161,11 @@
       const ghostSel = document.createElement("div");
       ghostSel.className = "ghost-sel";
 
-      this.layer.append(focus, ghostSel, ghost, root);
+      const ghostToggle = document.createElement("div");
+      ghostToggle.className = "ghost-toggle";
+      ghostToggle.style.cssText = "position:absolute;left:0;top:0;pointer-events:none;display:none;";
+
+      this.layer.append(focus, ghostSel, ghostToggle, ghost, root);
       const view = {
         root,
         svg: root.firstChild,
@@ -173,7 +177,9 @@
         ghostText: ghost.firstChild,
         caret: ghost.lastChild,
         ghostSel,
-        ghostFor: null,
+        ghostToggle,
+        ghostToggleEl: null,   // the real DOM element being overlaid
+        ghostToggleSvg: null,  // svg markup, rebuilt when size changes
         key: null,
         tagText: null
       };
@@ -260,8 +266,12 @@
      * @param {object} v  - view object from _create
      * @param {string} color - the cursor's color
      */
-    showGhostSel(v, color) {
+    /** color may be a resolved hex string or a cursor object (resolved internally). */
+    showGhostSel(v, colorOrCursor) {
       if (!v.ghostFor) return;
+      const color = colorOrCursor && typeof colorOrCursor === "object"
+        ? this.theme.palette[colorOrCursor.colorIndex % this.theme.palette.length]
+        : colorOrCursor;
       const p = v.ghostPad;
       const r = v.ghostFor.getBoundingClientRect();
       const s = v.ghostSel;
@@ -275,6 +285,44 @@
 
     hideGhostSel(v) {
       v.ghostSel.classList.remove("on");
+    }
+
+    /** Records the element to overlay; the render loop does the actual positioning. */
+    showGhostToggle(el, cursor, isRadio) {
+      const v = this.views.get(cursor.id);
+      if (!v) return;
+      v.ghostToggleEl = el;
+      v.ghostToggleIsRadio = isRadio;
+      v.ghostToggleSvg = null; // force rebuild on first frame
+    }
+
+    hideGhostToggle(el) {
+      // Find the view that owns this element and clear it.
+      for (const v of this.views.values()) {
+        if (v.ghostToggleEl === el) {
+          v.ghostToggleEl = null;
+          v.ghostToggle.style.display = "none";
+        }
+      }
+    }
+
+    /** Builds the SVG markup for the ghost toggle, cached by size+color. */
+    _toggleSvg(size, color, isRadio) {
+      if (isRadio) {
+        const h = size / 2;
+        return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+          `<circle cx="${h}" cy="${h}" r="${h - 1}" fill="none" stroke="${color}" stroke-width="1.5"/>` +
+          `<circle cx="${h}" cy="${h}" r="${h * 0.42}" fill="${color}"/></svg>`;
+      }
+      const p = size * 0.18;
+      return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+        `<rect x="1" y="1" width="${size - 2}" height="${size - 2}" rx="3" ` +
+        `fill="${color}" opacity="0.15" stroke="${color}" stroke-width="1.5"/>` +
+        `<path d="M${(p * 1.1).toFixed(1)} ${(size * 0.52).toFixed(1)} ` +
+        `L${(size * 0.42).toFixed(1)} ${(size - p * 1.4).toFixed(1)} ` +
+        `L${(size - p * 0.9).toFixed(1)} ${(p * 1.1).toFixed(1)}" ` +
+        `fill="none" stroke="${color}" stroke-width="${Math.max(1.5, size * 0.13).toFixed(1)}" ` +
+        `stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     }
 
     /**
@@ -368,10 +416,36 @@
           v.focus.classList.remove("on");
         }
 
+        // Ghost toggle: reposition every frame so it tracks scrolling.
+        if (v.ghostToggleEl && v.ghostToggleEl.isConnected) {
+          const r = v.ghostToggleEl.getBoundingClientRect();
+          // Hide when scrolled out of view.
+          const inView = r.bottom > 0 && r.top < H && r.right > 0 && r.left < W;
+          if (!inView) {
+            v.ghostToggle.style.display = "none";
+          } else {
+            const size = Math.round(Math.max(r.width, r.height, 14));
+            const svgKey = `${size}|${color}|${v.ghostToggleIsRadio}`;
+            if (v.ghostToggleSvg !== svgKey) {
+              v.ghostToggle.innerHTML = this._toggleSvg(size, color, v.ghostToggleIsRadio);
+              v.ghostToggleSvg = svgKey;
+              v.ghostToggle.style.width = `${size}px`;
+              v.ghostToggle.style.height = `${size}px`;
+            }
+            // Use left/top (not transform) so it's not affected by any parent transform.
+            v.ghostToggle.style.left = `${r.left.toFixed(1)}px`;
+            v.ghostToggle.style.top = `${r.top.toFixed(1)}px`;
+            v.ghostToggle.style.display = "block";
+          }
+        } else if (v.ghostToggleEl) {
+          v.ghostToggle.style.display = "none";
+          v.ghostToggleEl = null;
+        }
+
         if (c.ghost && c.ghost.el.isConnected) {
           if (v.ghostFor !== c.ghost.el) this._styleGhost(v, c.ghost.el);
           // Ghost theme: live-update text color to the cursor's current color.
-          if (this.theme.ghostColor === "cursor") v.ghostText.style.color = c.color;
+          if (this.theme.ghostColor === "cursor") v.ghostText.style.color = color;
           const r = c.ghost.el.getBoundingClientRect();
           const p = v.ghostPad;
           v.ghost.style.transform = `translate(${r.left + p.l}px, ${r.top + p.t}px)`;
@@ -398,6 +472,7 @@
           v.focus.remove();
           v.ghost.remove();
           v.ghostSel.remove();
+          v.ghostToggle.remove();
           this.views.delete(id);
         }
       }

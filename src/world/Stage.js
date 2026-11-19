@@ -73,6 +73,13 @@
       return false;
     }
 
+    /** True if el is a checkbox or radio button (candidate for ghost toggle). */
+    isToggle(el) {
+      if (el.localName !== "input") return false;
+      const type = (el.getAttribute("type") || "").toLowerCase();
+      return type === "checkbox" || type === "radio";
+    }
+
     /**
      * True if el is safe for ghost typing:
      * - empty value / content

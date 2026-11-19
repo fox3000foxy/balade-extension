@@ -182,7 +182,7 @@
       this._last = now;
       if (dt > 0) this.step(dt);
       if (!this.running) return;
-      this.renderer.render(this.cursors, this.config.cursor.squash);
+      this.renderer.render(this.cursors, this.config.cursor.squash, this.time);
       this._raf = requestAnimationFrame(this._frame);
     }
 

@@ -94,6 +94,8 @@
 
       if (this.stage.isTextField(el)) {
         yield* this.visitField(cursor, el, aim);
+      } else if (this.stage.isToggle(el)) {
+        yield* this.visitToggle(cursor, el, aim);
       } else {
         yield* this.visitElement(cursor, el, aim);
       }
@@ -103,6 +105,21 @@
     }
 
     // ---------- Visit details ----------
+
+    /**
+     * Checkbox or radio: hover, click animation, show a ghost toggle overlay,
+     * then remove it. No real click() is fired.
+     */
+    *visitToggle(cursor, el, aim) {
+      cursor.focus = el;
+      yield* this.hover(cursor, aim, M.rand(0.2, 0.5));
+      yield* this.motion.click(cursor);
+      // Show ghost toggle overlay in the cursor's color.
+      const renderer = this.engine.renderer;
+      const isRadio = (el.getAttribute("type") || "").toLowerCase() === "radio";
+      if (renderer) renderer.showGhostToggle(el, cursor, isRadio, M.rand(0.9, 1.8));
+      // No need to hide explicitly -- the renderer auto-clears after the lifetime.
+    }
 
     /** Hover + optional click on a link, button, heading, image... */
     *visitElement(cursor, el, aim) {
@@ -148,14 +165,18 @@
         if (M.chance(0.6)) {
           yield* this.eraseGhost(cursor, el, aside); // key by key
         } else {
-          // Select all: show highlight, pause, then wipe.
+          // Select all: show highlight, pause, sound, hide — ghost stays alive until after.
           yield* this.hover(cursor, aside, M.rand(0.1, 0.2));
           const renderer = this.engine.renderer;
           const view = renderer && renderer.views && renderer.views.get(cursor.id);
-          if (view) renderer.showGhostSel(view, cursor.color);
-          yield* this.hover(cursor, aside, M.rand(0.18, 0.28)); // "did I really want that?"
+          if (view) renderer.showGhostSel(view, cursor);
+          yield* this.hover(cursor, aside, M.rand(0.22, 0.35)); // linger on the selection
           if (this.engine.sound) this.engine.sound.erase(cursor);
+          cursor.ghost = null; // wipe text first so ghost disappears with the selection
+          yield* this.hover(cursor, aside, 0.05); // one frame for render to clear both
           if (view) renderer.hideGhostSel(view);
+          yield* this.hover(cursor, aside, M.rand(0.1, 0.2));
+          return; // skip the outer cursor.ghost = null below
         }
       }
       cursor.ghost = null;

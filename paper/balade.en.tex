@@ -6,10 +6,7 @@
 \usepackage{lmodern}
 \usepackage{amsmath,amssymb}
 \usepackage{hyperref}
-\usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{listings}
-\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single}
 \title{Balade: Lifelike Cursor Behavior from State Machines and Mathematics}
 \author{Balade contributors}
 \date{\today}
@@ -20,24 +17,24 @@ Balade is a browser extension that places autonomous animated cursors on web
 pages. They wander, inspect elements, type ghost text, greet each other, and
 anticipate the user. No neural network is involved: every behavior is a
 coroutine (a generator used as a state machine) driven by classical
-mathematics --- Fitts's law, minimum-jerk profiles, arc geometry, damped
-springs, Reynolds steering, Markov chains, and Bayesian-style scoring.
-This paper documents the formulas, the engineering trade-offs, and the
-benchmarks that replaced naive implementations with faster exact ones.
+mathematics: Fitts's law, minimum-jerk profiles, arc geometry, damped springs,
+Reynolds steering, Markov chains, and Bayesian-style scoring. This paper
+documents the formulas, the formula substitutions that made them fast, and the
+benchmarks that decided each substitution.
 \end{abstract}
 
 \section{Behaviors as coroutines}
-Each cursor runs a generator: \texttt{*run(cursor)} yields the frame time step
-and resumes. The engine pumps all cursors from a single requestAnimationFrame
-loop with one shared clock, so reads and writes stay batched and the
-simulation time is coherent. Composition uses \texttt{yield*}:
-\texttt{moveTo}, \texttt{wait}, \texttt{click} are reusable subroutines.
+Each cursor runs a generator \texttt{*run(cursor)} that yields the frame time
+step and resumes. One requestAnimationFrame loop pumps all cursors with a
+shared clock, so reads and writes stay batched. Composition uses
+\texttt{yield*}: \texttt{moveTo}, \texttt{wait}, \texttt{click} are reusable
+subroutines. State lives in generator locals, not in state fields.
 
 \section{Movement mathematics}
 
 \subsection{Duration: Fitts's law}
 \begin{equation}
-T = \frac{a + b \log_2\left(1 + D/W\right)}{v}, \quad \text{clamped to } [T_{\min}, T_{\max}]
+T = \frac{a + b \log_2(1 + D/W)}{v}, \quad \text{clamped to } [T_{\min}, T_{\max}]
 \end{equation}
 $D$ is the distance, $W$ the target width, $v$ a speed multiplier.
 
@@ -45,31 +42,68 @@ $D$ is the distance, $W$ the target width, $v$ a speed multiplier.
 \begin{equation}
 s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q), \; q \in [0.68, 0.85]
 \end{equation}
-Each cursor keeps its own warp $q$ for life: a recognizable motor signature.
+Each cursor keeps its own warp $q$ for life: a motor signature.
 
 \subsection{Paths: turtle arcs and similarity}
-Paths are traced turtle-style along circular arcs of constant curvature, then
-mapped by a similarity (rotation, scale, translation) onto the target.
+Traced turtle-style along circular arcs of constant curvature, then mapped by
+a similarity (rotation, scale, translation) onto the target. Short paths stay
+nearly straight; long ones curve up to full amplitude.
 
 \subsection{Settling: semi-implicit Euler spring}
 \begin{equation}
-a = -k\,x - c\,v
+a = -k\,x - c\,v, \qquad v \mathrel{+}= a\,\Delta t, \quad x \mathrel{+}= v\,\Delta t
 \end{equation}
 
 \subsection{Swarm: Reynolds steering}
-Orbit with breathing radius, 3-lobe rosace, and a swirl factor.
+Orbit with breathing radius ($\pm 18\%$), a 3-lobe rosace, and a swirl factor
+$\mathrm{swirl}(t) = \tanh(3\cos(0.11\,t))$ that flips direction about every
+29~s. Desired velocity minus current velocity, capped force, Euler integration.
+Neighbor alignment blends 70/30 with the weighted mean of nearby velocities.
 
-\section{Measured optimizations}
-Iterative heading rotation ($4\times$), sampled progress curves (zero
-\texttt{pow} per frame), triple-angle expansion without \texttt{atan2}
-($3\times$), squared-distance scans ($2\times$). Rejected after measurement:
-sine tables ($3\times$ slower), order-5 Taylor (wrong), cosine pre-filters.
+\section{Formula substitutions: same result, cheaper}
+Every substitution below was benchmarked (200\,000 gestures $\times$ 24 steps,
+plus targeted micro-benchmarks). Rejected alternatives are documented too.
+
+\subsection{Iterative heading rotation ($4\times$)}
+Tracing an arc needs $(\cos h, \sin h)$ per step. Instead of two transcendental
+calls per step, the heading unit vector is advanced by complex multiplication
+with the fixed per-arc rotation $(\cos \Delta h, \sin \Delta h)$: 2 calls per
+arc instead of 48. Bit-exact (drift $10^{-16}$ over 24 steps).
+Rejected: a 256-entry sine table ($3\times$ \emph{slower} than \texttt{cos}:
+memory access costs more than the FPU) and order-5 Taylor (slower \emph{and}
+wrong, error $0.5$ near $\pm\pi$).
+
+\subsection{Sampled progress curves (zero pow per frame)}
+Since $q$ is fixed per gesture, $u = \mathrm{minjerk}(t^q)$ is sampled once
+per gesture into 64 entries; each frame is an indexed read with linear
+interpolation. Maximum error $5 \times 10^{-4}$ on position: sub-pixel.
+
+\subsection{Triple-angle steering without atan2 ($3\times$)}
+The swarm needs $\sin(3\theta + \varphi)$ where $(\cos\theta, \sin\theta)$ are
+already known from normalization. The triple-angle expansion avoids the
+\texttt{atan2} round-trip entirely (34 vs 100~ms per million evaluations).
+Per-frame time oscillations are computed once and shared by all cursors;
+neighbor scans use squared distances with \texttt{sqrt} only for the close
+few ($2\times$).
+
+\subsection{Prediction: kept simple}
+A cosine pre-filter ($ \cos < \cos(\mathrm{tol}\cdot 2.5)$) was benchmarked and
+rejected: \texttt{cos} costs about as much as \texttt{acos}, and survivors pay
+for both (48 vs 38~ms per 500k candidates). Plain \texttt{acos} kept.
+
+\subsection{Deliberately not optimized}
+Fitts's \texttt{log2} runs once per gesture: nanoseconds on a 16~ms budget,
+and the formula stays readable. $(1-d/m)^2$ written out measured identical to
+\texttt{pow} (45 vs 43~ms per 2M); kept as $k\cdot k$ for readability.
 
 \section{Simulated cognition}
-First-order Markov habits, satiety with exponential decay, novelty pressure,
-gesture anticipation, social roles (leader, follower, loner), and moods.
+First-order Markov chains learn click sequences per site; satiety grows with
+visits and decays exponentially over 10 minutes; novelty pressure favors
+unseen elements; gesture anticipation scores candidates by angle, distance, and
+habit priors; social roles (leader, follower, loner) and moods (chill, grumpy,
+playful, proud) make behavior readable.
 
 \section{Conclusion}
-Lifelike behavior needs no learning: composable state machines plus the
-right classical formulas are enough.
+Lifelike behavior needs no learning: composable state machines plus the right
+classical formulas --- with exact, benchmarked substitutions --- are enough.
 \end{document}

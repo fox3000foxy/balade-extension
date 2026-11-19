@@ -40,6 +40,17 @@
       // Élément que le curseur « regarde » (affiché en surbrillance), ou null.
       this.focus = null;
 
+      // Forme affichée : "arrow" ou "ibeam" (au-dessus d'un champ de texte).
+      this.shape = "arrow";
+
+      // Texte fantôme en cours de frappe : { el, text } ou null. Purement visuel :
+      // le vrai champ de la page n'est jamais modifié.
+      this.ghost = null;
+
+      // Hauteur de « voix » propre à ce curseur (en degrés de gamme) pour les sons.
+      this.voice = Math.floor(M.rand(0, 5));
+      this.lastBumpSound = -Infinity;
+
       // Tempérament : chaque curseur a sa façon de bouger.
       this.temperament = {
         pace: M.rand(0.8, 1.25),     // multiplicateur de vitesse
@@ -75,7 +86,14 @@
     setBehavior(behavior) {
       this.behavior = behavior;
       this.routine = behavior.run(this);
+      this._resetPose();
+    }
+
+    /** Remet le curseur « au repos » : flèche, rien en surbrillance, pas de texte fantôme. */
+    _resetPose() {
       this.focus = null;
+      this.ghost = null;
+      this.shape = "arrow";
     }
 
     /**
@@ -93,7 +111,7 @@
       }
       if (res.done) {
         this.routine = null;
-        this.focus = null;
+        this._resetPose();
         return true;
       }
       return false;

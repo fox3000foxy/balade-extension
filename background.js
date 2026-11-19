@@ -7,6 +7,7 @@ const FILES = [
   "src/core/MathUtils.js",
   "src/core/Config.js",
   "src/entities/Cursor.js",
+  "src/motion/Path.js",
   "src/motion/Motion.js",
   "src/world/Stage.js",
   "src/behaviors/Behavior.js",
@@ -14,6 +15,7 @@ const FILES = [
   "src/behaviors/Leave.js",
   "src/behaviors/Wander.js",
   "src/render/Renderer.js",
+  "src/audio/Sound.js",
   "src/engine/Engine.js",
   "src/main.js"
 ];

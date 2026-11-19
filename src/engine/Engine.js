@@ -1,14 +1,16 @@
 // Le moteur : la boucle d'animation, la population de curseurs, la souris de l'utilisateur,
 // et le choix du comportement suivant de chaque curseur.
 (() => {
-  const { M, Cursor, Motion, Stage, Renderer, Arrive, Leave, Wander } = window.Balade;
+  const { M, Cursor, Motion, Stage, Renderer, Sound, Arrive, Leave, Wander } = window.Balade;
 
   class Engine {
     constructor(config) {
       this.config = config;
       this.motion = new Motion(config);
-      this.stage = new Stage(Renderer.hostTag);
+      this.stage = new Stage(config, Renderer.hostTag);
       this.renderer = new Renderer();
+      this.sound = new Sound(config);
+      this.motion.sound = this.sound;
 
       this.cursors = [];
       this.time = 0;
@@ -23,6 +25,8 @@
       this._nextPopulationChange = M.rand(...config.population.changeEvery);
 
       this.mouse = { x: -9999, y: -9999, movedAt: -Infinity };
+      this.fullscreen = false;
+      this._nextFullscreenCheck = 0;
 
       this._onPointerMove = (e) => {
         this.mouse.x = e.clientX;
@@ -32,6 +36,7 @@
       this._onKeyDown = (e) => {
         if (e.key === "Escape") this.stop();
       };
+      this._onFullscreenChange = () => this._checkFullscreen();
       this._frame = (ts) => this.frame(ts);
     }
 
@@ -42,8 +47,12 @@
       this.running = true;
       this.stopping = false;
       this.renderer.mount();
+      this.sound.start();
       window.addEventListener("pointermove", this._onPointerMove, { passive: true });
       window.addEventListener("keydown", this._onKeyDown);
+      document.addEventListener("fullscreenchange", this._onFullscreenChange);
+      window.addEventListener("resize", this._onFullscreenChange);
+      this._checkFullscreen();
       this._last = performance.now();
       this._raf = requestAnimationFrame(this._frame);
     }
@@ -60,7 +69,10 @@
       cancelAnimationFrame(this._raf);
       window.removeEventListener("pointermove", this._onPointerMove);
       window.removeEventListener("keydown", this._onKeyDown);
+      document.removeEventListener("fullscreenchange", this._onFullscreenChange);
+      window.removeEventListener("resize", this._onFullscreenChange);
       this.renderer.unmount();
+      this.sound.close();
       this.cursors = [];
       this.running = false;
       this.stopping = false;
@@ -80,6 +92,13 @@
 
     step(dt) {
       this.time += dt;
+
+      // Les événements couvrent l'API Fullscreen ; un contrôle régulier rattrape
+      // le plein écran du navigateur, qui ne déclenche pas toujours d'événement.
+      if (this.time >= this._nextFullscreenCheck) {
+        this._nextFullscreenCheck = this.time + 0.5;
+        this._checkFullscreen();
+      }
       if (!this.stopping) this._regulatePopulation(dt);
 
       for (const c of [...this.cursors]) {
@@ -160,6 +179,17 @@
       this.cursors.push(c);
     }
 
+    // ---------- Plein écran ----------
+
+    /** En plein écran (vidéo, présentation, F11), les curseurs se cachent et se taisent. */
+    _checkFullscreen() {
+      const fs = this.stage.isFullscreen();
+      if (fs === this.fullscreen) return;
+      this.fullscreen = fs;
+      this.renderer.setHidden(fs);
+      this.sound.setSuppressed(fs);
+    }
+
     // ---------- Souris de l'utilisateur ----------
 
     /** La souris bouscule les curseurs proches ; un ressort les ramène ensuite. */
@@ -176,6 +206,12 @@
         const k = 1 - d / radius;
         const a = strength * k * k;
         c.push((dx / d) * a * dt, (dy / d) * a * dt);
+
+        // Bousculé franchement : un petit « boing », pas plus d'un par seconde environ.
+        if (k > 0.45 && this.time - c.lastBumpSound > this.config.sound.bumpCooldown) {
+          c.lastBumpSound = this.time;
+          this.sound.boing(c);
+        }
       }
     }
   }

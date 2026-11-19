@@ -21,6 +21,16 @@
       <button class="main-btn" id="toggle" type="button" disabled>…</button>
     </header>
 
+    <section class="block site" id="site" aria-labelledby="t-site" hidden>
+      <h2 id="t-site"><span data-label="site">Ce site</span> · <span id="host"></span></h2>
+      <label class="switch"><span data-label="siteExclude">Ne jamais lancer ici</span><input type="checkbox" id="siteExclude"></label>
+      <label class="switch"><span data-label="siteAuto">Lancer automatiquement ici</span><input type="checkbox" id="siteAuto"></label>
+      <details class="sites" id="sites" hidden>
+        <summary id="sitesSummary"></summary>
+        <ul id="sitesList"></ul>
+      </details>
+    </section>
+
     <section class="block" aria-labelledby="t-theme">
       <h2 id="t-theme" data-label="theme">Thème</h2>
       <div class="themes" id="themes" role="radiogroup" aria-labelledby="t-theme"></div>
@@ -57,6 +67,7 @@
       <label class="switch"><span data-label="social">Bavarder entre eux</span><input type="checkbox" id="social"></label>
       <label class="switch"><span data-label="reactive">Réagir à ce que je fais</span><input type="checkbox" id="reactive"></label>
       <p class="hint swarm-hint"><kbd>Maj</kbd> <kbd>Maj</kbd> maintenu : <span data-label="swarmHint">appeler l'essaim autour du pointeur</span></p>
+      <label class="switch"><span data-label="adaptDark">Adapter aux pages sombres</span><input type="checkbox" id="adaptDark"></label>
       <label class="switch"><span data-label="hideFullscreen">Se cacher en plein écran</span><input type="checkbox" id="hideFullscreen"></label>
     </section>
 

@@ -191,6 +191,44 @@
       return "arrow";
     }
 
+    // ---------- Fond de page ----------
+
+    /**
+     * Luminance relative (0 noir → 1 blanc) du fond visible à ce point de l'écran :
+     * on remonte depuis l'élément sous le point jusqu'au premier fond opaque.
+     * Renvoie null si le fond est une image ou un dégradé (on ne sait pas trancher).
+     */
+    luminanceAt(x, y) {
+      if (x < 0 || y < 0 || x >= this.width || y >= this.height) return null;
+      let el = document.elementFromPoint(x, y);
+      while (el && el.nodeType === 1) {
+        if (el.localName === this.hostTag) return null;
+        const cs = getComputedStyle(el);
+        if (cs.backgroundImage && cs.backgroundImage !== "none") return null;
+        const lum = Stage.luminance(cs.backgroundColor);
+        if (lum != null) return lum;
+        el = el.parentElement;
+      }
+      // Rien d'opaque : fond du canevas, blanc par défaut, noir si la page se déclare sombre.
+      const scheme = getComputedStyle(document.documentElement).colorScheme || "";
+      return /^dark/.test(scheme) ? 0.05 : 1;
+    }
+
+    /** Luminance relative WCAG d'une couleur CSS rgb()/rgba() ; null si transparente ou illisible. */
+    static luminance(color) {
+      const m = /rgba?\(([^)]+)\)/.exec(color || "");
+      if (!m) return null;
+      const parts = m[1].split(/[\s,/]+/).filter(Boolean).map(parseFloat);
+      if (parts.length < 3) return null;
+      const alpha = parts.length > 3 ? parts[3] : 1;
+      if (alpha < 0.5) return null;
+      const lin = (v) => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * lin(parts[0]) + 0.7152 * lin(parts[1]) + 0.0722 * lin(parts[2]);
+    }
+
     // ---------- Plein écran ----------
 
     /**

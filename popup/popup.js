@@ -17,6 +17,7 @@
     carnet: { crowd: "Population", count: "Spécimens", habits: "Mœurs observées", sound: "Chants",
       ghostTyping: "Écrivent dans les champs", showNames: "Portent leur prénom", hideFullscreen: "Se cachent en plein écran",
       social: "Bavardent entre eux", reactive: "Réagissent à vos gestes", swarmHint: "rassembler les spécimens",
+      adaptDark: "S'adaptent à la nuit", site: "Terrain", siteExclude: "Zone protégée", siteAuto: "Lâcher dès l'arrivée",
       running: (n) => `Relevé du jour · ${n} spécimen${n > 1 ? "s" : ""}`, stopped: "Relevé du jour · aucun spécimen" }
   };
   const DEFAULT_WORDS = {
@@ -24,14 +25,16 @@
     curiosityHint: "rêveurs → fouineurs", ghostTyping: "Écrire dans les champs",
     showNames: "Afficher les prénoms", hideFullscreen: "Se cacher en plein écran",
     social: "Bavarder entre eux", reactive: "Réagir à ce que je fais", swarmHint: "appeler l'essaim autour du pointeur",
+    adaptDark: "Adapter aux pages sombres", site: "Ce site", siteExclude: "Ne jamais lancer ici",
+    siteAuto: "Lancer automatiquement ici",
     shortcut: "lance ou range les curseurs"
   };
 
-  const TOGGLES = ["ghostTyping", "showNames", "social", "reactive", "hideFullscreen"];
+  const TOGGLES = ["ghostTyping", "showNames", "social", "reactive", "adaptDark", "hideFullscreen"];
 
   let settings = null;
   let tabId = null;
-  let state = { state: "stopped", count: 0 };
+  let state = { state: "stopped", count: 0, host: "" };
 
   // ---------- Onglet actif ----------
 
@@ -57,10 +60,18 @@
       const hb = hostBalade();
       const e = hb && hb.engine;
       const on = !!(e && e.running && !e.stopping);
-      state = hb ? { state: on ? "running" : "stopped", count: on ? e.cursors.filter((c) => !c.leaving).length : 0 }
-                 : { state: "unavailable", count: 0 };
+      let host = "";
+      try {
+        host = window.parent.location.hostname;
+      } catch (err) { /* autre origine */ }
+      state = hb ? { state: on ? "running" : "stopped", count: on ? e.cursors.filter((c) => !c.leaving).length : 0, host }
+                 : { state: "unavailable", count: 0, host: "" };
+    }
+    if (state.state !== "unavailable" && state.host && Settings.isExcluded(settings, state.host) && state.state !== "running") {
+      state.state = "excluded";
     }
     renderStatus();
+    renderSite();
   }
 
   async function toggle() {
@@ -83,6 +94,12 @@
   function renderStatus() {
     const w = words();
     const btn = $("toggle");
+    if (state.state === "excluded") {
+      $("status").textContent = "Exclu sur ce site";
+      btn.textContent = "Lancer";
+      btn.disabled = true;
+      return;
+    }
     if (state.state === "unavailable") {
       $("status").textContent = "Indisponible sur cette page";
       btn.textContent = "Lancer";
@@ -133,6 +150,74 @@
       if (typeof v === "string") el.textContent = v;
     });
     renderStatus();
+    renderSite();
+  }
+
+  // ---------- Ce site ----------
+
+  const host = () => (state.host || "").toLowerCase();
+  const without = (list, h) => list.filter((x) => x !== h);
+
+  function renderSite() {
+    const h = host();
+    const box = $("site");
+    box.hidden = !h || state.state === "unavailable";
+    if (box.hidden) return;
+    $("host").textContent = h;
+    $("siteExclude").checked = settings.excludedSites.includes(h);
+    $("siteAuto").checked = settings.autoSites.includes(h);
+    $("siteAuto").disabled = settings.excludedSites.includes(h);
+
+    const ex = settings.excludedSites;
+    const au = settings.autoSites;
+    $("sites").hidden = ex.length + au.length === 0;
+    $("sitesSummary").textContent = `Sites exclus : ${ex.length} · automatiques : ${au.length}`;
+    const list = $("sitesList");
+    list.innerHTML = "";
+    const add = (h2, kind) => {
+      const li = document.createElement("li");
+      const label = document.createElement("span");
+      label.textContent = `${kind === "ex" ? "Exclu" : "Auto"} · ${h2}`;
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "remove";
+      rm.textContent = "×";
+      rm.setAttribute("aria-label", `Retirer ${h2}`);
+      rm.addEventListener("click", () =>
+        update(kind === "ex" ? { excludedSites: without(settings.excludedSites, h2) } : { autoSites: without(settings.autoSites, h2) })
+      );
+      li.append(label, rm);
+      list.appendChild(li);
+    };
+    ex.forEach((h2) => add(h2, "ex"));
+    au.forEach((h2) => add(h2, "au"));
+  }
+
+  function bindSite() {
+    $("siteExclude").addEventListener("change", async (e) => {
+      const h = host();
+      if (!h) return;
+      const ex = e.target.checked ? [...settings.excludedSites, h] : without(settings.excludedSites, h);
+      await update({ excludedSites: ex, autoSites: without(settings.autoSites, h) });
+      setTimeout(refreshStatus, 400); // la page range ses curseurs d'elle-même
+    });
+    $("siteAuto").addEventListener("change", (e) => {
+      const h = host();
+      if (!h) return;
+      if (!e.target.checked) {
+        update({ autoSites: without(settings.autoSites, h) });
+        return;
+      }
+      // Le lancement automatique demande l'accès au site : Chrome affiche une confirmation.
+      // La demande doit partir tout de suite, pendant le clic.
+      const ask = inExtension && chrome.permissions
+        ? chrome.permissions.request({ origins: [`*://${h}/*`] })
+        : Promise.resolve(true);
+      ask.then((granted) => {
+        if (granted) update({ autoSites: [...settings.autoSites, h] });
+        else e.target.checked = false;
+      });
+    });
   }
 
   async function update(patch) {
@@ -161,6 +246,7 @@
 
   function bind() {
     $("toggle").addEventListener("click", toggle);
+    bindSite();
     for (const id of ["count", "pace", "curiosity", "volume"]) {
       // Pendant le glissement : affichage immédiat ; au relâchement : enregistrement.
       $(id).addEventListener("input", (e) => {

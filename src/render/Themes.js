@@ -54,6 +54,7 @@
           box-shadow: 0 1px 3px rgba(0,0,0,.2); }
         .theme-classique .focus { border: 1.5px solid var(--c); border-radius: 5px; }
         .theme-classique .cur svg { filter: drop-shadow(0 1px 1.2px rgba(0,0,0,.3)); }
+        .theme-classique .cur.dark svg { filter: invert(1) hue-rotate(180deg) drop-shadow(0 1px 1.5px rgba(0,0,0,.6)); }
         .theme-classique .bubble { background: #fff; color: #1B1D21; border: 1px solid #D5D9DF; border-radius: 10px 10px 10px 2px;
           padding: 3px 9px; font: 500 12px/16px system-ui, -apple-system, "Segoe UI", sans-serif; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
       `
@@ -90,6 +91,7 @@
       css: `
         .theme-zine .tag { background: var(--c); color: #F3EEE4; border-radius: 0; padding: 3px 8px;
           font: 600 11px/14px "Balade Chivo Mono", ui-monospace, monospace; box-shadow: 3px 3px 0 var(--c2); }
+        .theme-zine .cur.dark svg { filter: drop-shadow(0 0 .8px #F3EEE4) drop-shadow(0 0 .8px #F3EEE4) brightness(1.25); }
         .theme-zine .focus { border: 1.5px dashed var(--c); border-radius: 0; box-shadow: 3px 3px 0 var(--c2); }
         .theme-zine .bubble { background: #F3EEE4; color: #1E1C1A; border: 1.5px solid #1E1C1A; padding: 2px 7px;
           font: 600 11px/15px "Balade Chivo Mono", ui-monospace, monospace; box-shadow: 3px 3px 0 var(--c); }
@@ -128,6 +130,7 @@
       css: `
         .theme-galets .tag { background: var(--c); color: #2B241F; border-radius: 14px 14px 14px 5px;
           padding: 3px 10px; font: 600 12px/16px "Balade Fredoka", system-ui, sans-serif; }
+        .theme-galets .cur.dark svg { filter: drop-shadow(0 0 2px rgba(251,247,241,.55)); }
         .theme-galets .focus { border: 2.5px solid var(--c); border-radius: 14px; opacity: .85; }
         .theme-galets .bubble { background: #FBF7F1; color: #3B342E; border-radius: 16px 16px 16px 6px; padding: 4px 11px;
           font: 600 12px/16px "Balade Fredoka", system-ui, sans-serif; box-shadow: 0 3px 10px rgba(59,52,46,.15); }
@@ -167,6 +170,7 @@
         .theme-carnet .tag { background: #F6F1E3; color: #1F2B44; border: 1px solid #1F2B44; border-radius: 0;
           padding: 2px 6px; font: 400 11px/15px "Balade Spline Sans Mono", ui-monospace, monospace;
           transform: rotate(-3deg); box-shadow: inset 0 -6px 0 var(--c); }
+        .theme-carnet .cur.dark svg { filter: invert(1) hue-rotate(180deg); }
         .theme-carnet .focus { border: 1.5px solid #C2412D; border-radius: 3px; }
         .theme-carnet .bubble { background: #FBF8EE; color: #1F2B44; border: 1px solid #1F2B44; padding: 2px 7px;
           font: 400 11px/15px "Balade Spline Sans Mono", ui-monospace, monospace; transform: rotate(2deg); }

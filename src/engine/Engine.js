@@ -148,6 +148,7 @@
       this.renderer.setTheme(this.config.theme);
       this.renderer.setShowNames(this.config.showNames);
       this.sound.setVolume(this.config.sound.volume);
+      if (!this.config.adaptDark) for (const c of this.cursors) c.onDark = false;
       this._checkFullscreen(true);
     }
 
@@ -190,6 +191,7 @@
       for (const c of this.cursors) c.updateScreen(sx, sy);
       this._avoidMouse(dt);
       if (!this.stopping) this._meetings();
+      this._sampleBackgrounds();
       for (const c of this.cursors) c.updateSignals(dt, this.config.cursor, this.time);
 
       if (this.stopping && this.cursors.length === 0) this.destroy();
@@ -486,6 +488,26 @@
             s.recentUntil = this.time + 1.2;
           }
         }
+      }
+    }
+
+    // ---------- Fonds sombres ----------
+
+    /** Regarde de temps en temps le fond sous chaque curseur (échantillonnage étalé). */
+    _sampleBackgrounds() {
+      const cfg = this.config.dark;
+      for (const c of this.cursors) {
+        if (!this.config.adaptDark) {
+          c.onDark = false;
+          continue;
+        }
+        if (this.time < c.nextBgSample) continue;
+        c.nextBgSample = this.time + cfg.every * M.rand(0.8, 1.2);
+        const lum = this.stage.luminanceAt(c.screenX + 3, c.screenY + 6);
+        if (lum == null) continue;
+        // Hystérésis : on ne bascule pas sans arrêt sur un fond intermédiaire.
+        if (c.onDark && lum > cfg.above) c.onDark = false;
+        else if (!c.onDark && lum < cfg.below) c.onDark = true;
       }
     }
 

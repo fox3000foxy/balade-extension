@@ -13,3 +13,13 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
     console.warn("[Balade] Impossible sur cette page :", err.message);
   }
 });
+
+// Lancement automatique : on garde l'enregistrement à jour avec les réglages et les accès accordés.
+const syncAuto = () => self.BaladeInject.syncAutoStart().catch((err) => console.warn("[Balade]", err.message));
+chrome.runtime.onInstalled.addListener(syncAuto);
+chrome.runtime.onStartup.addListener(syncAuto);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes["balade.settings"]) syncAuto();
+});
+chrome.permissions.onAdded.addListener(syncAuto);
+chrome.permissions.onRemoved.addListener(syncAuto);

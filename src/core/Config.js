@@ -154,6 +154,9 @@
     theme: "classique",
     showNames: true,
     hideFullscreen: true,
+    adaptDark: true,
+    // Fond sous chaque curseur : luminance relative (0 noir → 1 blanc), avec hystérésis.
+    dark: { below: 0.3, above: 0.42, every: 0.35 },
 
     sound: {
       enabled: true,

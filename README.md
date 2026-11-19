@@ -35,6 +35,17 @@ Chaque thème dessine cinq pointeurs (flèche, main, texte, viseur, attente), to
 Le pointeur change comme dans un vrai navigateur : main sur les liens et boutons,
 barre en I sur les champs, viseur sur les images, attente pendant certaines pauses.
 
+## Réglages par site
+
+Dans le menu, la section « Ce site » permet de ne jamais lancer Balade sur un site (utile pour
+les outils internes ou les pages qui affichent des données sensibles), ou de l'y lancer
+automatiquement. Le lancement automatique demande l'accès au site concerné, et à lui seul.
+
+## Pages sombres
+
+Chaque curseur regarde le fond sous lui et adapte son pointeur s'il est sombre
+(interrupteur « Adapter aux pages sombres »).
+
 ## Vie sociale et réactions
 
 - **Attention partagée** : souris immobile environ une seconde, ou saisie dans un champ, et les
@@ -75,6 +86,7 @@ dans l'ordre de `FILES` (`lib/inject.js`), qui est aussi celui des `<script>` de
 | `audio/Sound.js` | petits sons synthétisés (Web Audio) |
 | `engine/Engine.js` | boucle, population, défilement, souris, plein écran |
 | `main.js` | `Balade.toggle()` et suivi des réglages |
+| `autostart.js` | lancement automatique sur les sites choisis |
 
 ## Ajouter un comportement
 

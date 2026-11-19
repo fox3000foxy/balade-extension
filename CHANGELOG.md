@@ -1,5 +1,20 @@
 # Journal des versions
 
+## 0.5.0 — Réglages par site, pages sombres
+
+- **Ce site** (dans le menu) : « Ne jamais lancer ici » et « Lancer automatiquement ici »,
+  avec la liste des sites exclus et automatiques (retrait en un clic).
+- **Exclusion** : sur un site exclu, Alt+B et le bouton du menu ne font rien ; si la balade
+  tourne au moment de l'exclusion, les curseurs s'en vont d'eux-mêmes.
+- **Lancement automatique** : Chrome demande l'accès au site au moment où on l'active
+  (autorisation facultative, site par site) ; un script de contenu est alors enregistré
+  pour ces seuls sites.
+- **Pages sombres** : chaque curseur regarde le fond sous lui (luminance WCAG, avec hystérésis).
+  Sur fond sombre, le Classique s'inverse, le Carnet passe en « tableau noir », le Zine et
+  les Galets gagnent un halo. Le texte fantôme prend la couleur du champ s'il est sombre.
+  Interrupteur « Adapter aux pages sombres ».
+- Démo : une zone sombre pour essayer.
+
 ## 0.4.0 — Attention partagée, vie sociale, essaim à la demande
 
 - **Attention partagée** : quand votre souris reste immobile environ une seconde, ou quand vous

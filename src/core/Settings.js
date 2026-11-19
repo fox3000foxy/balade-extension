@@ -19,7 +19,10 @@
     showNames: true,      // étiquettes avec les prénoms
     hideFullscreen: true, // se cacher en plein écran
     social: true,         // rencontres et bulles
-    reactive: true        // attention partagée, réactions à vos gestes, essaim à la demande
+    reactive: true,       // attention partagée, réactions à vos gestes, essaim à la demande
+    adaptDark: true,      // pointeurs adaptés aux fonds sombres
+    excludedSites: [],    // sites où Balade ne se lance jamais (noms d'hôte)
+    autoSites: []         // sites où Balade se lance tout seul (noms d'hôte)
   });
 
   const THEMES = ["classique", "zine", "galets", "carnet"];
@@ -39,6 +42,11 @@
     s.hideFullscreen = !!s.hideFullscreen;
     s.social = !!s.social;
     s.reactive = !!s.reactive;
+    s.adaptDark = !!s.adaptDark;
+    const hosts = (list) =>
+      [...new Set((Array.isArray(list) ? list : []).map((h) => String(h).trim().toLowerCase()).filter(Boolean))].slice(0, 200);
+    s.excludedSites = hosts(s.excludedSites);
+    s.autoSites = hosts(s.autoSites).filter((h) => !s.excludedSites.includes(h));
     return s;
   }
 
@@ -123,7 +131,13 @@
       config.social.enabled = s.social;
       config.social.reactive = s.reactive;
       config.attention.enabled = s.reactive;
+      config.adaptDark = s.adaptDark;
       return config;
+    },
+
+    /** Balade est-il interdit sur ce nom d'hôte ? */
+    isExcluded(s, host) {
+      return s.excludedSites.includes(String(host || "").toLowerCase());
     }
   };
 

@@ -31,6 +31,7 @@
     .ghost .caret { display: inline-block; width: 1.5px; height: 1.15em; margin-left: 1px;
                     animation: blink 1s steps(1) infinite; }
     .spin { animation: spin 1.1s linear infinite; }
+    .cur svg { transition: filter .25s ease; }
     @keyframes blink { 50% { opacity: 0; } }
     @keyframes spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) {
@@ -175,7 +176,8 @@
       const g = v.ghost;
       g.style.font = cs.font;
       g.style.letterSpacing = cs.letterSpacing;
-      g.style.color = this.theme.text;
+      const fieldLum = window.Balade.Stage.luminance(cs.backgroundColor);
+      g.style.color = fieldLum != null && fieldLum < 0.3 ? cs.color : this.theme.text;
       // Couvre le placeholder avec le fond du champ, comme quand on tape vraiment.
       const bg = cs.backgroundColor;
       g.style.background = bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent" ? bg : "transparent";
@@ -236,6 +238,7 @@
         const below = c.screenY > H + OFF_MARGIN;
         const pip = (above || below) && !c.leaving;
         v.root.classList.toggle("pip", pip);
+        v.root.classList.toggle("dark", c.onDark);
 
         let text = t.tag(c);
         if (pip) text = `${above ? "↑" : "↓"} ${text}`;

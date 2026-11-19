@@ -13,7 +13,7 @@
     unsubscribe = null;
   }
 
-  /** @returns {Promise<"running"|"stopped">} */
+  /** @returns {Promise<"running"|"stopped"|"excluded">} */
   B.toggle = async () => {
     if (engine && engine.running && !engine.stopping) {
       engine.stop(); // sortie en douceur
@@ -22,6 +22,7 @@
     if (engine) engine.destroy(); // une demande pendant la sortie relance une balade neuve
 
     const settings = await B.Settings.load();
+    if (B.Settings.isExcluded(settings, location.hostname)) return "excluded";
     const config = structuredClone(B.Config);
     B.Settings.applyToConfig(settings, config);
 
@@ -36,7 +37,10 @@
     B.engine = engine; // accessible depuis la console pour expérimenter
     release();
     unsubscribe = B.Settings.subscribe((s) => {
-      if (B.engine === mine && mine.running) mine.applySettings(s);
+      if (B.engine !== mine || !mine.running) return;
+      // Le site vient d'être exclu : tout le monde s'en va.
+      if (B.Settings.isExcluded(s, location.hostname)) mine.stop();
+      else mine.applySettings(s);
     });
     engine.start();
     return "running";

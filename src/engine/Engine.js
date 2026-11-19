@@ -159,16 +159,21 @@
       this._raf = requestAnimationFrame(this._frame);
     }
 
-    /** Graceful stop: everyone leaves, then the overlay fades out. */
     stop() {
       if (!this.running || this.stopping) return;
       this.stopping = true;
       for (const c of this.cursors) this._sendAway(c);
+      // Safety net: if a Leave gesture never finishes (exception, detached
+      // target...), don't leave the overlay up forever — force teardown.
+      this._later(6, () => {
+        if (this.stopping && this.cursors.length > 0) this.destroy();
+      });
     }
 
     /** Immediate stop. */
     destroy() {
       cancelAnimationFrame(this._raf);
+      this._raf = 0;
       window.removeEventListener("pointermove", this._onPointerMove);
       window.removeEventListener("keydown", this._onKeyDown, true);
       window.removeEventListener("keyup", this._onKeyUp, true);
@@ -183,7 +188,8 @@
       window.removeEventListener("resize", this._onScroll);
       this.renderer.unmount();
       this.sound.close();
-      this.habits.save();
+      // Habits.save is async: a rejection here must not block the teardown.
+      try { this.habits.save(); } catch (_) {}
       this.habits.dispose();
       this.cursors = [];
       this._timers = [];
@@ -193,10 +199,12 @@
       if (this.predictor) this.predictor.lastGuess = null;
       this._companion = null;
       this._onScroll = null;
-      this.onDestroy = null;
       this.running = false;
       this.stopping = false;
-      if (this.onDestroy) this.onDestroy();
+      // Notify LAST: onDestroy clears main.js state (engine ref, timers).
+      const cb = this.onDestroy;
+      this.onDestroy = null;
+      if (cb) cb();
     }
 
     /** Applies new settings without restarting the cursors. */

@@ -88,23 +88,22 @@
       if (!this.stage.isInView(el, cursor)) return;
       cursor.shape = hoverShape;
       const social = this.config.social;
-      // R&D: satiated cursors say "seen it" and move on instead of marveling.
+      // R&D: satiated cursors may remark on it, but still interact normally.
+      // (Skipping the visit entirely made cursors look like they "couldn't"
+      // click anymore; pickElement already down-weights visited elements.)
       const vkey = window.Balade.Habits.keyOf(el);
+      let satiated = false;
       if (vkey) {
         const sat = this.engine.habits.satiety(vkey, this.engine.time);
         this.engine.habits.visit(vkey, this.engine.time);
         this.engine.habits.markSeen(vkey);
-        if (sat > 0.6) {
-          if (social && social.enabled && M.chance(0.5)) {
-            cursor.say(M.pick(this.config.bubbles.seen), this.engine.time);
-            yield* this.hover(cursor, aim, M.rand(0.3, 0.6));
-          }
-          cursor.focus = null;
-          yield* this.stepAside(cursor, el, hoverShape);
-          return;
-        }
+        satiated = sat > 0.6;
       }
-      if (social && social.enabled && M.chance(social.sayOnInspect)) {
+      if (satiated) {
+        if (social && social.enabled && M.chance(0.3)) {
+          cursor.say(M.pick(this.config.bubbles.seen), this.engine.time);
+        }
+      } else if (social && social.enabled && M.chance(social.sayOnInspect)) {
         cursor.say(M.pick(this.config.bubbles.inspect), this.engine.time);
       }
 

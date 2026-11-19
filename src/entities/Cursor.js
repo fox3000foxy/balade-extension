@@ -75,13 +75,18 @@
       // (speed-peak position) and first-try precision for life, so a cursor
       // is recognizable by how it moves. Patient cursors aim true;
       // impatient ones overshoot and correct.
+      // R&D axis 3: social roles. leader follows its own nose, follower tags
+      // along after greetings, loner avoids other cursors. Re-drawn rarely
+      // so roles feel stable but not frozen.
       const patience = M.rand(0.6, 1.6);
+      const roleDraw = Math.random();
       this.temperament = {
         pace: M.rand(0.8, 1.25),     // speed multiplier
         patience,                     // pause and reaction time multiplier
         curiosity: M.rand(0, 0.3),    // extra urge to inspect the page
         peakWarp: M.rand(0.68, 0.85), // own speed-peak position
-        precise: Math.random() < M.clamp(1.4 - patience, 0.15, 0.95)
+        precise: Math.random() < M.clamp(1.4 - patience, 0.15, 0.95),
+        role: roleDraw < 0.15 ? "leader" : roleDraw < 0.45 ? "follower" : roleDraw < 0.6 ? "loner" : "plain"
       };
 
       this.behavior = null;

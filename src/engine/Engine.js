@@ -354,9 +354,17 @@
         (c) => !c.leaving && !c.ghost && c.behavior && !(c.behavior instanceof Swarm) && !(c.behavior instanceof Gather)
       );
       if (free.length === 0) return;
+      // R&D axis 3: jealousy — cursors already watching something with company
+      // stay put instead of rushing to the new attention point.
+      const watching = new Set(free.map((c) => c.focus).filter(Boolean));
       const keen = 0.5 + this.config.wander.inspect; // "Curiosity" setting
       const n = Math.max(1, Math.min(free.length, Math.round(this.cursors.length * cfg.share * keen)));
-      free.sort((a, b) => b.temperament.curiosity + Math.random() * 0.3 - (a.temperament.curiosity + Math.random() * 0.3));
+      // Loners hang back from crowds; leaders arrive first.
+      const rank = (c) =>
+        c.temperament.curiosity + Math.random() * 0.3 +
+        (c.temperament.role === "leader" ? 0.3 : c.temperament.role === "loner" ? -0.3 : 0) -
+        (c.focus && watching.has(c.focus) ? 0.5 : 0);
+      free.sort((a, b) => rank(b) - rank(a));
       for (const c of free.slice(0, n)) {
         this._later(M.rand(...cfg.reaction) * Math.sqrt(c.temperament.patience), () => {
           if (this.attention === att && this._alive(c) && !this.swarmHeld && !c.ghost) c.setBehavior(new Gather(this));
@@ -396,8 +404,16 @@
           if (M.chance(cfg.sayOnGreet)) M.pick([a, b]).say(M.pick(this.config.bubbles.greet), this.time);
 
           // One of them, if wandering, follows the other for a while.
-          if (M.chance(cfg.followChance)) {
-            const [f, l] = M.chance(0.5) ? [a, b] : [b, a];
+          // R&D axis 3: role-driven. Followers tag along eagerly, leaders
+          // recruit followers, loners never follow, plain cursors as before.
+          const followP = a.temperament.role === "follower" || b.temperament.role === "follower" ? 0.6
+            : a.temperament.role === "loner" || b.temperament.role === "loner" ? 0
+            : cfg.followChance;
+          if (M.chance(followP)) {
+            // Leader recruits: the other one follows the leader.
+            const [f, l] = a.temperament.role === "leader" ? [b, a]
+              : b.temperament.role === "leader" ? [a, b]
+              : M.chance(0.5) ? [a, b] : [b, a];
             if (f.behavior instanceof Wander && !f.focus) f.setBehavior(new Follow(this, l));
           }
           return; // one greeting at a time

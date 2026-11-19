@@ -13,6 +13,11 @@
   // Fields where text is typed (not passwords, for privacy).
   const TEXT_INPUT_TYPES = new Set(["", "text", "search", "email", "url", "tel", "number"]);
 
+  // Types where free-form ghost words make sense. Email/url/number/tel fields
+  // reject ghost typing: a word like "meow" in an email field looks broken,
+  // and numeric fields suggest an invalid value.
+  const GHOST_WORD_TYPES = new Set(["", "text"]);
+
   // Name/id/placeholder hints that mark a search or filter field.
   const HINT_RE = /search|filter|query|find|cherch|filtr/;
 
@@ -334,4 +339,5 @@
   }
 
   window.Balade.Stage = Stage;
+  window.Balade.Stage.GHOST_WORD_TYPES = GHOST_WORD_TYPES;
 })();

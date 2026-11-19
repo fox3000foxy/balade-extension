@@ -171,7 +171,15 @@
       yield* this.motion.click(cursor);
 
       // Only type in fields that are safe: empty, not a search/combobox, not in use.
+      // Ghost words only make sense in free-text fields (not email/url/numbers).
       if (!this.stage.isGhostSafe(el) || !M.chance(w.ghostTypeChance)) {
+        yield* this.hover(cursor, aim, M.rand(0.3, 0.7));
+        return;
+      }
+      const wordType = (el.getAttribute && (el.getAttribute("type") || "").toLowerCase()) || "";
+      const freeText = el.isContentEditable || el.localName === "textarea" ||
+        (el.localName === "input" && window.Balade.Stage.GHOST_WORD_TYPES.has(wordType));
+      if (!freeText) {
         yield* this.hover(cursor, aim, M.rand(0.3, 0.7));
         return;
       }

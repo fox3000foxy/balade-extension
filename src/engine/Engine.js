@@ -190,6 +190,7 @@
       this._userClicks = [];
       this.stage.invalidateCache();
       if (this.predictor) this.predictor.lastGuess = null;
+      this._companion = null;
       this._onScroll = null;
       this.onDestroy = null;
       this.running = false;
@@ -531,9 +532,12 @@
     _regulatePopulation(dt) {
       const p = this.config.population;
 
-      // Focus mode: everyone stays out.
+      // Focus mode: everyone stays out, except one companion that "works" beside you.
       if (this.focus && this.focus.phase === "focus") {
-        for (const c of this.cursors) this._sendAway(c);
+        for (const c of this.cursors) {
+          if (c === this._companion && !c.leaving && c.behavior instanceof Companion) continue;
+          this._sendAway(c);
+        }
         return;
       }
 
@@ -569,6 +573,9 @@
 
       const side = M.sign();
       const start = this.stage.offscreenPoint(side, M.rand(0.15, 0.85) * this.stage.height);
+      // Arrival mood (site weather): fanfare pops in faster, lazy drifts in slower.
+      const mood = this.arrivalMood || "steady";
+      const paceMul = mood === "fanfare" ? 1.35 : mood === "lazy" ? 0.65 : 1;
       const c = new Cursor({
         id: this._nextId++,
         x: start.x,
@@ -578,7 +585,7 @@
         name: M.pick(freeNames.length ? freeNames : cfg.names),
         colorIndex: freeColors.length ? M.pick(freeColors) : Math.floor(M.rand(0, slots))
       });
-      c.setBehavior(new Arrive(this));
+      c.setBehavior(new Arrive(this, paceMul));
       this.cursors.push(c);
       // Return from break: announce it.
       if (this.focus && this.focus.phase === "break" && this.config.social.enabled) {
@@ -689,11 +696,16 @@
       const f = this.config.focus;
       this.endGame();
       this.focus = { phase: "focus", until: Date.now() + (minutes || f.minutes) * 60000 };
+      // Keep one cursor as a working companion; promote a wanderer if possible.
+      const cand = this.cursors.find((c) => !c.leaving) || null;
+      this._companion = cand;
+      if (cand) cand.setBehavior(new Companion(this));
       this._updateFocus(true);
     }
 
     stopFocus() {
       this.focus = null;
+      this._companion = null;
       this.renderer.setHud("corner", null);
     }
 
@@ -731,6 +743,19 @@
       const cfg = this.config.scroll;
       const tx = window.scrollX;
       const ty = window.scrollY;
+
+      // Scroll hint: near the bottom of a long scrollable page, one cursor
+      // drifts to the top area and points up — purely visual, no scrolling.
+      this._scrollHintAt = this._scrollHintAt || 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (max > window.innerHeight * 2 && ty > max * 0.85 && this.time > this._scrollHintAt) {
+        this._scrollHintAt = this.time + M.rand(20, 40);
+        const free = this.cursors.find((c) => !c.leaving && c.behavior instanceof Wander);
+        if (free) {
+          const top = { x: M.rand(0.3, 0.7) * this.stage.width, y: M.rand(0.08, 0.18) * this.stage.height };
+          free.setBehavior(new Anticipate(this, { isConnected: true, localName: "scroll-hint", getAttribute: () => null, contains: () => false, getBoundingClientRect: () => ({ left: top.x, top: top.y, width: 8, height: 8, right: top.x + 8, bottom: top.y + 8 }) }, "scroll"));
+        }
+      }
 
       for (const c of this.cursors) {
         if (c.leaving) continue;

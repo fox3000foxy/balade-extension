@@ -114,6 +114,12 @@
       return key;
     }
 
+    /** True when the site has almost no click history (first visits). */
+    isNew(maxClicks = 5) {
+      const all = Object.values(this.data.n).reduce((a, b) => a + b, 0);
+      return all < maxClicks;
+    }
+
     /** Most likely element after `fromKey`: { key, p, total } or null. */
     predictNext(fromKey, minTotal = 3, minP = 0.4) {
       const row = this.data.t[fromKey];

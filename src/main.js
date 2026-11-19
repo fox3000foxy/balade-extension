@@ -111,6 +111,18 @@
     });
     engine.start(snapshot);
     notifyRunning(true);
+    // Site weather: cursors arrive lazily on slow pages, in fanfare on fast ones.
+    // navigationStart -> now approximates the felt load time (all local reads).
+    try {
+      const nav = performance.getEntriesByType("navigation")[0];
+      const loadMs = nav ? nav.duration : performance.now();
+      engine.arrivalMood = loadMs < 800 ? "fanfare" : loadMs < 2500 ? "steady" : "lazy";
+      if (engine.arrivalMood === "fanfare") engine._later(1.2, () => {
+        const c = engine.cursors.find((x) => !x.leaving);
+        const cheers = engine.config.bubbles.cheer;
+        if (c && engine.config.social.enabled) c.say(cheers[Math.floor(Math.random() * cheers.length)], engine.time);
+      });
+    } catch (_) { engine.arrivalMood = "steady"; }
     // Periodic snapshot so a navigation always finds a fresh one, even if
     // beforeunload/visibilitychange didn't flush (cross-site, crash...).
     if (snapshotTimer) clearInterval(snapshotTimer);

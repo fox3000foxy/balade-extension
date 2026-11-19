@@ -127,6 +127,17 @@
       cursor.focus = el;
       yield* this.hover(cursor, aim, M.rand(...w.hover));
 
+      // Contrast inspector: flag hard-to-read text (WCAG < 4.5) with a remark.
+      // One extra getComputedStyle per visit at most, and only for text kinds.
+      const kind = this.stage.kindOf(el);
+      if ((kind === "heading" || kind === "link") && M.chance(0.2)) {
+        const ratio = this.stage.contrastOf(el);
+        if (ratio != null && ratio < 4.5 && this.config.social.enabled) {
+          cursor.say(M.pick(this.config.bubbles.curious), this.engine.time);
+          yield* this.hover(cursor, aim, M.rand(0.6, 1.0));
+        }
+      }
+
       const r = Math.random();
       if (r < w.doubleClickChance) {
         yield* this.motion.doubleClick(cursor);

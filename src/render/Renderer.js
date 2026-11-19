@@ -69,8 +69,11 @@
     mount() {
       if (this._unmountTimer) { clearTimeout(this._unmountTimer); this._unmountTimer = 0; }
       this.host = document.createElement(HOST_TAG);
+      // Below the demo page menu iframe (which sits at max z-index): the menu
+      // is the control UI and must stay visible and clickable above cursors.
+      // Still above everything any real page can reasonably use.
       this.host.style.cssText =
-        "position:fixed;inset:0;z-index:2147483647;pointer-events:none;display:block;";
+        "position:fixed;inset:0;z-index:2147483646;pointer-events:none;display:block;";
       const shadow = this.host.attachShadow({ mode: "open" });
       const style = document.createElement("style");
       style.textContent = BASE_STYLE + Object.values(Themes).map((t) => t.css).join("\n");

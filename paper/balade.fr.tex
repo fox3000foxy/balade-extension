@@ -10,21 +10,15 @@
 \author{\IEEEauthorblockN{Fox3000foxy}\IEEEauthorblockA{Independent Researcher\\fox3000foxy@users.noreply.github.com}}
 \maketitle
 \begin{abstract}
-Balade is a browser extension that places autonomous animated cursors on web
-pages. No neural network is involved: chaque comportement est une coroutine (un
-generateur utilise comme machine a etats) pilotee par des mathematiques
-classiques --- loi de Fitts, profils a secousse minimale, geometrie des arcs,
-ressorts amortis, pilotage de Reynolds, chaines de Markov. Cet article
-documente le moteur (I--II), les comportements ajoutes de v0.1 a v1.3.1
-(III--IV), les substitutions qui les ont rendus rapides (V), les resultats
-negatifs (VI) et les lecons d'ingenierie (VII).
+Balade est une extension de navigateur qui pose des curseurs animes autonomes
+sur les pages web. Aucun reseau de neurones : chaque comportement est une
+coroutine (un generateur utilise comme machine a etats) pilotee par des
+mathematiques classiques. Cet article documente les lois et constantes exactes
+embarquees dans le code (I--III), les comportements de v0.1 a v1.3.1 (IV), les
+substitutions qui les ont rendus rapides (V), les resultats negatifs (VI) et
+les lecons d'ingenierie (VII). Toutes les constantes sont les valeurs
+embarquees de \texttt{src/core/Config.js}.
 \end{abstract}
-
-\section{Introduction}
-Un curseur qui glisse en ligne droite a vitesse constante est un robot. Un
-humain accelere, ralentit, courbe, hesite. Balade empile quatre ingredients sur
-chaque geste : une courbe, un assouplissement, une duree non proportionnelle a
-la distance et un alea borne. Appliques partout, ils se lisent comme vivants.
 
 \section{Comportements comme coroutines}
 Chaque curseur execute un generateur \texttt{*run(cursor)} qui rend la main
@@ -33,46 +27,49 @@ curseurs avec une horloge partagee. La composition utilise \texttt{yield*} ;
 l'etat vit dans les variables locales du generateur. Une mauvaise image ne tue
 jamais la boucle : try/catch autour de step et render, rAF toujours re-arme.
 
-\section{Mathematiques du mouvement}
-La duree suit la loi de Fitts :
+\section{Duree : loi de Fitts}
 \begin{equation}
-T = (a + b \log_2(1 + D/W))/v
+T = \frac{\mathrm{clamp}(0.08 + 0.085\,\log_2(1 + D/W),\, 0.12,\, 0.75)}{v}
 \end{equation}
-Le profil de vitesse est a secousse minimale avec deformation par curseur :
+$D$ distance, $W$ largeur de cible (plancher $\max(4, W)$), $v$ multiplicateur
+de vitesse. Exemple a $v=1$, $W=24$ : $D=100 \Rightarrow 0.27$\,s ; $D=800
+\Rightarrow 0.51$\,s.
+
+\section{Profil : secousse minimale avec deformation du temps}
 \begin{equation}
 s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
 \end{equation}
-Les trajectoires sont tracees facon tortue le long d'arcs de cercle, projetees
-par une similitude sur la cible. La stabilisation utilise un ressort d'Euler
-semi-implicite $a = -k\,x - c\,v$. L'essaim utilise le pilotage de Reynolds :
-orbite respirante, rosace a 3 lobes, tourbillon
-$\tanh(3\cos(0.11\,t))$, force plafonnee. Le son est une synthese pentatonique panoramiquee par la
-position horizontale.
+Chaque curseur garde son $q$ et sa precision du premier coup a vie (signature
+motrice). Probabilite de correction 0.75 (0.15 pour les precis), pause
+$[0.02, 0.08]$\,s, vitesse de correction $0.8\times$.
 
-\section{Comportements v0.1 a v1.0}
-Balade, frappe fantome (jamais ecrite dans la page), voix par curseur.
-Themes, attention partagee (les curseurs curieux se rassemblent autour d'une
-souris immobile),
-rencontres avec salutations, bulles. Reglages par site, pages sombres via
-luminance WCAG. Chaines de Markov par site, anticipation du geste. Noms et
-palettes perso, pointeurs SVG nettoyes. Jeu du chat, mode concentration,
-enregistrement WebM. Theme Ghost par defaut, i18n EN/FR. Persistance
-inter-pages via instantanes et messages d'etat.
+\section{Trajectoires : arcs tortue et similitude}
+Tracees facon tortue le long d'arcs de cercle, puis projetees par similitude
+sur la cible. Trajets courts ($<90$\,px) presque droits ; courbure pleine a
+420\,px. Styles : arc 0.45, S 0.25, crochet 0.2, vague 0.1. Resolution 24
+points. Progression echantillonnee en courbes de 64 entrees par geste
+($u=\mathrm{minjerk}(t^q)$, erreur $<5\times10^{-4}$).
 
-\section{Comportements v1.2 a v1.3.1}
-Ambiance de lecture, indice de defilement, visite guidee, compagnon de
-concentration,
-inspecteur de contraste, meteo du site. Signatures motrices (deformation
-propre, correction par temperament),
-satiete a decroissance exponentielle, pression de nouveaute, roles sociaux
-(meneur 15\%, suiveur 30\%, solitaire 15\%), humeurs, taquineries avec delais,
-frappe par mot de titre. Correctifs de figement et attenutation des modales.
+\section{Essaim, son, cognition}
+Pilotage de Reynolds : orbite respirante, rosace a 3 lobes, tourbillon
+$\tanh(3\cos(0.11\,t))$ ; alignement 70/30 sous 80\,px. Son : pentatonique
+(0, 2, 4, 7, 9) depuis MIDI 72 (do5), panoramique $1.6\,x/L-0.8$ borne a
+$\pm0.8$. Habitudes : chaines de Markov d'ordre un par site ; satiete sur
+10\,min ; pression de nouveaute. Roles sociaux : meneur 15\%, suiveur 30\%,
+solitaire 15\%.
+
+\section{Comportements v0.1 a v1.3.1}
+Balade, frappe fantome, voix ; themes (Ghost par defaut), attention, rencontres ;
+reglages par site, adaptation sombre, anticipation ; personnalisation, jeu du chat,
+mode concentration, enregistrement WebM ; i18n EN/FR (145 cles), persistance inter-pages ;
+fonctions d'ambiance (ambiance de lecture, indice de defilement, visite guidee, compagnon,
+inspecteur de contraste, meteo du site) ; cognition, roles, humeurs, taquineries ;
+correctifs de figement et attenutation des modales.
 
 \section{Substitutions de formules}
-Tout mesure sur 200\,000 gestes $\times$ 24 pas plus micro-bancs.
 \begin{table}[h]
 \centering
-\caption{Substitutions : garder ou rejeter.}
+\caption{Mesure sur 200\,000 gestes $\times$ 24 pas.}
 \begin{tabular}{@{}lcc@{}}
 \toprule
 Substitution & Resultat & Garde \\
@@ -90,26 +87,23 @@ Pre-filtre cosinus & plus lent & non \\
 Deliberement non optimise : \texttt{log2} de Fitts une fois par geste.
 
 \section{Resultats negatifs}
-La table de sinus devait gagner et a perdu $3\times$ : l'acces memoire coute
-plus que le FPU. Taylor-5 est a la fois plus lent et faux loin du centre. Le
-pre-filtre en cosinus a perdu car \texttt{cos} coute autant que \texttt{acos}.
-Un retour anticipe de satiete rendait les curseurs incapables de cliquer : revenu a une
-ponderation de remarque. Les visites stockees dans le champ de version plantaient chaque
-inspection : deplacees dans une carte separee.
+La table de sinus a perdu $3\times$ (memoire $>$ FPU). Taylor-5 plus lent et
+faux. Pre-filtre cosinus perdu (48 contre 38\,ms). Retour de satiete revenu a
+une ponderation de remarque. Visites dans le champ de version plantaient les
+inspections : carte separee.
 
 \section{Lecons d'ingenierie}
-Empoisonnement de cache (rects perimes), courses a la double injection (promesse partagee),
-collisions de cles (lire les labels d'abord), placeholders morts (reconcilier chaque
-seconde), la boucle doit survivre (toujours re-armer). Methode : hypothese,
-banc cible, garder ou rejeter avec des chiffres, documenter les deux issues.
+Empoisonnement de cache, course a la double injection, collisions de cles,
+placeholders morts, la boucle doit survivre. Methode : hypothese, banc,
+garder ou rejeter avec des chiffres, documenter les deux.
 
 \section{Conclusion}
 Un comportement vivant n'a pas besoin d'apprentissage : des machines a etats
 composables et les bonnes formules classiques --- avec des substitutions
 exactes et mesurees --- suffisent.
 \begin{thebibliography}{9}
-\bibitem{fitts} P.~M.~Fitts, ``The information capacity of the human motor system,'' 1954.
-\bibitem{flash} T.~Flash and N.~Hogan, ``The coordination of arm movements,'' 1985.
-\bibitem{reynolds} C.~W.~Reynolds, ``Steering behaviors for autonomous characters,'' 1999.
+\bibitem{fitts} P.~M.~Fitts, ``La capacite d'information du systeme moteur humain,'' 1954.
+\bibitem{flash} T.~Flash and N.~Hogan, ``La coordination des mouvements du bras,'' 1985.
+\bibitem{reynolds} C.~W.~Reynolds, ``Comportements de pilotage pour personnages autonomes,'' 1999.
 \end{thebibliography}
 \end{document}

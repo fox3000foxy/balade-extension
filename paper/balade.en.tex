@@ -12,18 +12,12 @@
 \begin{abstract}
 Balade is a browser extension that places autonomous animated cursors on web
 pages. No neural network is involved: every behavior is a coroutine (a
-generator used as a state machine) driven by classical mathematics---Fitts's
-law, minimum-jerk profiles, arc geometry, damped springs, Reynolds steering,
-Markov chains. This paper documents the engine (I--II), the behaviors added
-from v0.1 to v1.3.1 (III--IV), the formula substitutions that made them fast
-(V), the negative results (VI), and the engineering lessons (VII).
+generator used as a state machine) driven by classical mathematics. This paper
+documents the exact laws and constants shipped in the code (I--III), the
+behaviors from v0.1 to v1.3.1 (IV), the formula substitutions that made them
+fast (V), negative results (VI) and engineering lessons (VII). All constants
+are the shipped values from \texttt{src/core/Config.js}.
 \end{abstract}
-
-\section{Introduction}
-A cursor that slides in a straight line at constant speed is a robot. A human
-speeds up, slows down, curves, hesitates. Balade stacks four ingredients on
-every gesture: a curve, an easing, a duration that is not proportional to
-distance, and bounded randomness. Applied everywhere, they read as alive.
 
 \section{Behaviors as Coroutines}
 Each cursor runs a generator \texttt{*run(cursor)} yielding the frame time
@@ -32,42 +26,48 @@ Composition uses \texttt{yield*}; state lives in generator locals. One bad
 frame never kills the loop: try/catch around step and render, rAF always
 re-armed.
 
-\section{Movement Mathematics}
-Duration follows Fitts's law:
+\section{Duration: Fitts's Law}
 \begin{equation}
-T = (a + b \log_2(1 + D/W))/v
+T = \frac{\mathrm{clamp}(0.08 + 0.085\,\log_2(1 + D/W),\, 0.12,\, 0.75)}{v}
 \end{equation}
-The speed profile is minimum jerk with a per-cursor time warp:
+$D$ distance, $W$ target width ($\max(4, W)$ floor), $v$ speed multiplier.
+Example at $v=1$, $W=24$: $D=100 \Rightarrow 0.27$\,s; $D=800 \Rightarrow 0.51$\,s.
+
+\section{Profile: Minimum Jerk with Time Warp}
 \begin{equation}
 s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
 \end{equation}
-Paths are traced turtle-style along circular arcs, mapped by a similarity
-onto the target. Settling uses a semi-implicit Euler spring $a = -k\,x - c\,v$.
-The swarm uses Reynolds steering: breathing orbit, 3-lobe rosace, swirl
-$\tanh(3\cos(0.11\,t))$, capped force. Sound is pentatonic synthesis panned by
-horizontal position.
+Each cursor keeps its own $q$ and first-try precision for life (motor
+signature). Correction probability 0.75 (0.15 for precise cursors), pause
+$[0.02, 0.08]$\,s, correction speed $0.8\times$.
 
-\section{Behaviors v0.1 to v1.0}
-Wandering, ghost typing (never written into the page), per-cursor voices.
-Themes, shared attention (curious cursors gather around a still mouse),
-meetings with greetings, speech bubbles. Per-site settings, dark-page
-adaptation via WCAG luminance. Markov click chains per site, gesture
-anticipation. Custom names, palettes, sanitized SVG pointers. Tag game,
-focus mode, WebM recording. Ghost theme by default, EN/FR i18n.
-Cross-page persistence via storage snapshots and state messages.
+\section{Paths: Turtle Arcs and Similarity}
+Traced turtle-style along circular arcs, then similarity-mapped onto the
+target. Short trips ($<90$\,px) stay nearly straight; curvature reaches full
+amplitude at 420\,px. Styles: arc 0.45, S 0.25, hook 0.2, wave 0.1. Resolution
+24 points. Progress sampled into 64-entry curves per gesture ($u=\mathrm{minjerk}(t^q)$,
+error $<5\times10^{-4}$).
 
-\section{Behaviors v1.2 to v1.3.1}
-Reading ambiance, scroll hint, first-visit guided tour, focus companion,
-contrast inspector, site weather. Motor signatures (own warp, trait-driven
-correction), satiety with exponential decay, novelty pressure, social roles
-(leader 15\%, follower 30\%, loner 15\%), moods, teasing with cooldowns,
-heading-word ghost typing. Interaction freeze fixes and modal dimming.
+\section{Swarm, Sound, Cognition}
+Reynolds steering: breathing orbit, 3-lobe rosace, swirl
+$\tanh(3\cos(0.11\,t))$; neighbor alignment 70/30 within 80\,px. Sound:
+pentatonic (0, 2, 4, 7, 9) from MIDI 72 (C5), pan $1.6\,x/L-0.8$ clamped to
+$\pm0.8$. Habits: first-order Markov chains per site; satiety decays over
+10\,min; novelty pressure. Social roles: leader 15\%, follower 30\%,
+loner 15\%.
+
+\section{Behaviors v0.1 to v1.3.1}
+Wandering, ghost typing, voices; themes (Ghost default), attention, meetings;
+per-site settings, dark adaptation, anticipation; customization, tag game,
+focus mode, WebM recording; i18n EN/FR (145 keys), cross-page persistence;
+ambient features (reading ambiance, scroll hint, guided tour, companion,
+contrast inspector, site weather); cognition, roles, moods, teasing;
+freeze fixes and modal dimming.
 
 \section{Formula Substitutions}
-All measured on 200\,000 gestures $\times$ 24 steps plus micro-benchmarks.
 \begin{table}[h]
 \centering
-\caption{Substitutions: keep or reject.}
+\caption{Measured on 200\,000 gestures $\times$ 24 steps.}
 \begin{tabular}{@{}lcc@{}}
 \toprule
 Substitution & Result & Kept \\
@@ -85,18 +85,14 @@ Cosine pre-filter & slower & no \\
 Deliberately not optimized: Fitts \texttt{log2} once per gesture.
 
 \section{Negative Results}
-The sine table was expected to win and lost $3\times$: memory access costs
-more than the FPU. Taylor-5 is both slower and wrong away from center. The
-cosine pre-filter lost because \texttt{cos} costs as much as \texttt{acos}.
-A satiety early-return made cursors look unable to click: reverted to a
-remark weight. Visits stored in the format-version field crashed every
-inspection: moved to a separate map.
+Sine table lost $3\times$ (memory $>$ FPU). Taylor-5 slower and wrong.
+Cosine pre-filter lost (48 vs 38\,ms). Satiety early-return reverted to a
+remark weight. Visits in the version field crashed inspections: separate map.
 
 \section{Engineering Lessons}
-Cache poisoning (stale rects), double-injection races (shared promise),
-key collisions (read labels first), dead placeholders (reconcile each
-second), the loop must survive (re-arm always). Method: hypothesis,
-targeted benchmark, keep or reject with numbers, document both outcomes.
+Cache poisoning, double-injection race, key collisions, dead placeholders,
+the loop must survive. Method: hypothesis, benchmark, keep or reject with
+numbers, document both.
 
 \section{Conclusion}
 Lifelike behavior needs no learning: composable state machines plus the

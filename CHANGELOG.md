@@ -19,6 +19,11 @@
 ### Performance
 - Background sampling: max 2 cursors per frame round-robin, interval 0.35 s → 1 s.
 - `visibleElements`: O(1) host-tag check instead of `closest()` per element.
+- Arc tracing: iterative heading rotation, ~4x faster than `Math.cos/sin` per step, bit-exact.
+- Gesture timing: per-gesture 64-entry progress curve, no `Math.pow` per frame (error < 5e-4).
+- Swarm: triple-angle `sin(3θ+φ)` without `atan2` (~3x), shared per-frame oscillations, squared neighbor distances (~2x).
+- Prediction: cosine pre-filter benchmarked and rejected (slower); plain `acos` kept.
+- Path resolution 48 → 24 points (invisible at 60 fps, half the allocs).
 
 ## 1.1.0 — Bug fixes, cross-site persistence
 

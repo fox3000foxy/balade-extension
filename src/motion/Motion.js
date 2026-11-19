@@ -20,6 +20,10 @@
       this.cfg = config.motion;
       this.paths = new PathBuilder(config);
       this.sound = null; // connected by the engine
+      // Sampled progress curves per gesture: q is fixed for a gesture, so
+      // u = minjerk(k^q) is precomputed once (64 entries) instead of
+      // calling Math.pow every frame for every cursor.
+      this._curveN = 64;
     }
 
     /** Fitts's law: MT = a + b * log2(1 + D / W), divided by speed. */
@@ -30,12 +34,26 @@
     }
 
     /**
-     * Progress along the path as a function of time (0 -> 1).
-     * Minimum jerk is symmetric (speed peak at 50%). Warping time by t^q (q < 1)
-     * shifts the peak to 35-45%: a sharp start without jerk, long deceleration to aim.
+     * Progress curve for one gesture: samples u = minjerk(k^q) so each frame
+     * is an indexed read instead of Math.pow + polynomial evaluation.
      */
-    progress(t, q) {
-      return minimumJerk(Math.pow(t, q));
+    makeCurve(q) {
+      const n = this._curveN;
+      const curve = new Float32Array(n + 1);
+      for (let i = 0; i <= n; i++) {
+        curve[i] = minimumJerk(Math.pow(i / n, q));
+      }
+      curve[n] = 1; // exact landing
+      return curve;
+    }
+
+    /** Progress along the path as a function of time (0 -> 1). */
+    progress(curve, t) {
+      const n = this._curveN;
+      const x = M.clamp(t, 0, 1) * n;
+      const i = Math.floor(x);
+      if (i >= n) return 1;
+      return curve[i] + (curve[i + 1] - curve[i]) * (x - i);
     }
 
     /**
@@ -102,13 +120,13 @@
 
       const path = this.paths.build(start, end0, { calm: opts.calm });
       const dur = this.duration(dist, opts.width, opts.speed);
-      const q = M.rand(...this.cfg.peakWarp);
+      const curve = this.makeCurve(M.rand(...this.cfg.peakWarp));
 
       let t = 0;
       for (;;) {
         t += yield;
         const k = Math.min(1, t / dur);
-        const u = this.progress(k, q);
+        const u = this.progress(curve, k);
         const p = path.at(u);
         // Moving target: gradually add its displacement since the start.
         const now = get();

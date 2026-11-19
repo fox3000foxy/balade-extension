@@ -32,6 +32,18 @@
         while (engine.swarmHeld) {
           const dt = yield;
           const time = engine.time;
+          // Time oscillations are identical for every cursor: compute once per
+          // frame and share (saves 3 trig + 1 tanh per cursor per frame).
+          let osc = engine._swarmOsc;
+          if (!osc || osc.time !== time) {
+            osc = engine._swarmOsc = {
+              time,
+              breathe: Math.sin(0.6 * time),
+              rosace: Math.sin(0.8 * time),
+              rosaceC: Math.cos(0.8 * time),
+              swirl: Math.tanh(3 * Math.cos(0.13 * time))
+            };
+          }
           const O = {
             x: engine.mouse.x + window.scrollX - cursor.viewX,
             y: engine.mouse.y + window.scrollY - cursor.viewY
@@ -45,9 +57,14 @@
           const ty = nx;
           const theta = Math.atan2(dy, dx);
 
-          const R = cfg.radius * (1 + 0.15 * Math.sin(0.6 * time));
-          const ring = R * (1 + 0.25 * Math.sin(3 * theta + 0.8 * time)) + lane;
-          const swirl = Math.tanh(3 * Math.cos(0.13 * time));
+          // sin(3θ + φ) expanded with (nx, ny) = (cos θ, sin θ), already known:
+          // avoids atan2 -> sin round-trip; cos(3θ+φ) via angle addition.
+          // sin3 = 3n - 4n^3, cos3 = 4n^3 - 3n with n = ny, nx respectively.
+          const s3 = 3 * ny - 4 * ny * ny * ny;
+          const c3 = 4 * nx * nx * nx - 3 * nx;
+          const R = cfg.radius * (1 + 0.15 * osc.breathe);
+          const ring = R * (1 + 0.25 * (s3 * osc.rosaceC + c3 * osc.rosace)) + lane;
+          const swirl = osc.swirl;
           const tang = 260 * (0.7 + 0.3 * spin) * swirl;
           const rad = M.clamp(4 * (ring - d), -2400, 1300);
           let wx = tang * tx + rad * nx;
@@ -61,8 +78,12 @@
           for (const o of engine.cursors) {
             if (neighborCount >= 8) break;
             if (o === cursor || o.behavior == null || !(o.behavior instanceof Swarm)) continue;
-            const od = Math.hypot(o.pageX - cursor.pageX, o.pageY - cursor.pageY);
-            if (od > 80) continue;
+            // Squared-distance test: hypot only for the close few that count.
+            const ox = o.pageX - cursor.pageX;
+            const oy = o.pageY - cursor.pageY;
+            const od2 = ox * ox + oy * oy;
+            if (od2 > 6400) continue;
+            const od = Math.sqrt(od2);
             const w = 1 - od / 80;
             ax += o.vx * w;
             ay += o.vy * w;

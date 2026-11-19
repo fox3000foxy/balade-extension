@@ -154,6 +154,30 @@ Interactive explainer with live animated demos: [docs/how-it-works.html](docs/ho
 
 The principles and formulas studied before writing Balade: [docs/research.en.md](docs/research.en.md).
 
+## Motion math: why these implementations
+
+Identical results, cheaper computations (measured with `node /tmp/opencode/bench-trig.mjs`, 200k gestures × 24 steps):
+
+- **Arc tracing** (`motion/Path.js`): the turtle heading vector is rotated iteratively
+  (complex multiply by a fixed per-arc rotation) instead of `Math.cos/sin` per step —
+  ~4x faster (~90 vs ~380 ns/gesture), bit-exact (drift 1e-16). Rejected: a 256-entry
+  sin table (3x *slower* than `Math.cos` — memory access costs more than the FPU)
+  and Taylor order 5 (slower *and* wrong, error 0.5 near ±π).
+- **Gesture timing** (`motion/Motion.js`): the progress curve `minjerk(t^q)` is sampled
+  once per gesture (64 entries, `q` is fixed per gesture) instead of `Math.pow` per
+  frame — same curve within 5e-4, indexed read per frame.
+- **Swarm steering** (`behaviors/Swarm.js`): `sin(3θ+φ)` expanded by triple-angle from
+  the already-known `(cos θ, sin θ)` (exact, no `atan2`→`sin` round-trip); per-frame
+  time oscillations computed once and shared by all cursors; neighbor scan uses
+  squared distances (`sqrt` only for the close few).
+- **Prediction** (`world/Predictor.js`): candidates pre-filtered by cosine comparison
+  (`cos < cos(tol·2.5)`, no `acos`); only survivors pay for the exact weight.
+- **Flee** (`behaviors/Flee.js`): `(1−d/m)²` written out (`Math.pow(x,2)` has call
+  overhead for a square); crowd separation tested on squared distances.
+
+Deliberately *not* optimized: Fitts's law (`Math.log2` once per gesture) — nanoseconds
+on a 16 ms frame budget, and the formula stays readable.
+
 ## Fonts
 
 Bricolage Grotesque, Chivo Mono, Fredoka, Figtree, Young Serif and Spline Sans Mono, under the

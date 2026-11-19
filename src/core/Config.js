@@ -48,8 +48,9 @@
       fullCurveAt: 420,
       // Path style probabilities (beyond shortTrip).
       styles: { arc: 0.45, s: 0.25, hook: 0.2, wave: 0.1 },
-      // Path resolution (points per path).
-      samples: 48
+      // Path resolution (points per path). 24 is plenty: gestures last
+      // under a second at 60 fps, so denser polylines are invisible.
+      samples: 24
     },
 
     wander: {

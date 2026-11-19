@@ -92,15 +92,19 @@
         if (D < 1) continue;
 
         // Angle between velocity and target direction, tolerance based on target size.
+        // Cheap pre-filter on cosines (no acos): theta > tol*2.5 <=> cos < cos(tol*2.5).
+        // Only survivors pay for acos — exact weights, fewer transcendentals.
         const cos = M.clamp((dx * ux + dy * uy) / D, -1, 1);
-        const theta = Math.acos(cos);
         const tol = 0.3 + Math.atan2(Math.max(r.width, r.height) / 2, D);
-        if (theta > tol * 2.5) continue;
+        if (cos < Math.cos(tol * 2.5)) continue;
 
-        let w = Math.exp(-((theta / tol) ** 2));
+        const theta = Math.acos(cos);
+        const t = theta / tol;
+        let w = Math.exp(-t * t);
         if (remaining != null) {
           const spread = 0.45 * remaining + 40;
-          w *= Math.exp(-(((D - remaining) / spread) ** 2));
+          const dd = (D - remaining) / spread;
+          w *= Math.exp(-dd * dd);
         } else {
           w *= 1 / (1 + D / 900);
         }

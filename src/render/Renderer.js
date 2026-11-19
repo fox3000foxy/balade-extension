@@ -508,6 +508,21 @@
           this.views.delete(id);
         }
       }
+
+      // Reconciliation (once per second): any field still marked as ghost-typing
+      // but no longer ghosted by a live cursor gets its placeholder back.
+      // Covers interrupted ghosts (behavior switch, element detached by a
+      // re-render, SPA navigation) where the per-view cleanup never ran.
+      if (this.theme.ghostColor === "cursor" && now - (this._reconAt || 0) > 1) {
+        this._reconAt = now;
+        const live = new Set();
+        for (const c of cursors) {
+          if (c.ghost && c.ghost.el && c.ghost.el.isConnected) live.add(c.ghost.el);
+        }
+        for (const el of document.querySelectorAll("[data-balade-typing]")) {
+          if (!live.has(el)) el.removeAttribute("data-balade-typing");
+        }
+      }
     }
   }
 

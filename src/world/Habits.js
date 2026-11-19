@@ -46,6 +46,7 @@
       this.enabled = true;
       this._saveTimer = 0;
       this._unsub = null;
+      this._sessionSeen = new Set(); // element keys visited this session
     }
 
     static keyOf(el) {
@@ -89,9 +90,10 @@
       clearTimeout(this._saveTimer);
     }
 
-    reset() {
+      reset() {
       this.data = { v: 1, n: {}, t: {} };
       this.last = null;
+      this._sessionSeen = new Set();
     }
 
     /** Records a click; returns the element key (or null). */
@@ -118,6 +120,44 @@
     isNew(maxClicks = 5) {
       const all = Object.values(this.data.n).reduce((a, b) => a + b, 0);
       return all < maxClicks;
+    }
+
+    // ---------- R&D axis 2: simulated cognition ----------
+
+    /** Records a cursor visit (not a user click): feeds satiety and novelty. */
+    visit(key, now) {
+      if (!key) return;
+      const v = this.data.v || (this.data.v = {});
+      const e = v[key] || (v[key] = { n: 0, at: 0 });
+      e.n++;
+      e.at = now;
+    }
+
+    /**
+     * Satiety 0..1 for an element: 0 fresh, 1 boring. Rises with visit count,
+     * decays over ~10 minutes. Cursor visits feed it, not user clicks.
+     */
+    satiety(key, now) {
+      const e = this.data.v && this.data.v[key];
+      if (!e) return 0;
+      const age = Math.max(0, now - e.at) / 600; // 10 min memory
+      const grown = 1 - Math.exp(-e.n / 2); // 1 visit ~0.4, 3 visits ~0.8
+      return grown * Math.exp(-age);
+    }
+
+    /** Share of page elements never visited this session: drives curiosity. */
+    noveltyPressure(totalVisible) {
+      if (!totalVisible) return 0;
+      return Math.min(1, Math.max(0, 1 - this._sessionSeen.size / totalVisible));
+    }
+
+    /** Mark an element seen this session (resets on navigation). */
+    markSeen(key) {
+      if (key) this._sessionSeen.add(key);
+    }
+
+    resetSession() {
+      this._sessionSeen = new Set();
     }
 
     /** Most likely element after `fromKey`: { key, p, total } or null. */

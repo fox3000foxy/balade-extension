@@ -123,6 +123,7 @@
       this.sound.start();
       this.habits.enabled = this.config.predict.learn;
       this.habits.load();
+      this.habits.resetSession(); // novelty restarts on each navigation
       this._onScroll = () => this.stage.invalidateCache();
       window.addEventListener("pointermove", this._onPointerMove, { passive: true });
       window.addEventListener("keydown", this._onKeyDown, true);

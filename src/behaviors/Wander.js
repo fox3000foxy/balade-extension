@@ -66,12 +66,16 @@
 
     *inspect(cursor) {
       const busy = new Set(this.engine.cursors.map((c) => c.focus).filter(Boolean));
-      const el = this.stage.pickElement(cursor, this.engine.time, this._last, busy);
+      const el = this.stage.pickElement(cursor, this.engine.time, this._last, busy, this.engine.habits);
       if (!el) {
         yield* this.stroll(cursor);
         return;
       }
       this._last = el;
+      // R&D axis 2: feed satiety and novelty from cursor visits.
+      const vkey = window.Balade.Habits.keyOf(el);
+      this.engine.habits.visit(vkey, this.engine.time);
+      this.engine.habits.markSeen(vkey);
 
       // Function target: if the page scrolls, the cursor follows the element.
       const aim = this.stage.aimOn(el, cursor);

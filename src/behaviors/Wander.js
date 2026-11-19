@@ -233,6 +233,9 @@
      */
     *typeGhost(cursor, el, word, anchor) {
       const sound = this.engine.sound;
+      // If a sibling wanders onto the field mid-typing, shoo it away with a
+      // tease instead of letting it walk over the ghost text.
+      const shooAt = Math.floor(word.length / 2);
       for (let i = 0; i < word.length; i++) {
         const ch = word[i];
         let d = M.rand(0.07, 0.15);
@@ -242,8 +245,25 @@
         if (!this.stage.isInView(el, cursor)) return false;
         cursor.ghost.text += ch;
         if (sound) sound.key(cursor, i);
+        if (i === shooAt) this._shooIntruders(cursor, el);
       }
       return true;
+    }
+
+    /** Teases a sibling cursor standing on the field being typed in. */
+    _shooIntruders(cursor, el) {
+      if (!this.config.social.enabled) return;
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      for (const o of this.engine.cursors) {
+        if (o === cursor || o.leaving || o.ghost) continue;
+        if (Math.hypot(o.screenX - cx, o.screenY - cy) > 70) continue;
+        cursor.tease(o, this.engine.time, this.config.bubbles.tease);
+        // Small physical shove aside; its behavior keeps running untouched.
+        o.push((o.screenX - cx) || M.sign() * 20, -120);
+        return; // one intruder at a time
+      }
     }
 
     *eraseGhost(cursor, el, anchor) {

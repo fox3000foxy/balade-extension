@@ -67,6 +67,7 @@
     }
 
     mount() {
+      if (this._unmountTimer) { clearTimeout(this._unmountTimer); this._unmountTimer = 0; }
       this.host = document.createElement(HOST_TAG);
       this.host.style.cssText =
         "position:fixed;inset:0;z-index:2147483647;pointer-events:none;display:block;";
@@ -91,9 +92,15 @@
       if (!this.host) return;
       const host = this.host;
       this.layer.classList.remove("on");
-      setTimeout(() => host.remove(), 450);
+      if (this._unmountTimer) clearTimeout(this._unmountTimer);
+      this._unmountTimer = setTimeout(() => { host.remove(); this._unmountTimer = 0; }, 450);
       this.host = null;
       this.layer = null;
+      this.hud = null;
+      // Restore placeholders hidden for ghost typing, before dropping the views.
+      for (const v of this.views.values()) {
+        if (v.ghostFor && this.theme.ghostColor === "cursor") v.ghostFor.removeAttribute("data-balade-typing");
+      }
       this.views.clear();
     }
 

@@ -53,6 +53,7 @@
     }
 
     async load() {
+      this.dispose(); // avoid stacking watchers on repeated loads
       try {
         if (hasChrome) {
           const got = await chrome.storage.local.get(this.storageKey);
@@ -84,6 +85,7 @@
 
     dispose() {
       if (this._unsub) this._unsub();
+      this._unsub = null;
       clearTimeout(this._saveTimer);
     }
 

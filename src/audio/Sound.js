@@ -25,6 +25,7 @@
 
     start() {
       if (this.ctx) return;
+      if (this._closeTimer) { clearTimeout(this._closeTimer); this._closeTimer = 0; }
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         this.ctx = new Ctx({ latencyHint: "interactive" });
@@ -63,10 +64,12 @@
 
     close() {
       this._removeUnlock();
+      if (this._closeTimer) { clearTimeout(this._closeTimer); this._closeTimer = 0; }
       if (this.ctx) {
         const ctx = this.ctx;
         this.ctx = null;
-        setTimeout(() => ctx.close().catch(() => {}), 300);
+        this.out = null;
+        this._closeTimer = setTimeout(() => { ctx.close().catch(() => {}); this._closeTimer = 0; }, 300);
       }
     }
 

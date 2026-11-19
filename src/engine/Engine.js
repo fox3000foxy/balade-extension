@@ -188,6 +188,10 @@
       this._timers = [];
       this._pairs.clear();
       this._userClicks = [];
+      this.stage.invalidateCache();
+      if (this.predictor) this.predictor.lastGuess = null;
+      this._onScroll = null;
+      this.onDestroy = null;
       this.running = false;
       this.stopping = false;
       if (this.onDestroy) this.onDestroy();
@@ -777,14 +781,19 @@
 
     // ---------- Dark backgrounds ----------
 
-    /** Periodically samples the background under each cursor (spread out). */
+    /** Periodically samples the background under each cursor (round-robin). */
     _sampleBackgrounds() {
       const cfg = this.config.dark;
-      for (const c of this.cursors) {
-        if (!this.config.adaptDark) {
-          c.onDark = false;
-          continue;
-        }
+      if (!this.config.adaptDark) {
+        for (const c of this.cursors) c.onDark = false;
+        return;
+      }
+      // At most 2 cursors per frame: elementFromPoint + getComputedStyle is costly.
+      const n = this.cursors.length;
+      if (n === 0) return;
+      this._bgIndex = (this._bgIndex || 0) % n;
+      for (let k = 0; k < Math.min(2, n); k++) {
+        const c = this.cursors[(this._bgIndex + k) % n];
         if (this.time < c.nextBgSample) continue;
         c.nextBgSample = this.time + cfg.every * M.rand(0.8, 1.2);
         const lum = this.stage.luminanceAt(c.screenX + 3, c.screenY + 6);
@@ -793,6 +802,7 @@
         if (c.onDark && lum > cfg.above) c.onDark = false;
         else if (!c.onDark && lum < cfg.below) c.onDark = true;
       }
+      this._bgIndex = (this._bgIndex + 2) % n;
     }
 
     // ---------- Full screen ----------

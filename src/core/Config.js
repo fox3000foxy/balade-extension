@@ -183,7 +183,7 @@
     hideFullscreen: true,
     adaptDark: true,
     // Background under each cursor: relative luminance (0 black -> 1 white), with hysteresis.
-    dark: { below: 0.3, above: 0.42, every: 0.35 },
+    dark: { below: 0.3, above: 0.42, every: 1.0 },
 
     sound: {
       enabled: true,

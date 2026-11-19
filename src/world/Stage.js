@@ -141,7 +141,9 @@
       const H = this.height;
       for (let i = 0; i < all.length && out.length < 300; i++) {
         const el = all[i];
-        if (el.closest(this.hostTag)) continue;
+        // Our overlay lives in a shadow root, so querySelectorAll never returns
+        // its children; only skip the host element itself (O(1) tag check, no closest()).
+        if (el.localName === this.hostTag) continue;
         if (el.localName === "input" && el.type === "hidden") continue;
         const r = el.getBoundingClientRect();
         if (r.width < 12 || r.height < 10) continue;

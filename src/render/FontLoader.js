@@ -1,7 +1,7 @@
-// Charge une police embarquée dans l'extension pour l'overlay.
-// On passe par l'API FontFace avec les octets du fichier : la police est disponible
-// dans la page (et donc dans notre Shadow DOM) sans dépendre du réseau.
-// En cas d'échec, l'overlay garde sa police de repli : rien ne casse.
+// Loads a font bundled with the extension for the overlay.
+// Uses the FontFace API with the raw file bytes: the font is available
+// in the page (and in our Shadow DOM) without any network request.
+// On failure, the overlay keeps its fallback font: nothing breaks.
 (() => {
   const B = window.Balade;
   const loaded = new Map(); // famille → Promise

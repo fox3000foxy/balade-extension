@@ -1,13 +1,13 @@
-// Un curseur : sa position, son tempérament, ses micro-signaux (pression, inclinaison,
-// bousculade), sa « vue » de la page, et le comportement qu'il exécute.
-// Il ne décide de rien lui-même : ce sont les comportements (src/behaviors) qui le déplacent.
+// A cursor: its position, temperament, micro-signals (pressure, tilt,
+// nudge), its "view" of the page, and the behavior it is running.
+// It makes no decisions itself: behaviors (src/behaviors) move it.
 //
-// Trois repères de coordonnées :
-//  - vue du curseur : (x, y), ce qu'écrivent les comportements, comme sur SON écran ;
-//  - page           : vue + (viewX, viewY), son propre défilement ;
-//  - écran de l'utilisateur : page − défilement de l'utilisateur (screenX, screenY).
-// Quand vous faites défiler, le curseur reste accroché à la page ; il « défile » ensuite
-// lui-même pour vous rattraper (voir Engine._followScroll).
+// Three coordinate frames:
+//  - cursor view : (x, y), what behaviors write, as if on ITS own screen;
+//  - page        : view + (viewX, viewY), its own scroll offset;
+//  - user screen : page - user scroll (screenX, screenY).
+// When you scroll, the cursor stays anchored to the page; it then
+// scrolls itself to catch up (see Engine._followScroll).
 (() => {
   const { M } = window.Balade;
 
@@ -32,49 +32,49 @@
       this.viewX = viewX;
       this.viewY = viewY;
 
-      // Position affichée sur l'écran de l'utilisateur (calculée à chaque image).
+      // Position on the user's screen (computed every frame).
       this.screenX = x;
       this.screenY = y;
 
-      // Rattrapage du défilement : { phase, wait, from, to, t, dur, q }.
+      // Scroll catch-up state: { phase, wait, from, to, t, dur, q }.
       this.scroll = { phase: "idle", wait: 0, recentUntil: -Infinity };
 
-      // Décalage dû aux bousculades, ramené à 0 par un ressort amorti.
+      // Offset from nudges, pulled back to 0 by a damped spring.
       this.offsetX = 0;
       this.offsetY = 0;
       this.offsetVX = 0;
       this.offsetVY = 0;
 
-      // Vitesse estimée à partir des positions successives sur l'écran (px/s).
+      // Speed estimated from successive screen positions (px/s).
       this.vx = 0;
       this.vy = 0;
       this._prevX = null;
       this._prevY = null;
 
-      this.pressure = 0; // 1 au moment du clic, retombe à 0
-      this.angle = 0;    // inclinaison en degrés
+      this.pressure = 0; // 1 on click, falls back to 0
+      this.angle = 0;    // tilt in degrees
 
-      this.focus = null;   // élément regardé (surbrillance)
+      this.focus = null;   // element being watched (highlight)
       this.shape = "arrow"; // arrow | hand | ibeam | crosshair | wait
-      this.ghost = null;   // texte fantôme { el, text } — purement visuel
-      this.bubble = null;  // bulle { text, until } (en temps du moteur)
-      this.heading = null; // orientation imposée en degrés (vol en essaim), sinon null
-      this.wiggleAt = -Infinity; // début du dernier tortillement (salut)
-      this.gatherAngle = null;   // place prise autour d'un point d'attention
-      this.onDark = false;       // le fond sous le curseur est sombre
-      this.predicting = null;    // élément deviné, pendant une anticipation
-      this.caught = false;       // attrapé pendant le jeu du chat
+      this.ghost = null;   // ghost text { el, text } - visual only
+      this.bubble = null;  // speech bubble { text, until } (engine time)
+      this.heading = null; // imposed heading in degrees (swarm flight), else null
+      this.wiggleAt = -Infinity; // start of the last wiggle (greeting)
+      this.gatherAngle = null;   // spot taken around an attention point
+      this.onDark = false;       // background under the cursor is dark
+      this.predicting = null;    // guessed element, during anticipation
+      this.caught = false;       // caught during the tag game
       this.nextBgSample = 0;
 
-      // Hauteur de « voix » propre à ce curseur (en degrés de gamme) pour les sons.
+      // This cursor's "voice" pitch offset (scale degrees) for sounds.
       this.voice = Math.floor(M.rand(0, 5));
       this.lastBumpSound = -Infinity;
 
-      // Tempérament : chaque curseur a sa façon de bouger.
+      // Temperament: each cursor has its own way of moving.
       this.temperament = {
-        pace: M.rand(0.8, 1.25),     // multiplicateur de vitesse
-        patience: M.rand(0.6, 1.6),  // multiplicateur des pauses et du temps de réaction
-        curiosity: M.rand(0, 0.3)    // envie en plus d'inspecter la page
+        pace: M.rand(0.8, 1.25),     // speed multiplier
+        patience: M.rand(0.6, 1.6),  // pause and reaction time multiplier
+        curiosity: M.rand(0, 0.3)    // extra urge to inspect the page
       };
 
       this.behavior = null;
@@ -95,28 +95,28 @@
       this.pressure = 1;
     }
 
-    /** Affiche une petite bulle de texte pendant `duration` secondes. */
+    /** Shows a small speech bubble for `duration` seconds. */
     say(text, now, duration = 1.6) {
       this.bubble = { text, until: now + duration };
     }
 
-    /** Petit tortillement (pour saluer). */
+    /** Small wiggle (for greeting). */
     wiggle(now) {
       this.wiggleAt = now;
     }
 
-    /** Ajoute une impulsion (px/s) au décalage : le curseur est bousculé. */
+    /** Adds an impulse (px/s) to the offset: the cursor is nudged. */
     push(ix, iy) {
       this.offsetVX += ix;
       this.offsetVY += iy;
     }
 
     setBehavior(behavior) {
-      // Termine proprement le comportement en cours (ses blocs finally s'exécutent).
+      // Cleanly ends the current behavior (its finally blocks run).
       if (this.routine) {
         try {
           this.routine.return();
-        } catch (err) { /* déjà terminé */ }
+        } catch (err) { /* already finished */ }
       }
       this.behavior = behavior;
       this.routine = behavior.run(this);
@@ -130,8 +130,8 @@
     }
 
     /**
-     * Fait avancer le comportement d'un pas de temps.
-     * @returns {boolean} true si le comportement vient de se terminer.
+     * Advances the behavior by one time step.
+     * @returns {boolean} true if the behavior just finished.
      */
     advance(dt) {
       if (!this.routine) return true;
@@ -139,7 +139,7 @@
       try {
         res = this.routine.next(dt);
       } catch (err) {
-        console.warn("[Balade] Erreur dans un comportement :", err);
+        console.warn("[Balade] Error in a behavior:", err);
         res = { done: true };
       }
       if (res.done) {
@@ -150,15 +150,15 @@
       return false;
     }
 
-    /** Calcule la position sur l'écran de l'utilisateur. */
+    /** Computes the position on the user's screen. */
     updateScreen(scrollX, scrollY) {
       this.screenX = this.x + this.viewX - scrollX + this.offsetX;
       this.screenY = this.y + this.viewY - scrollY + this.offsetY;
     }
 
-    /** Met à jour les micro-signaux après le déplacement de l'image. */
+    /** Updates micro-signals after the frame move. */
     updateSignals(dt, cfg, now = 0) {
-      // Vitesse estimée dans SA vue (le défilement ne fait pas pencher le curseur).
+      // Speed estimated in ITS view (scrolling does not tilt the cursor).
       if (this._prevX == null) {
         this._prevX = this.x;
         this._prevY = this.y;
@@ -168,7 +168,7 @@
       this._prevX = this.x;
       this._prevY = this.y;
 
-      // Ressort amorti : a = -k·x - c·v (Euler semi-implicite).
+      // Damped spring: a = -k*x - c*v (semi-implicit Euler).
       const ax = -cfg.springK * this.offsetX - cfg.springDamping * this.offsetVX;
       const ay = -cfg.springK * this.offsetY - cfg.springDamping * this.offsetVY;
       this.offsetVX += ax * dt;
@@ -178,8 +178,8 @@
 
       this.pressure = Math.max(0, this.pressure - cfg.pressDecay * dt);
 
-      // Orientation : en vol, la flèche regarde où elle va ; sinon elle penche
-      // légèrement dans le sens du mouvement, puis se redresse.
+      // Orientation: in flight the arrow looks where it goes; otherwise it tilts
+      // slightly in the direction of movement, then straightens.
       let target;
       if (this.heading != null) {
         target = this.angle + M.wrapDeg(this.heading - this.angle);
@@ -189,7 +189,7 @@
       }
       this.angle = M.damp(this.angle, target, this.heading != null ? 9 : cfg.tiltRate, dt);
 
-      // Tortillement : une oscillation rapide qui s'amortit en un demi-seconde.
+      // Wiggle: a fast oscillation that damps out over half a second.
       const w = now - this.wiggleAt;
       this.wiggle_ = w >= 0 && w < 0.5 ? Math.sin(w * 30) * 14 * (1 - w / 0.5) : 0;
 

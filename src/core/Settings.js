@@ -1,8 +1,8 @@
-// Les réglages de l'utilisateur : valeurs par défaut, lecture/écriture, et traduction
-// en paramètres du moteur. Partagé par l'overlay (content script), le menu et la démo.
+// User settings: defaults, read/write, and mapping to engine parameters.
+// Shared by the overlay (content script), the menu, and the demo.
 //
-// Stockage : chrome.storage.sync dans l'extension ; localStorage + BroadcastChannel
-// ailleurs (page de démo), pour que tout fonctionne aussi sans extension.
+// Storage: chrome.storage.sync in the extension; localStorage + BroadcastChannel
+// elsewhere (demo page), so everything works without the extension too.
 (() => {
   const B = window.Balade || (window.Balade = { ready: false });
   if (B.Settings) return;
@@ -11,28 +11,28 @@
 
   const DEFAULTS = Object.freeze({
     theme: "classique",   // classique | zine | galets | carnet
-    count: 6,             // nombre de curseurs (2 à 12)
-    pace: 55,             // allure : 0 calme → 100 vive
-    curiosity: 40,        // 0 rêveurs → 100 fouineurs
-    volume: 40,           // 0 à 100
-    ghostTyping: true,    // écrire des mots fantômes dans les champs
-    showNames: true,      // étiquettes avec les prénoms
-    hideFullscreen: true, // se cacher en plein écran
-    social: true,         // rencontres et bulles
-    reactive: true,       // attention partagée, réactions à vos gestes, essaim à la demande
-    adaptDark: true,      // pointeurs adaptés aux fonds sombres
-    anticipate: true,     // deviner l'élément que vous visez
-    learn: true,          // apprendre vos enchaînements de clics (en local)
-    names: [],            // vos prénoms (vide : la liste par défaut)
-    custom: null,         // thème perso : { enabled, base, palette, pointer }
-    excludedSites: [],    // sites où Balade ne se lance jamais (noms d'hôte)
-    autoSites: []         // sites où Balade se lance tout seul (noms d'hôte)
+    count: 6,             // number of cursors (2 to 12)
+    pace: 55,             // pace: 0 calm -> 100 lively
+    curiosity: 40,        // 0 dreamers -> 100 snoopers
+    volume: 40,           // 0 to 100
+    ghostTyping: true,    // type ghost words in empty fields
+    showNames: true,      // show name tags
+    hideFullscreen: true, // hide in full screen
+    social: true,         // greetings and bubbles
+    reactive: true,       // shared attention, reactions to gestures, on-demand swarm
+    adaptDark: true,      // adapt pointers to dark backgrounds
+    anticipate: true,     // guess the element you are aiming at
+    learn: true,          // learn your click sequences (local only)
+    names: [],            // your names (empty: use the default list)
+    custom: null,         // custom theme: { enabled, base, palette, pointer }
+    excludedSites: [],    // sites where Balade never starts (hostnames)
+    autoSites: []         // sites where Balade starts automatically (hostnames)
   });
 
   const THEMES = ["classique", "zine", "galets", "carnet"];
   const HEX = /^#[0-9a-f]{6}$/i;
 
-  /** Thème perso : base, palette (couleurs #rrggbb), pointeur importé (déjà nettoyé). */
+  /** Custom theme: base, palette (#rrggbb colors), imported pointer (already sanitized). */
   function sanitizeCustom(c) {
     if (!c || typeof c !== "object") return null;
     const palette = (Array.isArray(c.palette) ? c.palette : []).filter((x) => HEX.test(x)).slice(0, 10);
@@ -108,7 +108,7 @@
       }
     },
 
-    /** Enregistre une partie des réglages (fusionnée avec l'existant). */
+    /** Saves a subset of settings (merged with existing). */
     async save(patch) {
       const next = sanitize({ ...(await this.load()), ...patch });
       if (hasChrome) {
@@ -116,14 +116,14 @@
       } else {
         try {
           localStorage.setItem(KEY, JSON.stringify(next));
-        } catch (err) { /* stockage indisponible : réglage non conservé */ }
+        } catch (err) { /* storage unavailable: setting not saved */ }
         const ch = getChannel();
         if (ch) ch.postMessage(next);
       }
       return next;
     },
 
-    /** Appelle `fn(settings)` à chaque changement. Renvoie une fonction pour se désabonner. */
+    /** Calls `fn(settings)` on every change. Returns an unsubscribe function. */
     subscribe(fn) {
       if (hasChrome) {
         const listener = (changes, area) => {
@@ -140,22 +140,21 @@
     },
 
     /**
-     * Traduit les réglages en paramètres du moteur (modifie `config` en place).
-     * Les correspondances sont volontairement douces : le milieu des curseurs
-     * redonne les valeurs de base de Config.js.
+     * Maps settings to engine parameters (modifies `config` in place).
+     * Curves are intentionally gentle: the slider midpoint reproduces Config.js defaults.
      */
     applyToConfig(s, config) {
-      // Foule : l'effectif oscille de ±1 autour du nombre choisi.
+      // Crowd: count oscillates by +/-1 around the chosen number.
       config.population.target = s.count;
       config.population.min = Math.max(1, s.count - 1);
       config.population.max = s.count + 1;
 
-      // Allure : multiplicateur de vitesse de 0,6 à 1,5 (progression géométrique).
+      // Pace: speed multiplier from 0.6 to 1.5 (geometric progression).
       const speed = 0.6 * Math.pow(2.5, s.pace / 100);
       config.motion.speedMul = speed;
       config.wander.pauseMul = 1 / Math.sqrt(speed);
 
-      // Curiosité : probabilité de base d'aller inspecter un élément, de 0,1 à 0,6.
+      // Curiosity: base probability of inspecting an element, from 0.1 to 0.6.
       config.wander.inspect = 0.1 + 0.5 * (s.curiosity / 100);
 
       config.sound.volume = 0.45 * (s.volume / 100);
@@ -175,7 +174,7 @@
       return config;
     },
 
-    /** Balade est-il interdit sur ce nom d'hôte ? */
+    /** Is Balade excluded on this hostname? */
     isExcluded(s, host) {
       return s.excludedSites.includes(String(host || "").toLowerCase());
     }

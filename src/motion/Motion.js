@@ -1,12 +1,12 @@
-// Les gestes de base, sous forme de générateurs à composer avec `yield*`.
-// Convention : chaque `yield` rend la main au moteur et reçoit en retour
-// le temps écoulé depuis l'image précédente (dt, en secondes).
+// Basic gestures, as generators to compose with `yield*`.
+// Convention: each `yield` yields control to the engine and receives back
+// the time elapsed since the previous frame (dt, in seconds).
 //
-// Un pointage humain, d'après la littérature sur le mouvement de la main :
-//  1. un geste principal rapide (« balistique »), dont le pic de vitesse arrive
-//     avant la moitié du trajet, et qui rate un peu la cible ;
-//  2. un court geste de correction, plus lent, qui finit le travail.
-// La durée suit la loi de Fitts : elle dépend de la distance ET de la taille de la cible.
+// A human pointing movement, based on hand-movement research:
+//  1. a fast primary gesture ("ballistic"), with its speed peak before
+//     the midpoint, overshooting the target slightly;
+//  2. a short, slower correction gesture that finishes the job.
+// Duration follows Fitts's law: it depends on distance AND target size.
 (() => {
   const { M, PathBuilder } = window.Balade;
 
@@ -19,10 +19,10 @@
     constructor(config) {
       this.cfg = config.motion;
       this.paths = new PathBuilder(config);
-      this.sound = null; // branché par le moteur
+      this.sound = null; // connected by the engine
     }
 
-    /** Loi de Fitts : MT = a + b · log2(1 + D / W), divisée par la vitesse. */
+    /** Fitts's law: MT = a + b * log2(1 + D / W), divided by speed. */
     duration(dist, width, speed) {
       const f = this.cfg.fitts;
       const id = Math.log2(1 + dist / Math.max(4, width));
@@ -30,10 +30,9 @@
     }
 
     /**
-     * Avancement le long du trajet en fonction du temps (0 → 1).
-     * Le minimum jerk est symétrique (pic de vitesse à 50 %). En déformant le temps
-     * par t^q (q < 1), on avance le pic vers 35–45 % : démarrage vif mais sans à-coup,
-     * longue décélération pour viser.
+     * Progress along the path as a function of time (0 -> 1).
+     * Minimum jerk is symmetric (speed peak at 50%). Warping time by t^q (q < 1)
+     * shifts the peak to 35-45%: a sharp start without jerk, long deceleration to aim.
      */
     progress(t, q) {
       return minimumJerk(Math.pow(t, q));
@@ -67,7 +66,7 @@
       const precise = opts.precise !== false;
 
       if (precise && dist > c.correction.minDist && M.chance(c.correction.chance)) {
-        // 1. Geste principal, qui vise un point légèrement à côté.
+        // 1. Primary gesture, aiming slightly off-target.
         const ux = (p0.x - cursor.x) / dist;
         const uy = (p0.y - cursor.y) / dist;
         const along = M.clamp(M.rand(...c.correction.along) * dist, -c.correction.maxAlong, c.correction.maxAlong);
@@ -75,7 +74,7 @@
         const miss = { x: ux * along - uy * across, y: uy * along + ux * across };
         yield* this._segment(cursor, get, miss, { ...opts, speed, width });
 
-        // 2. Une fraction de seconde pour « voir » l'écart, puis la correction.
+        // 2. A fraction of a second to "see" the gap, then the correction.
         yield* this.wait(M.rand(...c.correction.pause));
         yield* this._segment(cursor, get, { x: 0, y: 0 }, {
           ...opts,
@@ -88,7 +87,7 @@
       }
     }
 
-    /** Un seul geste continu, le long d'un trajet en arcs, vers cible + décalage. */
+    /** One continuous gesture, along an arc path, toward target + offset. */
     *_segment(cursor, get, offset, opts) {
       const start = { x: cursor.x, y: cursor.y };
       const t0 = get();
@@ -111,7 +110,7 @@
         const k = Math.min(1, t / dur);
         const u = this.progress(k, q);
         const p = path.at(u);
-        // Cible mobile : on ajoute progressivement son déplacement depuis le départ.
+        // Moving target: gradually add its displacement since the start.
         const now = get();
         cursor.x = p.x + (now.x - t0.x) * u;
         cursor.y = p.y + (now.y - t0.y) * u;
@@ -123,13 +122,13 @@
       cursor.y = now.y + offset.y;
     }
 
-    /** Attend `seconds` secondes. */
+    /** Waits `seconds` seconds. */
     *wait(seconds) {
       let t = 0;
       while (t < seconds) t += yield;
     }
 
-    /** Un clic : le curseur s'enfonce, un petit son, puis un court temps de geste. */
+    /** A click: the cursor presses down, a small sound, then a brief gesture. */
     *click(cursor) {
       cursor.press();
       if (this.sound) this.sound.click(cursor);

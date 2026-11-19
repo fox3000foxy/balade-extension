@@ -1,167 +1,167 @@
-// Tous les réglages au même endroit, pour les ajuster à l'œil.
+// All settings in one place, easy to tune by eye.
 (() => {
-  // Textes dans la langue du navigateur (_locales).
+  // Texts in the browser language (_locales).
   const L = (key) => window.Balade.I18n.list(key);
 
   window.Balade.Config = {
-    // Pas de temps maximal : évite les sauts au retour d'un onglet en arrière-plan.
+    // Max time step: prevents jumps when returning to a background tab.
     dtMax: 0.05,
 
     population: {
-      // Effectif visé et bornes de ses variations (réglage « Curseurs » du menu).
+      // Target count and variation range (the "Cursors" menu setting).
       target: 6,
       min: 5,
       max: 7,
-      // Toutes les 6 à 14 s, l'effectif voulu change de ±1 : des curseurs arrivent ou repartent.
+      // Every 6 to 14 s the target count shifts by +/-1: cursors arrive or leave.
       changeEvery: [6, 14],
-      // Écart moyen entre deux arrivées (s).
+      // Average gap between two arrivals (s).
       spawnGap: 0.5
     },
 
     motion: {
-      // Loi de Fitts : durée = a + b · log2(1 + distance / largeur de la cible), en s.
+      // Fitts's law: duration = a + b * log2(1 + distance / target width), in s.
       fitts: { a: 0.08, b: 0.085, min: 0.12, max: 0.75 },
-      // Multiplicateur global de vitesse (réglage « Allure » du menu).
+      // Global speed multiplier (the "Pace" menu setting).
       speedMul: 1,
-      // Largeur de cible supposée quand on vise un simple point (px).
+      // Assumed target width when aiming at a plain point (px).
       defaultWidth: 24,
-      // Déformation du temps t^q : le pic de vitesse arrive à 0,5^(1/q) du trajet
-      // (q = 0,7 → 37 % ; q = 0,85 → 44 %). Tiré à chaque geste.
+      // Time warp t^q: the speed peak lands at 0.5^(1/q) through the path
+      // (q = 0.7 -> 37%; q = 0.85 -> 44%). Drawn fresh each gesture.
       peakWarp: [0.68, 0.85],
-      // Geste principal imparfait, puis petit geste de correction.
+      // Imperfect primary gesture, then a small correction.
       correction: {
-        chance: 0.75,       // proportion des pointages qui en ont besoin
-        minDist: 60,        // en dessous, on vise juste du premier coup
-        along: [-0.03, 0.07], // trop court (-) ou trop long (+), en fraction de la distance
-        across: 0.025,      // écart latéral max, en fraction de la distance
+        chance: 0.75,       // proportion of pointing moves that need correction
+        minDist: 60,        // below this, we aim straight on the first try
+        along: [-0.03, 0.07], // too short (-) or too long (+), as a fraction of distance
+        across: 0.025,      // max lateral offset, as a fraction of distance
         maxAlong: 34,
         maxAcross: 14,
-        pause: [0.02, 0.08], // temps de réaction avant de corriger (s)
-        speed: 0.8           // la correction est un peu plus lente
+        pause: [0.02, 0.08], // reaction time before correcting (s)
+        speed: 0.8           // corrections are slightly slower
       }
     },
 
     paths: {
-      // Trajets plus courts que ça : un simple arc, presque droit.
+      // Paths shorter than this: a simple arc, nearly straight.
       shortTrip: 90,
-      // À partir de cette distance, la courbure atteint toute son ampleur.
+      // From this distance on, curvature reaches its full amplitude.
       fullCurveAt: 420,
-      // Probabilités des styles de trajet (au-delà de shortTrip).
+      // Path style probabilities (beyond shortTrip).
       styles: { arc: 0.45, s: 0.25, hook: 0.2, wave: 0.1 },
-      // Finesse du tracé (points par trajet).
+      // Path resolution (points per path).
       samples: 48
     },
 
     wander: {
-      // Marges de l'écran que la flânerie évite (fractions).
+      // Screen margins that wandering avoids (fractions).
       marginX: 0.08,
       marginY: 0.1,
       strollSpeed: 0.45,
-      // Part des promenades qui traversent tout l'écran (les autres restent dans le coin).
+      // Share of strolls that cross the full screen (others stay nearby).
       longStroll: 0.45,
       nearRadius: 260,
       pause: [0.4, 1.4],
       pauseMul: 1,
-      // Chance qu'une pause soit une « réflexion » (pointeur d'attente).
+      // Chance a pause is a "thinking" pause (busy pointer).
       waitChance: 0.1,
-      // Probabilités de base des humeurs (la curiosité du curseur s'y ajoute).
+      // Base mood probabilities (cursor curiosity adds to these).
       inspect: 0.35,
       fidget: 0.2,
-      // Pendant une inspection : durée du survol, chance de cliquer.
+      // During an inspection: hover duration, click chance.
       hover: [0.3, 0.9],
       clickChance: 0.35,
       doubleClickChance: 0.1,
-      // Attrait relatif des éléments de la page (les champs de saisie d'abord).
+      // Relative interest of page elements (input fields first).
       interest: { field: 3, button: 1.5, link: 1, heading: 1, media: 0.6, other: 0.8 },
-      // Chance d'écrire un texte fantôme dans un champ vide.
+      // Chance of typing ghost text into an empty field.
       ghostTypeChance: 0.75,
       ghostWords: L("ghost_words")
     },
 
     cursor: {
-      // Pression : écrasement au clic, puis retour.
+      // Pressure: squash on click, then spring back.
       squash: 0.12,
       pressDecay: 6,
-      // Inclinaison selon la vitesse horizontale.
+      // Tilt based on horizontal speed.
       tiltPerPxPerS: 0.01,
       tiltMax: 10,
       tiltRate: 10,
-      // Ressort qui ramène le curseur après une bousculade.
+      // Spring that pulls the cursor back after a nudge.
       springK: 70,
       springDamping: 12
     },
 
-    // Votre souris bouscule les curseurs qu'elle approche.
+    // Your mouse nudges nearby cursors.
     avoid: {
       radius: 80,
-      // px/s² au contact ; écart maximal ≈ strength / springK ≈ 64 px.
+      // px/s^2 at contact; max offset ~= strength / springK ~= 64 px.
       strength: 4500
     },
 
-    // Défilement : chaque curseur vous rattrape après un temps de réaction.
+    // Scrolling: each cursor catches up after a reaction delay.
     scroll: {
-      reaction: [0.3, 1.5],      // délai habituel (s), multiplié par la patience
-      distracted: 0.12,          // chance de traîner ailleurs un moment
-      distractedFor: [2.5, 6],   // durée de ce moment (s)
-      followUp: [0.08, 0.3],     // délai quand on vient déjà de vous suivre
-      duration: [0.3, 1.1]       // durée du défilement lui-même (s)
+      reaction: [0.3, 1.5],      // typical delay (s), scaled by patience
+      distracted: 0.12,          // chance of lingering elsewhere for a while
+      distractedFor: [2.5, 6],   // duration of that detour (s)
+      followUp: [0.08, 0.3],     // delay when already following recently
+      duration: [0.3, 1.1]       // scroll catch-up duration (s)
     },
 
-    // Attention partagée : quand vous vous arrêtez quelque part, les curieux s'approchent.
+    // Shared attention: when you pause somewhere, curious cursors come to look.
     attention: {
       enabled: true,
-      stillSpeed: 80,      // souris « immobile » en dessous de cette vitesse (px/s)
-      stillFor: 1.0,       // durée d'immobilité avant que l'attention se pose (s)
-      leaveRadius: 140,    // s'éloigner de plus que ça défait l'attention (px)
-      maxAge: 14,          // l'attention s'éteint d'elle-même après ce délai (s)
-      share: 0.6,          // au plus cette part des curseurs vient voir
-      ring: [70, 130],     // distance polie au point regardé (px)
-      stay: [3, 8],        // durée de séjour maximale (s)
+      stillSpeed: 80,      // mouse is "still" below this speed (px/s)
+      stillFor: 1.0,       // stillness duration before attention is set (s)
+      leaveRadius: 140,    // moving further than this clears the attention (px)
+      maxAge: 14,          // attention fades on its own after this delay (s)
+      share: 0.6,          // at most this fraction of cursors come to look
+      ring: [70, 130],     // polite distance to the watched point (px)
+      stay: [3, 8],        // max stay duration (s)
       reaction: [0.2, 1.2],
       bubbleChance: 0.25
     },
 
-    // Vie sociale : rencontres, bulles, réactions à vos clics et formulaires.
+    // Social life: greetings, bubbles, reactions to your clicks and forms.
     social: {
-      enabled: true,       // rencontres et bulles
-      reactive: true,      // réactions à vos clics et formulaires, essaim à la demande
-      meetDistance: 42,    // deux curseurs plus proches que ça se saluent (px)
-      pairCooldown: 14,    // une même paire ne se resalue pas avant (s)
-      greetCooldown: 1.2,  // pas plus d'un salut par… (s)
+      enabled: true,       // greetings and bubbles
+      reactive: true,      // reactions to clicks/forms, on-demand swarm
+      meetDistance: 42,    // cursors closer than this greet each other (px)
+      pairCooldown: 14,    // same pair won't greet again before (s)
+      greetCooldown: 1.2,  // at most one greeting every (s)
       followChance: 0.3,
       sayOnGreet: 0.45,
       sayOnInspect: 0.12,
-      clickRadius: 320,    // les curseurs à moins de cette distance réagissent à un clic (px)
-      clickLean: 170       // élan vers le clic (px/s) au plus près
+      clickRadius: 320,    // cursors within this distance react to a click (px)
+      clickLean: 170       // lean toward click (px/s) at closest
     },
 
-    // Essaim à la demande (deux appuis sur Maj, le second maintenu).
+    // On-demand swarm (double Shift press, hold the second).
     swarm: {
       radius: 90,
-      doubleTap: 0.35,     // délai maximal entre les deux appuis (s)
-      holdBefore: 0.18     // maintien nécessaire avant de déclencher (s)
+      doubleTap: 0.35,     // max delay between the two presses (s)
+      holdBefore: 0.18     // hold time needed before triggering (s)
     },
 
-    // Anticipation du geste et apprentissage des habitudes.
+    // Gesture anticipation and habit learning.
     predict: {
       enabled: true,
       learn: true,
-      cooldown: 1.2,          // entre deux prédictions (s)
-      minSpeed: 450,          // vitesse de souris minimale pour tenter une prédiction (px/s)
-      brakeAccel: 1500,       // décélération à partir de laquelle on considère que vous freinez (px/s²)
-      minShare: 0.5,          // part du score que la meilleure cible doit avoir (en freinage)
-      minShareBallistic: 0.85, // … et avant de freiner (bien plus exigeant)
-      minDistance: 100        // en dessous, pas le temps d'arriver avant vous (px)
+      cooldown: 1.2,          // between two predictions (s)
+      minSpeed: 450,          // minimum mouse speed to attempt a prediction (px/s)
+      brakeAccel: 1500,       // deceleration threshold that counts as braking (px/s^2)
+      minShare: 0.5,          // score share the best target must hold (while braking)
+      minShareBallistic: 0.85, // ... and before braking (much stricter)
+      minDistance: 100        // below this, no time to arrive before you (px)
     },
 
-    // Jeu du chat : attrapez les curseurs avec votre souris.
+    // Tag game: catch the cursors with your mouse.
     game: {
-      danger: 260,       // distance à laquelle votre souris fait fuir (px)
-      wall: 90,          // les bords repoussent en deçà (px)
-      catchRadius: 20    // attrapé si votre pointeur passe à moins de… (px)
+      danger: 260,       // distance at which your mouse triggers fleeing (px)
+      wall: 90,          // edges repel within this margin (px)
+      catchRadius: 20    // caught if your pointer comes within this radius (px)
     },
 
-    // Mode concentration : les curseurs s'en vont, puis reviennent pour la pause.
+    // Focus mode: cursors leave, then come back for the break.
     focus: { minutes: 25, breakMinutes: 5 },
 
     bubbles: {
@@ -177,20 +177,20 @@
       cheer: L("bubbles_cheer")
     },
 
-    // Thème et options d'affichage (remplacés par les réglages du menu).
+    // Theme and display options (overridden by menu settings).
     theme: "classique",
     showNames: true,
     hideFullscreen: true,
     adaptDark: true,
-    // Fond sous chaque curseur : luminance relative (0 noir → 1 blanc), avec hystérésis.
+    // Background under each cursor: relative luminance (0 black -> 1 white), with hysteresis.
     dark: { below: 0.3, above: 0.42, every: 0.35 },
 
     sound: {
       enabled: true,
       volume: 0.22,
-      // Au plus N sons par seconde, toutes sources confondues.
+      // At most N sounds per second, all sources combined.
       maxPerSecond: 18,
-      // Délai minimal entre deux « boing » d'un même curseur bousculé (s).
+      // Minimum delay between two "boing" sounds from the same nudged cursor (s).
       bumpCooldown: 0.7
     },
 

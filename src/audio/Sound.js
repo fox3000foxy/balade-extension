@@ -1,12 +1,12 @@
-// Les petits bruits, synthétisés en direct avec Web Audio (aucun fichier son).
-// Tous les sons sont pris dans une gamme pentatonique majeure : ils ne peuvent pas
-// sonner faux entre eux. Chaque curseur a sa « voix » (un décalage dans la gamme),
-// et le son est placé en stéréo à l'endroit du curseur.
+// Small sounds, synthesized live with Web Audio (no sound files).
+// All sounds come from a major pentatonic scale: they can never sound
+// wrong together. Each cursor has its own "voice" (a scale offset),
+// and the sound is panned to where the cursor is.
 (() => {
   const { M } = window.Balade;
 
   const PENTA = [0, 2, 4, 7, 9];
-  const BASE_MIDI = 72; // do5 : aigu et léger
+  const BASE_MIDI = 72; // C5: bright and light
 
   const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -16,12 +16,12 @@
       this.ctx = null;
       this.out = null;
       this.muted = !this.cfg.enabled || this.cfg.volume <= 0;
-      this.suppressed = false; // plein écran
+      this.suppressed = false; // full screen
       this._recent = [];
       this._unlock = () => this._resume();
     }
 
-    // ---------- Cycle de vie ----------
+    // ---------- Lifecycle ----------
 
     start() {
       if (this.ctx) return;
@@ -40,8 +40,8 @@
       this.out.connect(comp);
       comp.connect(this.ctx.destination);
 
-      // Les navigateurs bloquent le son tant que l'utilisateur n'a pas interagi avec
-      // la page : on réessaie au premier clic ou à la première touche.
+      // Browsers block audio until the user interacts with the page:
+      // retry on the first click or key press.
       if (this.ctx.state !== "running") {
         window.addEventListener("pointerdown", this._unlock, true);
         window.addEventListener("keydown", this._unlock, true);
@@ -74,7 +74,7 @@
       this.muted = muted;
     }
 
-    /** Volume de 0 à ~0,45 (réglage du menu, déjà converti). */
+    /** Volume from 0 to ~0.45 (menu setting, already converted). */
     setVolume(volume) {
       this.cfg.volume = volume;
       this.muted = volume <= 0;
@@ -85,66 +85,66 @@
       this.suppressed = suppressed;
     }
 
-    // ---------- Sons des gestes ----------
+    // ---------- Gesture sounds ----------
 
-    /** Clic : un « pop » rond qui descend un peu. */
+    /** Click: a round "pop" that falls slightly. */
     click(c) {
       const f = this._note(c, 2, 1);
       this._tone({ c, freq: f, to: f * 0.62, dur: 0.075, vol: 0.5, type: "sine" });
       this._tone({ c, freq: f * 2, to: f * 1.2, dur: 0.03, vol: 0.08, type: "triangle" });
     }
 
-    /** Touche : un « tic » aigu ; les touches successives jouent une petite mélodie. */
+    /** Key: a bright "tick"; successive keys play a little melody. */
     key(c, i) {
       const step = [0, 2, 1, 3, 2, 4][i % 6];
       this._tone({ c, freq: this._note(c, step, 2), dur: 0.04, vol: 0.16, type: "sine" });
     }
 
-    /** Retour arrière : un « tuc » plus grave et plus doux. */
+    /** Backspace: a deeper, softer "thud". */
     backspace(c) {
       this._tone({ c, freq: this._note(c, M.pick([0, 1]), 1), dur: 0.035, vol: 0.12, type: "triangle" });
     }
 
-    /** Tout effacer d'un coup : un « fiou » qui glisse vers le grave. */
+    /** Erase all at once: a "whoosh" sliding downward. */
     erase(c) {
       const f = this._note(c, 4, 2);
       this._tone({ c, freq: f, to: f * 0.3, dur: 0.11, vol: 0.18, type: "sine" });
     }
 
-    /** Arrivée : deux notes qui montent, comme un « coucou ». */
+    /** Arrival: two rising notes, like a "cuckoo". */
     hello(c) {
       this._tone({ c, freq: this._note(c, 0, 1), dur: 0.11, vol: 0.28, type: "sine" });
       this._tone({ c, freq: this._note(c, 2, 1), dur: 0.14, vol: 0.28, type: "sine", delay: 0.08 });
     }
 
-    /** Départ : les mêmes notes, en descendant. */
+    /** Departure: same notes, descending. */
     bye(c) {
       this._tone({ c, freq: this._note(c, 2, 1), dur: 0.11, vol: 0.22, type: "sine" });
       this._tone({ c, freq: this._note(c, 0, 1), dur: 0.16, vol: 0.22, type: "sine", delay: 0.09 });
     }
 
-    /** Salut entre deux curseurs : deux notes rapides et légères. */
+    /** Greeting between two cursors: two quick light notes. */
     greet(c) {
       this._tone({ c, freq: this._note(c, 2, 1), dur: 0.07, vol: 0.16, type: "sine" });
       this._tone({ c, freq: this._note(c, 4, 1), dur: 0.09, vol: 0.16, type: "sine", delay: 0.06 });
     }
 
-    /** Hourra collectif : un petit arpège qui monte. */
+    /** Collective cheer: a short rising arpeggio. */
     cheer() {
       [0, 2, 4, 5, 7].forEach((deg, i) => {
         this._tone({ c: null, freq: this._note(null, deg, 1), dur: 0.16, vol: 0.2, type: "triangle", delay: i * 0.07 });
       });
     }
 
-    /** Bousculé par la souris : un petit « boing » qui tremble. */
+    /** Nudged by the mouse: a small wobbling "boing". */
     boing(c) {
       const f = this._note(c, 0, -1);
       this._tone({ c, freq: f, to: f * 1.9, dur: 0.22, vol: 0.32, type: "sine", wobble: 18 });
     }
 
-    // ---------- Synthèse ----------
+    // ---------- Synthesis ----------
 
-    /** Fréquence d'un degré de la gamme, décalée par la voix du curseur. */
+    /** Frequency of a scale degree, shifted by the cursor's voice. */
     _note(c, degree, octave) {
       const d = degree + (c ? c.voice : 0);
       const midi = BASE_MIDI + 12 * (octave + Math.floor(d / 5)) + PENTA[d % 5];
@@ -161,8 +161,8 @@
     }
 
     /**
-     * Une note courte : attaque très brève, décroissance exponentielle,
-     * glissando optionnel (`to`) et vibrato optionnel (`wobble`, en Hz).
+     * A short note: very brief attack, exponential decay,
+     * optional glide (`to`) and optional vibrato (`wobble`, in Hz).
      */
     _tone({ c, freq, to, dur, vol, type, delay = 0, wobble = 0 }) {
       if (!this._allowed()) return;

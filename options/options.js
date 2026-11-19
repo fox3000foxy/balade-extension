@@ -1,5 +1,5 @@
-// Page de personnalisation : prénoms, thème perso (habillage, couleurs, pointeur importé).
-// Chaque modification est enregistrée aussitôt et s'applique en direct sur les pages ouvertes.
+// Customization page: names, custom theme (style, colors, imported pointer).
+// Every change is saved immediately and applies live on open pages.
 (() => {
   const { Settings, Themes, SvgSanitizer, makePerso, I18n } = window.Balade;
   const $ = (id) => document.getElementById(id);
@@ -10,7 +10,7 @@
   let custom = null;
   let savedTimer = 0;
 
-  // Les styles d'étiquettes des thèmes servent aussi à l'aperçu.
+  // Theme tag styles are also used in the preview.
   const style = document.createElement("style");
   style.textContent = Object.values(Themes).map((t) => t.css).join("\n");
   document.head.appendChild(style);
@@ -31,7 +31,7 @@
   const palette = () => (custom.palette && custom.palette.length ? custom.palette : Themes[custom.base].palette);
   const saveCustom = (changes) => save({ custom: { ...custom, ...changes } });
 
-  // ---------- Prénoms ----------
+  // ---------- Names ----------
 
   let namesTimer = 0;
   function bindNames() {
@@ -48,7 +48,7 @@
   }
   const countText = (n) => (n ? I18n.plural("opt_names_count", n) + (n > 40 ? I18n.t("opt_names_over") : "") : I18n.t("opt_names_default"));
 
-  // ---------- Thème perso ----------
+  // ---------- Custom theme ----------
 
   function renderBases() {
     const box = $("bases");
@@ -120,7 +120,7 @@
       $("svgError").textContent = "";
       try {
         const { markup, viewBox } = SvgSanitizer.clean(await file.text());
-        // Pointe par défaut : le coin haut gauche du dessin, comme une flèche classique.
+        // Default hotspot: the top-left corner of the drawing, like a classic arrow.
         const hot = { x: viewBox[0] + viewBox[2] * 0.12, y: viewBox[1] + viewBox[3] * 0.08 };
         saveCustom({ pointer: { markup, viewBox, hot, name: file.name } });
       } catch (err) {
@@ -129,7 +129,7 @@
     });
     $("svgRemove").addEventListener("click", () => saveCustom({ pointer: null }));
 
-    // Placer la pointe : clic sur le dessin, ou flèches du clavier (1 unité, 10 avec Maj).
+    // Place the hotspot: click the drawing, or use arrow keys (1 unit, 10 with Shift).
     const area = $("hotArea");
     area.addEventListener("click", (e) => {
       const p = custom.pointer;
@@ -163,7 +163,7 @@
     const svg = $("hotSvg");
     svg.setAttribute("viewBox", p.viewBox.join(" "));
     svg.setAttribute("color", palette()[0]);
-    svg.innerHTML = p.markup; // déjà nettoyé par SvgSanitizer
+    svg.innerHTML = p.markup; // already sanitized by SvgSanitizer
     const { k, ox, oy } = fit(p.viewBox);
     $("hotMark").style.left = `${ox + (p.hot.x - p.viewBox[0]) * k}px`;
     $("hotMark").style.top = `${oy + (p.hot.y - p.viewBox[1]) * k}px`;

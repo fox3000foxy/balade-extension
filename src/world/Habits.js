@@ -1,19 +1,19 @@
-// Apprentissage des habitudes, site par site : quels éléments vous cliquez, et dans quel
-// ordre. C'est une chaîne de Markov d'ordre 1 entre éléments : on compte les transitions
-// « après A, vous avez cliqué B », puis on estime P(B | A) = n(A→B) / n(A→·).
+// Habit learning, site by site: which elements you click and in what order.
+// It is a first-order Markov chain over elements: transitions "after A you clicked B"
+// are counted, then P(B | A) = n(A->B) / n(A->*) is estimated.
 //
-// Confidentialité : tout reste sur cet ordinateur (chrome.storage.local, jamais synchronisé,
-// jamais envoyé). On n'enregistre que l'identité des éléments cliqués (balise, libellé,
-// chemin du lien), jamais ce que vous tapez dans les champs.
+// Privacy: everything stays on this computer (chrome.storage.local, never synced,
+// never sent). Only the identity of clicked elements is stored (tag, label, link path),
+// never what you type in fields.
 (() => {
   const B = window.Balade;
   const hasChrome = typeof chrome !== "undefined" && chrome.storage && chrome.storage.local;
   const MAX_KEYS = 300;
-  const LINK_WINDOW = 90; // au-delà (s), deux clics ne sont plus considérés comme enchaînés
+  const LINK_WINDOW = 90; // beyond this (s), two clicks are no longer considered sequential
 
   const CLICKABLE = "a[href],button,input,select,textarea,[role=button],summary,label";
 
-  /** Identité stable d'un élément cliquable : balise, id lisible, libellé, chemin du lien. */
+  /** Stable identity of a clickable element: tag, readable id, label, link path. */
   function keyOf(target) {
     const el = target && target.closest ? target.closest(CLICKABLE) : null;
     if (!el) return null;
@@ -65,7 +65,7 @@
       this._watch();
     }
 
-    /** Si le menu efface ce site (« Oublier »), on oublie aussi en mémoire. */
+    /** If the menu clears this site ("Forget"), also clear in memory. */
     _watch() {
       if (hasChrome) {
         const fn = (changes, area) => {
@@ -92,7 +92,7 @@
       this.last = null;
     }
 
-    /** Enregistre un clic ; renvoie la clé de l'élément (ou null). */
+    /** Records a click; returns the element key (or null). */
     record(target, now) {
       const key = keyOf(target);
       if (!key) return null;
@@ -112,7 +112,7 @@
       return key;
     }
 
-    /** Élément le plus probable après `fromKey` : { key, p, total } ou null. */
+    /** Most likely element after `fromKey`: { key, p, total } or null. */
     predictNext(fromKey, minTotal = 3, minP = 0.4) {
       const row = this.data.t[fromKey];
       if (!row) return null;
@@ -128,8 +128,8 @@
     }
 
     /**
-     * Probabilité a priori qu'on clique cet élément maintenant : P(clé | dernier clic)
-     * si le dernier clic est récent, sinon sa fréquence générale (atténuée).
+     * Prior probability of clicking this element now: P(key | last click)
+     * when the last click is recent, otherwise its general frequency (dampened).
      */
     prior(key, now) {
       const d = this.data;
@@ -144,7 +144,7 @@
       return all > 0 ? (0.5 * (d.n[key] || 0)) / all : 0;
     }
 
-    /** Garde au plus MAX_KEYS éléments (on oublie les moins cliqués). */
+    /** Keeps at most MAX_KEYS elements (least-clicked are forgotten). */
     _prune() {
       const keys = Object.keys(this.data.n);
       if (keys.length <= MAX_KEYS) return;
@@ -169,7 +169,7 @@
       } catch (err) { /* stockage plein ou indisponible */ }
     }
 
-    /** Efface ce qui a été appris pour un site (appelé depuis le menu). */
+    /** Clears what was learned for a site (called from the menu). */
     static async forget(host) {
       const key = `balade.habits.${String(host || "").toLowerCase()}`;
       if (hasChrome) {
@@ -177,7 +177,7 @@
       } else {
         try {
           localStorage.removeItem(key);
-        } catch (err) { /* rien */ }
+        } catch (err) { /* nothing */ }
         if (typeof BroadcastChannel !== "undefined") {
           const ch = new BroadcastChannel("balade.habits");
           ch.postMessage(`forget:${String(host || "").toLowerCase()}`);
@@ -186,7 +186,7 @@
       }
     }
 
-    /** Nombre de clics appris pour un site (pour l'afficher dans le menu). */
+    /** Number of clicks learned for a site (to display in the menu). */
     static async count(host) {
       const key = `balade.habits.${String(host || "").toLowerCase()}`;
       try {

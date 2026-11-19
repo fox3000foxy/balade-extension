@@ -1,5 +1,5 @@
-// Le moteur : la boucle d'animation, la population de curseurs, le défilement,
-// la souris de l'utilisateur, le plein écran, et le choix du comportement suivant.
+// The engine: animation loop, cursor population, scrolling,
+// the user's mouse, full screen, and next-behavior selection.
 (() => {
   const { M, Cursor, Motion, Stage, Renderer, Sound, Settings, Habits, Predictor, Arrive, Leave, Wander, Gather, Follow, Swarm, Anticipate, Flee, I18n } = window.Balade;
 
@@ -28,7 +28,7 @@
       this.fullscreen = false;
       this._nextFullscreenCheck = 0;
 
-      // Attention partagée, vie sociale, essaim.
+      // Shared attention, social life, swarm.
       this.attention = null;      // { kind, pageX, pageY, since, el? }
       this._still = 0;
       this._attCooled = false;
@@ -39,15 +39,15 @@
       this.swarmHeld = false;
       this._shift = { down: false, lastUp: -Infinity, armedAt: null };
 
-      // Anticipation et habitudes.
+      // Anticipation and habits.
       this.habits = new Habits(location.hostname);
       this.predictor = new Predictor(this);
       this.predictionHits = 0;
-      this._userClicks = []; // { el, time } : vos clics récents
+      this._userClicks = []; // { el, time } : your recent clicks
 
-      // Jeu du chat et mode concentration.
+      // Tag game and focus mode.
       this.game = null;  // { start, total, caught, done, doneAt, text }
-      this.focus = null; // { phase: "focus" | "break", until (ms, horloge murale) }
+      this.focus = null; // { phase: "focus" | "break", until (ms, wall clock) }
       this._hudAt = 0;
 
       this._onPointerMove = (e) => {
@@ -69,12 +69,12 @@
         const sh = this._shift;
         if (e.key === "Shift") {
           if (!e.repeat) {
-            // Second appui rapproché : on « arme » l'essaim, déclenché si la touche reste tenue.
+            // Second press close together: "arm" the swarm, triggered if the key stays held.
             sh.armedAt = this.time - sh.lastUp < this.config.swarm.doubleTap ? this.time : null;
             sh.down = true;
           }
         } else {
-          sh.armedAt = null; // une autre touche : c'était de la saisie, pas un appel
+          sh.armedAt = null; // another key: it was typing, not a swarm call
         }
       };
       this._onKeyUp = (e) => {
@@ -105,7 +105,7 @@
       this._frame = (ts) => this.frame(ts);
     }
 
-    // ---------- Cycle de vie ----------
+    // ---------- Lifecycle ----------
 
     start() {
       if (this.running) return;
@@ -132,14 +132,14 @@
       this._raf = requestAnimationFrame(this._frame);
     }
 
-    /** Arrêt en douceur : tout le monde sort, puis l'overlay disparaît. */
+    /** Graceful stop: everyone leaves, then the overlay fades out. */
     stop() {
       if (!this.running || this.stopping) return;
       this.stopping = true;
       for (const c of this.cursors) this._sendAway(c);
     }
 
-    /** Arrêt immédiat. */
+    /** Immediate stop. */
     destroy() {
       cancelAnimationFrame(this._raf);
       window.removeEventListener("pointermove", this._onPointerMove);
@@ -162,7 +162,7 @@
       if (this.onDestroy) this.onDestroy();
     }
 
-    /** Applique de nouveaux réglages sans relancer la balade. */
+    /** Applies new settings without restarting the cursors. */
     applySettings(settings) {
       Settings.applyToConfig(settings, this.config);
       const p = this.config.population;
@@ -175,7 +175,7 @@
       this._checkFullscreen(true);
     }
 
-    // ---------- Boucle ----------
+    // ---------- Loop ----------
 
     frame(now) {
       const dt = Math.min((now - this._last) / 1000, this.config.dtMax);
@@ -189,8 +189,8 @@
     step(dt) {
       this.time += dt;
 
-      // Les événements couvrent l'API Fullscreen ; un contrôle régulier rattrape
-      // le plein écran du navigateur, qui ne déclenche pas toujours d'événement.
+      // Events cover the Fullscreen API; a periodic check catches browser
+      // full screen (F11), which doesn't always fire an event.
       if (this.time >= this._nextFullscreenCheck) {
         this._nextFullscreenCheck = this.time + 0.5;
         this._checkFullscreen();
@@ -226,11 +226,11 @@
       if (this.stopping && this.cursors.length === 0) this.destroy();
     }
 
-    // ---------- Comportements ----------
+    // ---------- Behaviors ----------
 
     /**
-     * Choisit ce que fait un curseur quand son comportement se termine.
-     * C'est le point d'extension pour les futurs comportements (prédiction de tâche…).
+     * Chooses what a cursor does when its behavior finishes.
+     * This is the extension point for future behaviors (task prediction...).
      */
     chooseBehavior(cursor) {
       if (this.game && !cursor.caught) return new Flee(this);
@@ -238,7 +238,7 @@
       return new Wander(this);
     }
 
-    // ---------- Petit ordonnanceur (délais en temps du moteur) ----------
+    // ---------- Small scheduler (delays in engine time) ----------
 
     _later(delay, fn) {
       this._timers.push({ at: this.time + delay, fn });
@@ -255,11 +255,11 @@
       return !c.leaving && this.cursors.includes(c);
     }
 
-    // ---------- Attention partagée ----------
+    // ---------- Shared attention ----------
 
     /**
-     * Votre attention se pose quand la souris reste immobile un moment, ou quand vous
-     * tapez dans un champ. Elle se défait quand vous vous éloignez, ou au bout d'un moment.
+     * Your attention is set when the mouse stays still, or when you type in a field.
+     * It clears when you move away, or after a timeout.
      */
     _trackAttention(dt) {
       const cfg = this.config.attention;
@@ -299,19 +299,19 @@
 
       if (this.attention && this.time - this.attention.since > cfg.maxAge) {
         this.attention = null;
-        this._attCooled = true; // il faudra bouger avant une nouvelle attention
+        this._attCooled = true; // must move before attention can be set again
       }
       if (this.attention && this.attention !== prev) this._summon(this.attention);
     }
 
-    /** Envoie les plus curieux voir ce qui vous intéresse, chacun à son rythme. */
+    /** Sends the most curious cursors to see what you're looking at, each at its own pace. */
     _summon(att) {
       const cfg = this.config.attention;
       const free = this.cursors.filter(
         (c) => !c.leaving && !c.ghost && c.behavior && !(c.behavior instanceof Swarm) && !(c.behavior instanceof Gather)
       );
       if (free.length === 0) return;
-      const keen = 0.5 + this.config.wander.inspect; // réglage « Curiosité »
+      const keen = 0.5 + this.config.wander.inspect; // "Curiosity" setting
       const n = Math.max(1, Math.min(free.length, Math.round(this.cursors.length * cfg.share * keen)));
       free.sort((a, b) => b.temperament.curiosity + Math.random() * 0.3 - (a.temperament.curiosity + Math.random() * 0.3));
       for (const c of free.slice(0, n)) {
@@ -321,9 +321,9 @@
       }
     }
 
-    // ---------- Vie sociale ----------
+    // ---------- Social life ----------
 
-    /** Deux curseurs qui se croisent se saluent ; parfois l'un suit l'autre. */
+    /** Two cursors crossing paths greet each other; sometimes one follows the other. */
     _meetings() {
       const cfg = this.config.social;
       if (!cfg.enabled || this.swarmHeld || this.time - this._lastGreet < cfg.greetCooldown) return;
@@ -343,17 +343,17 @@
           this.sound.greet(a);
           if (M.chance(cfg.sayOnGreet)) M.pick([a, b]).say(M.pick(this.config.bubbles.greet), this.time);
 
-          // L'un des deux, s'il flânait, suit l'autre un moment.
+          // One of them, if wandering, follows the other for a while.
           if (M.chance(cfg.followChance)) {
             const [f, l] = M.chance(0.5) ? [a, b] : [b, a];
             if (f.behavior instanceof Wander && !f.focus) f.setBehavior(new Follow(this, l));
           }
-          return; // une rencontre à la fois
+          return; // one greeting at a time
         }
       }
     }
 
-    /** Vos clics attirent le regard : les curseurs proches ont un petit élan vers eux. */
+    /** Your clicks draw attention: nearby cursors get a small push toward them. */
     _reactToClick(x, y) {
       const cfg = this.config.social;
       if (!cfg.reactive || this.swarmHeld || this.stopping) return;
@@ -369,7 +369,7 @@
       }
     }
 
-    /** Un formulaire envoyé : petit hourra collectif, chacun saute à son tour. */
+    /** A form submitted: a collective cheer, each cursor jumping in turn. */
     _cheer() {
       const cfg = this.config.social;
       if (!cfg.reactive || this.stopping) return;
@@ -394,7 +394,7 @@
       if (guess) this._anticipate(guess.el, "gesture");
     }
 
-    /** Mémorise votre clic, puis devine éventuellement la suite d'après vos habitudes. */
+    /** Records your click, then optionally guesses the next one from habits. */
     _learnClick(target) {
       if (this.stopping || !target || target.nodeType !== 1) return;
       const key = this.habits.record(target, this.time);
@@ -412,7 +412,7 @@
       });
     }
 
-    /** Envoie le curseur libre le plus proche vers l'élément deviné. */
+    /** Sends the nearest free cursor toward the guessed element. */
     _anticipate(el, reason) {
       if (this.cursors.some((c) => c.predicting)) return;
       const r = el.getBoundingClientRect();
@@ -434,8 +434,8 @@
     }
 
     /**
-     * Le curseur avait-il vu juste ? "right" si vous avez cliqué l'élément ou si votre
-     * souris est dessus, "wrong" si vous avez cliqué ailleurs, sinon null (on attend).
+     * Did the cursor guess right? "right" if you clicked the element or your
+     * mouse is over it, "wrong" if you clicked elsewhere, null otherwise (still waiting).
      */
     judgePrediction(el, since) {
       for (const k of this._userClicks) {
@@ -448,13 +448,13 @@
       return null;
     }
 
-    // ---------- Essaim à la demande ----------
+    // ---------- On-demand swarm ----------
 
     _checkSwarm() {
       const sh = this._shift;
       if (this.swarmHeld || sh.armedAt == null || !sh.down || !this.config.social.reactive) return;
       if (this.time - sh.armedAt < this.config.swarm.holdBefore) return;
-      if (this.mouse.x < -1000) return; // il faut savoir où est votre pointeur
+      if (this.mouse.x < -1000) return; // we need to know where your pointer is
       this.swarmHeld = true;
       for (const c of this.cursors) {
         if (!c.leaving) c.setBehavior(new Swarm(this));
@@ -480,7 +480,7 @@
     _regulatePopulation(dt) {
       const p = this.config.population;
 
-      // Concentration : tout le monde reste dehors.
+      // Focus mode: everyone stays out.
       if (this.focus && this.focus.phase === "focus") {
         for (const c of this.cursors) this._sendAway(c);
         return;
@@ -488,7 +488,7 @@
 
       this._nextPopulationChange -= dt;
       if (this._nextPopulationChange <= 0) {
-        // De temps en temps, quelqu'un arrive ou s'en va, puis on revient vers la cible.
+        // Occasionally, someone arrives or leaves, then we drift back toward the target.
         const drift = this._wanted === p.target ? M.sign() : Math.sign(p.target - this._wanted);
         this._wanted = M.clamp(this._wanted + drift, p.min, p.max);
         this._nextPopulationChange = M.rand(...p.changeEvery);
@@ -501,7 +501,7 @@
         this._spawn();
         this._spawnCooldown = p.spawnGap * M.rand(0.6, 1.6);
       } else if (present.length > this._wanted) {
-        // Celui qui part est pris au hasard, pas forcément le dernier arrivé.
+        // The one that leaves is chosen at random, not necessarily the last to arrive.
         this._sendAway(M.pick(present));
       }
     }
@@ -511,7 +511,7 @@
       const taken = new Set(this.cursors.map((c) => c.name));
       const freeNames = cfg.names.filter((n) => !taken.has(n));
       const usedColors = new Set(this.cursors.map((c) => c.colorIndex));
-      // Une couleur pas encore prise dans la palette du thème, si possible.
+      // A color not yet taken from the theme palette, if possible.
       const slots = this.renderer.theme.palette.length;
       const freeColors = [];
       for (let i = 0; i < slots; i++) if (!usedColors.has(i)) freeColors.push(i);
@@ -529,20 +529,20 @@
       });
       c.setBehavior(new Arrive(this));
       this.cursors.push(c);
-      // Retour de pause : on l'annonce.
+      // Return from break: announce it.
       if (this.focus && this.focus.phase === "break" && this.config.social.enabled) {
         this._later(M.rand(0.8, 1.6), () => this._alive(c) && c.say(M.pick(this.config.bubbles.breakTime), this.time, 2.2));
       }
       return c;
     }
 
-    // ---------- Jeu du chat ----------
+    // ---------- Tag game ----------
 
-    /** Attrapez-les tous : chaque curseur fuit votre souris ; on l'attrape en passant dessus. */
+    /** Catch them all: each cursor flees your mouse; catch one by passing over it. */
     startGame() {
       if (this.game || this.stopping) return;
       this.swarmHeld = false;
-      // Toute l'équipe en jeu, tout de suite.
+      // The whole team in play, right away.
       const present = () => this.cursors.filter((c) => !c.leaving);
       while (present().length < this.config.population.target) this._spawn();
       const players = present();
@@ -615,7 +615,7 @@
       return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
     }
 
-    /** Meilleur temps (gardé dans le stockage de l'extension, jamais dans celui du site). */
+    /** Best time (stored in extension storage, never in the site's storage). */
     static async bestTime(candidate) {
       const key = "balade.best.chat";
       try {
@@ -624,16 +624,16 @@
           if (prev == null || candidate < prev) await chrome.storage.local.set({ [key]: candidate });
           return prev == null ? null : prev;
         }
-      } catch (err) { /* pas de record */ }
+      } catch (err) { /* no record */ }
       Engine._best = Engine._best == null ? null : Engine._best;
       const prev = Engine._best;
       if (prev == null || candidate < prev) Engine._best = candidate;
       return prev;
     }
 
-    // ---------- Mode concentration ----------
+    // ---------- Focus mode ----------
 
-    /** Les curseurs s'en vont pendant `minutes`, puis reviennent pour la pause. */
+    /** Cursors leave for `minutes`, then come back for the break. */
     startFocus(minutes) {
       const f = this.config.focus;
       this.endGame();
@@ -652,7 +652,7 @@
       const now = Date.now();
       if (now >= f.until) {
         if (f.phase === "focus") {
-          // Fin de la concentration : la pause commence, tout le monde revient.
+          // Focus time is up: break starts, everyone comes back.
           f.phase = "break";
           f.until = now + this.config.focus.breakMinutes * 60000;
           this._spawnCooldown = 0;
@@ -669,12 +669,12 @@
       }
     }
 
-    // ---------- Défilement ----------
+    // ---------- Scrolling ----------
 
     /**
-     * Chaque curseur vit sur la page. Quand vous faites défiler, il reste en place
-     * dans la page (il glisse donc à l'écran), puis, après un temps de réaction,
-     * il défile lui-même pour vous rattraper, avec le même profil de vitesse qu'un geste.
+     * Each cursor lives on the page. When you scroll, it stays put in the
+     * page (so it slides on screen), then, after a reaction delay,
+     * it scrolls itself to catch up, with the same speed profile as a gesture.
      */
     _followScroll(dt) {
       const cfg = this.config.scroll;
@@ -690,9 +690,9 @@
           if (dist < 1) continue;
           s.phase = "waiting";
           if (this.time < s.recentUntil) {
-            s.wait = M.rand(...cfg.followUp); // déjà en train de vous suivre
+            s.wait = M.rand(...cfg.followUp); // already following you recently
           } else if (M.chance(cfg.distracted)) {
-            s.wait = M.rand(...cfg.distractedFor); // occupé ailleurs un moment
+            s.wait = M.rand(...cfg.distractedFor); // busy elsewhere for a moment
           } else {
             s.wait = M.rand(...cfg.reaction) * Math.sqrt(c.temperament.patience);
           }
@@ -728,9 +728,9 @@
       }
     }
 
-    // ---------- Fonds sombres ----------
+    // ---------- Dark backgrounds ----------
 
-    /** Regarde de temps en temps le fond sous chaque curseur (échantillonnage étalé). */
+    /** Periodically samples the background under each cursor (spread out). */
     _sampleBackgrounds() {
       const cfg = this.config.dark;
       for (const c of this.cursors) {
@@ -742,15 +742,15 @@
         c.nextBgSample = this.time + cfg.every * M.rand(0.8, 1.2);
         const lum = this.stage.luminanceAt(c.screenX + 3, c.screenY + 6);
         if (lum == null) continue;
-        // Hystérésis : on ne bascule pas sans arrêt sur un fond intermédiaire.
+        // Hysteresis: don't flip repeatedly on an intermediate background.
         if (c.onDark && lum > cfg.above) c.onDark = false;
         else if (!c.onDark && lum < cfg.below) c.onDark = true;
       }
     }
 
-    // ---------- Plein écran ----------
+    // ---------- Full screen ----------
 
-    /** En plein écran (vidéo, présentation, F11), les curseurs se cachent et se taisent. */
+    /** In full screen (video, presentation, F11), cursors hide and go silent. */
     _checkFullscreen(force) {
       const fs = this.config.hideFullscreen && this.stage.isFullscreen();
       if (fs === this.fullscreen && !force) return;
@@ -759,24 +759,24 @@
       this.sound.setSuppressed(fs);
     }
 
-    // ---------- Souris de l'utilisateur ----------
+    // ---------- User's mouse ----------
 
-    /** La souris bouscule les curseurs proches ; un ressort les ramène ensuite. */
+    /** The mouse nudges nearby cursors; a spring pulls them back. */
     _avoidMouse(dt) {
-      if (this.time - this.mouse.movedAt > 1.5) return; // souris immobile : on la laisse tranquille
+      if (this.time - this.mouse.movedAt > 1.5) return; // mouse still: leave it alone
       const { radius, strength } = this.config.avoid;
       for (const c of this.cursors) {
         const dx = c.screenX - this.mouse.x;
         const dy = c.screenY - this.mouse.y;
         const d = Math.hypot(dx, dy);
         if (d >= radius || d < 0.001) continue;
-        // Accélération (px/s²) qui croît comme le carré de la proximité.
-        // À l'équilibre avec le ressort, l'écart vaut environ strength / springK.
+        // Acceleration (px/s^2) that grows as the square of closeness.
+        // At equilibrium with the spring, the offset is about strength / springK.
         const k = 1 - d / radius;
         const a = strength * k * k;
         c.push((dx / d) * a * dt, (dy / d) * a * dt);
 
-        // Bousculé franchement : un petit « boing », pas plus d'un par seconde environ.
+        // Nudged hard: a small "boing", at most roughly one per second.
         if (k > 0.45 && this.time - c.lastBumpSound > this.config.sound.bumpCooldown) {
           c.lastBumpSound = this.time;
           this.sound.boing(c);

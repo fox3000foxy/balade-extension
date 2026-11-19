@@ -1,6 +1,6 @@
-// Le rendu : un overlay plein écran, isolé du site par un Shadow DOM,
-// qui ne capte jamais la souris (pointer-events: none).
-// L'apparence (pointeurs, étiquettes, surbrillances) vient du thème actif (Themes.js).
+// The renderer: a full-screen overlay, isolated from the site by a Shadow DOM,
+// that never captures the mouse (pointer-events: none).
+// Appearance (pointers, tags, highlights) comes from the active theme (Themes.js).
 (() => {
   const { Themes, FontLoader } = window.Balade;
   const HOST_TAG = "balade-overlay";
@@ -45,14 +45,14 @@
     }
   `;
 
-  // Marge au-delà de laquelle un curseur est considéré hors de l'écran (px).
+  // Margin beyond which a cursor is considered off-screen (px).
   const OFF_MARGIN = 6;
 
   class Renderer {
     constructor() {
       this.host = null;
       this.layer = null;
-      this.views = new Map(); // id du curseur → éléments DOM de sa vue
+      this.views = new Map(); // cursor id -> DOM elements of its view
       this.hidden = false;
       this.theme = Themes.classique;
       this.themeId = "classique";
@@ -79,11 +79,11 @@
       shadow.append(style, this.layer);
       this._applyLayerClass();
       document.documentElement.appendChild(this.host);
-      // Laisse le navigateur peindre l'état initial avant le fondu d'entrée.
+      // Let the browser paint the initial state before the fade-in.
       requestAnimationFrame(() => this.layer && this.layer.classList.add("on"));
     }
 
-    /** Fondu de sortie, puis retrait du DOM. */
+    /** Fade out, then remove from the DOM. */
     unmount() {
       if (!this.host) return;
       const host = this.host;
@@ -94,7 +94,7 @@
       this.views.clear();
     }
 
-    /** Change de thème (ou de thème perso) ; la police du thème est chargée à la volée. */
+    /** Changes the theme (or custom theme); the theme font is loaded on demand. */
     setTheme(id, custom) {
       if (id === "perso" && custom && custom.enabled) {
         this.theme = window.Balade.makePerso(custom);
@@ -106,7 +106,7 @@
       this.cssId = this.theme.cssId || id;
       this.version = (this.version || 0) + 1;
       FontLoader.load(this.theme.font);
-      for (const v of this.views.values()) v.key = null; // force le redessin des pointeurs
+      for (const v of this.views.values()) v.key = null; // force pointer redraw
       this._applyLayerClass();
     }
 
@@ -115,7 +115,7 @@
       this._applyLayerClass();
     }
 
-    /** Petit affichage fixe : "top" (jeu) ou "corner" (minuteur). null pour le cacher. */
+    /** Small fixed display: "top" (game) or "corner" (timer). null to hide. */
     setHud(slot, text) {
       const el = this.hud && this.hud[slot];
       if (!el) return;
@@ -127,7 +127,7 @@
       el.classList.add("on");
     }
 
-    /** Cache ou montre tous les curseurs (plein écran). */
+    /** Hides or shows all cursors (full screen). */
     setHidden(hidden) {
       this.hidden = hidden;
       this._applyLayerClass();
@@ -174,7 +174,7 @@
       return view;
     }
 
-    /** Redessine le pointeur quand la forme, la couleur ou le thème changent. */
+    /** Redraws the pointer when shape, color or theme change. */
     _applyShape(v, c, color) {
       const t = this.theme;
       const size = t.size;
@@ -187,13 +187,13 @@
       v.svg.style.left = `${-hot.x * k}px`;
       v.svg.style.top = `${-hot.y * k}px`;
       v.svg.style.transformOrigin = `${hot.x * k}px ${hot.y * k}px`;
-      // L'étiquette se place sous la pointe de la flèche, quelle que soit la forme.
+      // The tag is placed below the arrow tip, whatever the shape.
       v.tag.style.left = `${size * 0.48}px`;
       v.tag.style.top = `${size * 0.66}px`;
       v.bubble.style.left = `${size * 0.55}px`;
       v.bubble.style.bottom = `${size * 0.35}px`;
       v.root.style.setProperty("--c", color);
-      // Avec vos couleurs (thème perso), le texte des étiquettes s'adapte pour rester lisible.
+      // With custom colors, tag text adapts to stay readable.
       if (this.themeId === "perso") {
         v.root.style.setProperty("--ct", window.Balade.textOn(color, this.cssId === "galets" ? "#2B241F" : "#1B1D21",
           this.cssId === "zine" ? "#F3EEE4" : "#FFFFFF"));
@@ -201,12 +201,12 @@
         v.root.style.removeProperty("--ct");
       }
       v.root.style.setProperty("--c2", t.second ? t.second(color) : color);
-      // Curseur de texte : à la couleur du curseur (au crayon rouge dans le carnet).
+      // Text caret: in the cursor's color (red pencil in the Notebook theme).
       const css = this.cssId || this.themeId;
       v.caret.style.background = css === "carnet" ? "#C2412D" : css === "classique" && this.themeId !== "perso" ? "#1B1D21" : color;
     }
 
-    /** Copie la typographie et la boîte de contenu du champ, une fois par mot fantôme. */
+    /** Copies the field's typography and content box, once per ghost word. */
     _styleGhost(v, el) {
       const cs = getComputedStyle(el);
       const g = v.ghost;
@@ -214,7 +214,7 @@
       g.style.letterSpacing = cs.letterSpacing;
       const fieldLum = window.Balade.Stage.luminance(cs.backgroundColor);
       g.style.color = fieldLum != null && fieldLum < 0.3 ? cs.color : this.theme.text;
-      // Couvre le placeholder avec le fond du champ, comme quand on tape vraiment.
+      // Covers the placeholder with the field's background, as when actually typing.
       const bg = cs.backgroundColor;
       g.style.background = bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent" ? bg : "transparent";
       g.style.alignItems = el.localName === "input" ? "center" : "flex-start";
@@ -228,9 +228,9 @@
     }
 
     /**
-     * Range les repères de bord de gauche à droite sans chevauchement :
-     * chacun reste au plus près de l'abscisse de son curseur, et passe à la rangée
-     * suivante quand il n'y a plus de place.
+     * Lays out edge markers left to right without overlap:
+     * each stays as close as possible to its cursor's x position, and
+     * wraps to the next row when there's no room.
      */
     _layoutPips(pips, W, H) {
       for (const above of [true, false]) {
@@ -269,7 +269,7 @@
           v.key = key;
         }
 
-        // Hors de l'écran (au-dessus ou en dessous) : un repère au bord, avec le prénom.
+        // Off-screen (above or below): an edge marker with the name.
         const above = c.screenY < -OFF_MARGIN;
         const below = c.screenY > H + OFF_MARGIN;
         const pip = (above || below) && !c.leaving;
@@ -284,7 +284,7 @@
         }
 
         if (pip) {
-          // Placé après la boucle, pour que les repères ne se chevauchent pas.
+          // Placed after the loop, so markers don't overlap.
           pips.push({ v, x: c.screenX, above });
         } else {
           v.root.style.transform = `translate(${c.screenX.toFixed(1)}px, ${c.screenY.toFixed(1)}px)`;
@@ -294,7 +294,7 @@
         }
 
         if (c.bubble) {
-          // Près d'un bord, la bulle passe de l'autre côté pour rester lisible.
+          // Near an edge, the bubble switches sides to stay readable.
           v.root.classList.toggle("bub-left", c.screenX > W - 160);
           v.root.classList.toggle("bub-below", c.screenY < 48);
           if (v.bubbleText !== c.bubble.text) {

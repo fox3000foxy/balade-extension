@@ -1,5 +1,5 @@
-// Lancement automatique : injecté par le service worker sur les sites choisis dans le menu
-// (« Lancer automatiquement ici »). Ne fait rien si le site est exclu ou si la balade tourne déjà.
+// Auto-start: injected by the service worker on sites chosen in the menu
+// ("Start automatically here"). Does nothing if the site is excluded or cursors are already running.
 (() => {
   const B = window.Balade;
   if (!B || !B.Settings || !B.toggle) return;

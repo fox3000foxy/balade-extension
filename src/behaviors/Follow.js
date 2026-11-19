@@ -1,5 +1,5 @@
-// Suivre un autre curseur quelques secondes, après une rencontre :
-// on reste un peu en retrait, derrière lui, en léger décalage sur le côté.
+// Follow another cursor for a few seconds after a greeting:
+// stay a little behind, slightly to one side.
 (() => {
   const { Behavior, M } = window.Balade;
 
@@ -22,13 +22,13 @@
         t -= dt;
         if (leader.leaving || !this.engine.cursors.includes(leader)) break;
 
-        // Direction du meneur (gardée en mémoire quand il s'arrête).
+        // Leader direction (remembered when it stops).
         const sp = Math.hypot(leader.vx, leader.vy);
         if (sp > 40) {
           hx = leader.vx / sp;
           hy = leader.vy / sp;
         }
-        // Position du meneur, convertie dans la vue de ce curseur.
+        // Leader position, converted into this cursor's view.
         const lx = leader.pageX - cursor.viewX;
         const ly = leader.pageY - cursor.viewY;
         const tx = lx - hx * back - hy * side;

@@ -1,6 +1,6 @@
-// Enregistrement vidéo de l'onglet (document hors écran, seul endroit où MV3 permet
-// d'utiliser le flux de chrome.tabCapture avec MediaRecorder).
-// L'enregistrement s'arrête tout seul au bout de 2 minutes.
+// Tab video recording (offscreen document, the only place MV3 allows
+// using the chrome.tabCapture stream with MediaRecorder).
+// Recording stops automatically after 2 minutes.
 (() => {
   const MAX_MS = 2 * 60 * 1000;
   let recorder = null;
@@ -21,7 +21,7 @@
       audio: { mandatory: { chromeMediaSource: "tab", chromeMediaSourceId: streamId } },
       video: { mandatory: { chromeMediaSource: "tab", chromeMediaSourceId: streamId, maxFrameRate: 60 } }
     });
-    // Capturer l'onglet coupe son son pour vous : on le renvoie vers les haut-parleurs.
+    // Capturing the tab mutes it for you: route it back to the speakers.
     audioCtx = new AudioContext();
     audioCtx.createMediaStreamSource(stream).connect(audioCtx.destination);
 

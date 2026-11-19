@@ -1,5 +1,5 @@
-// Service worker : le raccourci Alt+B lance ou range la balade dans l'onglet actif.
-// (Un clic sur l'icône ouvre le menu, qui a son propre bouton.)
+// Service worker: the Alt+B shortcut starts or puts away the cursors in the active tab.
+// (Clicking the icon opens the menu, which has its own button.)
 importScripts("lib/inject.js");
 
 chrome.commands.onCommand.addListener(async (command, tab) => {
@@ -9,12 +9,12 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
   try {
     await self.BaladeInject.toggle(target.id);
   } catch (err) {
-    // Pages protégées (chrome://, Chrome Web Store…) : rien à faire.
+    // Protected pages (chrome://, Chrome Web Store...): nothing to do.
     console.warn("[Balade] Impossible sur cette page :", err.message);
   }
 });
 
-// Lancement automatique : on garde l'enregistrement à jour avec les réglages et les accès accordés.
+// Auto-start: keep the registration in sync with settings and granted permissions.
 const syncAuto = () => self.BaladeInject.syncAutoStart().catch((err) => console.warn("[Balade]", err.message));
 chrome.runtime.onInstalled.addListener(syncAuto);
 chrome.runtime.onStartup.addListener(syncAuto);
@@ -24,9 +24,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.permissions.onAdded.addListener(syncAuto);
 chrome.permissions.onRemoved.addListener(syncAuto);
 
-// ---------- Enregistrement vidéo de l'onglet ----------
-// Le menu obtient l'identifiant du flux (chrome.tabCapture, au moment de votre clic),
-// puis le service worker confie l'enregistrement à un document hors écran.
+// ---------- Tab video recording ----------
+// The menu gets the stream ID (chrome.tabCapture, at the moment of your click),
+// then the service worker hands the recording off to an offscreen document.
 
 const REC_KEY = "balade.rec";
 
@@ -64,12 +64,12 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       const host = ((rec && rec.host) || "page").replace(/[^a-z0-9.-]/gi, "_");
       await chrome.downloads.download({ url: msg.url, filename: `balade-${host}-${stamp}.webm` });
       await setRecording(null);
-      // On laisse le temps au téléchargement de lire la vidéo avant de libérer la mémoire.
+      // Give the download time to read the video before freeing the memory.
       setTimeout(() => chrome.runtime.sendMessage({ target: "offscreen", type: "cleanup" }), 30000);
     } else if (msg.type === "rec-error") {
       console.warn("[Balade] Enregistrement impossible :", msg.message);
       await setRecording(null);
     }
   })().catch((err) => console.warn("[Balade]", err.message));
-  return true; // réponse asynchrone
+  return true; // async reply
 });

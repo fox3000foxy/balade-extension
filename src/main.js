@@ -1,6 +1,6 @@
-// Point d'entrée : un seul moteur à la fois, que l'icône, le menu ou Alt+B allument ou éteignent.
-// Les réglages sont lus au lancement, puis suivis en direct (un changement dans le menu
-// s'applique immédiatement, sans relancer la balade).
+// Entry point: one engine at a time, started or stopped by the icon, menu or Alt+B.
+// Settings are read on start, then tracked live (a change in the menu
+// applies immediately, without restarting the cursors).
 (() => {
   const B = window.Balade;
   if (B.ready) return;
@@ -16,10 +16,10 @@
   /** @returns {Promise<"running"|"stopped"|"excluded">} */
   B.toggle = async () => {
     if (engine && engine.running && !engine.stopping) {
-      engine.stop(); // sortie en douceur
+      engine.stop(); // graceful exit
       return "stopped";
     }
-    if (engine) engine.destroy(); // une demande pendant la sortie relance une balade neuve
+    if (engine) engine.destroy(); // a request during exit starts fresh
 
     const settings = await B.Settings.load();
     if (B.Settings.isExcluded(settings, location.hostname)) return "excluded";
@@ -34,11 +34,11 @@
         release();
       }
     };
-    B.engine = engine; // accessible depuis la console pour expérimenter
+    B.engine = engine; // accessible from the console for experimentation
     release();
     unsubscribe = B.Settings.subscribe((s) => {
       if (B.engine !== mine || !mine.running) return;
-      // Le site vient d'être exclu : tout le monde s'en va.
+      // The site was just excluded: everyone leaves.
       if (B.Settings.isExcluded(s, location.hostname)) mine.stop();
       else mine.applySettings(s);
     });
@@ -46,7 +46,7 @@
     return "running";
   };
 
-  /** Démarre la balade si besoin. Renvoie false si le site est exclu. */
+  /** Starts the cursors if needed. Returns false if the site is excluded. */
   async function ensureRunning() {
     if (engine && engine.running && !engine.stopping) return true;
     return (await B.toggle()) === "running";

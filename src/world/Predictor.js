@@ -1,14 +1,14 @@
-// Anticipation du geste : pendant que vous déplacez la souris, on cherche l'élément
-// cliquable que vous êtes en train de viser.
+// Gesture anticipation: while you move the mouse, search for the
+// clickable element you are aiming at.
 //
-// Indices utilisés (tous tirés de la façon dont une main pointe une cible) :
-//  - la direction : la cible est dans un cône autour de la vitesse, d'autant plus large
-//    que la cible est grande et proche ;
-//  - la décélération : un pointage rapide freine dans son dernier tiers ; à décélération
-//    à peu près constante, la distance restante vaut v² / (2·|a|) ;
-//  - vos habitudes : un élément que vous cliquez souvent à ce moment-là est favorisé.
-// Le score de chaque cible est le produit de ces indices ; on ne prédit que si une
-// cible l'emporte nettement.
+// Cues used (all drawn from how a hand points at a target):
+//  - direction: the target is in a cone around the velocity, wider
+//    when the target is large and close;
+//  - deceleration: a fast pointing movement brakes in its last third;
+//    at roughly constant deceleration, the remaining distance is v^2 / (2*|a|);
+//  - your habits: an element you often click at this moment is favoured.
+// Each target's score is the product of these cues; a prediction is
+// only made when one target wins clearly.
 (() => {
   const { M } = window.Balade;
 
@@ -17,8 +17,8 @@
   class Predictor {
     constructor(engine) {
       this.engine = engine;
-      this.samples = []; // { t (s, temps du moteur), x, y } en coordonnées d'écran
-      this.locked = false; // une seule prédiction par geste
+      this.samples = []; // { t (s, engine time), x, y } in screen coordinates
+      this.locked = false; // one prediction per gesture
       this.lastAt = -Infinity;
     }
 
@@ -27,7 +27,7 @@
       while (this.samples.length > 2 && t - this.samples[0].t > 0.3) this.samples.shift();
     }
 
-    /** Vitesse moyenne entre deux instants passés (px/s) : { vx, vy } ou null. */
+    /** Mean velocity between two past moments (px/s): { vx, vy } or null. */
     _velocity(fromAgo, toAgo, now) {
       const s = this.samples;
       const pick = (ago) => {
@@ -43,8 +43,8 @@
     }
 
     /**
-     * Cherche la cible visée. Renvoie { el, share, distance } ou null.
-     * @param {number} now temps du moteur
+     * Searches for the aimed target. Returns { el, share, distance } or null.
+     * @param {number} now engine time
      */
     predict(now) {
       const cfg = this.engine.config.predict;
@@ -52,7 +52,7 @@
       if (s.length < 4) return null;
       const last = s[s.length - 1];
 
-      // Souris arrêtée : le geste est fini, on pourra prédire le suivant.
+      // Mouse stopped: the gesture is done, we can predict the next one.
       if (now - last.t > 0.12) {
         this.locked = false;
         return null;
@@ -66,7 +66,7 @@
       const speedPrev = Math.hypot(vPrev.vx, vPrev.vy);
       if (speed < cfg.minSpeed) return null;
 
-      // Direction stable (sinon la main hésite encore).
+      // Stable direction (otherwise the hand is still hesitating).
       const turn = Math.abs(Math.atan2(v.vx * vPrev.vy - v.vy * vPrev.vx, v.vx * vPrev.vx + v.vy * vPrev.vy));
       if (turn > 0.45) return null;
 
@@ -91,7 +91,7 @@
         const D = Math.hypot(dx, dy);
         if (D < 1) continue;
 
-        // Angle entre la vitesse et la direction de la cible, et tolérance selon sa taille.
+        // Angle between velocity and target direction, tolerance based on target size.
         const cos = M.clamp((dx * ux + dy * uy) / D, -1, 1);
         const theta = Math.acos(cos);
         const tol = 0.3 + Math.atan2(Math.max(r.width, r.height) / 2, D);
@@ -122,7 +122,7 @@
 
       this.locked = true;
       this.lastAt = now;
-      // Gardé pour expérimenter depuis la console : Balade.engine.predictor.lastGuess
+      // Kept for console experimentation: Balade.engine.predictor.lastGuess
       this.lastGuess = { el: best.el, share, distance: best.D, braking, remaining, speed };
       return this.lastGuess;
     }

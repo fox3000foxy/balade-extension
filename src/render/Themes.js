@@ -1,12 +1,12 @@
-// Les quatre thèmes : dessins des pointeurs (SVG, viewBox 24×24), points chauds,
-// palettes et styles des étiquettes. Tous les pointeurs sont dessinés pour ce projet.
+// The four themes: pointer drawings (SVG, viewBox 24x24), hotspots,
+// palettes and tag styles. All pointers were drawn for this project.
 //
-// Pointeurs : arrow (flèche), hand (main, sur les liens et boutons), ibeam (texte),
-// crosshair (viseur, sur les images), wait (attente, pendant certaines pauses).
+// Pointers: arrow, hand (over links and buttons), ibeam (text),
+// crosshair (over images), wait (during some pauses).
 (() => {
   const tr = (key, ...args) => window.Balade.I18n.t(key, ...args);
-  // Silhouettes communes. La flèche suit les proportions d'un pointeur système :
-  // bord gauche vertical, pointe à 45°, queue fine et inclinée.
+  // Common silhouettes. The arrow follows system pointer proportions:
+  // vertical left edge, 45-degree tip, thin angled tail.
   const ARROW = "M4 2.5 L4 18 L7.6 14.6 L10.2 20.1 L12.8 18.9 L10.3 13.6 L15 13.5 Z";
   const HAND =
     "M9 3.5 a1.8 1.8 0 0 1 3.6 0 V10 h0.4 a1.6 1.6 0 0 1 3.2 0.3 V11 a1.6 1.6 0 0 1 3.2 0.4 V16 " +
@@ -26,7 +26,7 @@
     classique: {
       label: tr("theme_classique"),
       size: 26,
-      font: null, // police du système
+      font: null, // system font
       palette: ["#E5484D", "#F76B15", "#30A46C", "#0090FF", "#8E4EC6", "#D6409F", "#12A594", "#AD7F58"],
       hot: { ...HOT_COMMON, wait: { x: 4, y: 2.5 } },
       text: "#1B1D21",
@@ -61,7 +61,7 @@
       `
     },
 
-    // ---------------------------------------------------------------- Zine risographié
+    // ---------------------------------------------------------------- Riso zine
     zine: {
       label: tr("theme_zine"),
       size: 26,
@@ -143,7 +143,7 @@
       label: tr("theme_carnet"),
       size: 26,
       font: { family: "Balade Spline Sans Mono", file: "SplineSansMono.ttf" },
-      // Ici la couleur est celle du surligneur de l'étiquette ; le trait reste à l'encre.
+      // Here the color is the tag highlighter; the line stays in ink.
       palette: ["#D7EB6A", "#FFD36E", "#9FE0D0", "#F7A8C4", "#B9C8FF", "#FFB38A"],
       hot: HOT_COMMON,
       text: "#1F2B44",
@@ -181,10 +181,10 @@
   };
 
   /**
-   * Thème perso : l'habillage (étiquettes, bulles, pointeurs secondaires) d'un thème de base,
-   * avec votre palette et, si vous en avez importé un, votre pointeur à la place de la flèche.
-   * Le pointeur est imbriqué dans le repère 24×24 en gardant ses proportions ; son point
-   * chaud est converti dans ce repère.
+   * Custom theme: the style (tags, bubbles, secondary pointers) of a base theme,
+   * with your palette and, if you imported one, your pointer in place of the arrow.
+   * The pointer is fitted into the 24x24 frame keeping its proportions; its
+   * hotspot is converted into that frame.
    */
   function makePerso(custom) {
     const base = THEMES[(custom && custom.base) || "classique"] || THEMES.classique;
@@ -193,7 +193,7 @@
     t.cssId = (custom && custom.base) || "classique";
     if (custom && custom.palette) t.palette = custom.palette;
     let p = custom && custom.pointer;
-    // Par prudence, le pointeur est re-nettoyé avant d'entrer dans la page.
+    // As a precaution, the pointer is re-sanitized before entering the page.
     if (p && window.Balade.SvgSanitizer) {
       try {
         const again = window.Balade.SvgSanitizer.clean(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${p.viewBox.join(" ")}">${p.markup}</svg>`);
@@ -217,7 +217,7 @@
     return t;
   }
 
-  /** Couleur de texte lisible sur un fond #rrggbb (contraste WCAG le meilleur des deux). */
+  /** Readable text color on a #rrggbb background (best WCAG contrast of the two). */
   function textOn(hex, dark = "#1B1D21", light = "#FFFFFF") {
     const m = /^#([0-9a-f]{6})$/i.exec(hex || "");
     if (!m) return dark;
@@ -227,7 +227,7 @@
       return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
     };
     const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
-    // Contraste avec le blanc : 1,05 / (L + 0,05) ; avec le foncé (L ≈ 0,012) : (L + 0,05) / 0,062.
+    // Contrast with white: 1.05 / (L + 0.05); with dark (L ~= 0.012): (L + 0.05) / 0.062.
     return 1.05 / (L + 0.05) >= (L + 0.05) / 0.062 ? light : dark;
   }
 

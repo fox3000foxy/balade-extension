@@ -1,19 +1,19 @@
-// Traductions. Les textes vivent dans _locales/<langue>/messages.json (format Chrome).
-// Dans l'extension, chrome.i18n choisit la langue du navigateur ; ailleurs (page de démo),
-// le fichier de la langue est lu une fois, avec l'anglais en secours.
+// Translations. Texts live in _locales/<lang>/messages.json (Chrome format).
+// In the extension, chrome.i18n picks the browser language; elsewhere (demo page),
+// the language file is read once, with English as fallback.
 //
-//   t("key", a, b)      → texte, avec $1, $2… remplacés
-//   plural("key", n)    → key_one ou key_other selon n (n remplace $1)
-//   list("key")         → tableau, pour les textes séparés par « | »
-//   first(["a", "b"])   → premier texte qui existe (variante d'un thème, puis texte commun)
-//   apply(root)         → remplit les éléments marqués data-i18n, data-i18n-html, data-i18n-attr
+//   t("key", a, b)      -> text, with $1, $2... replaced
+//   plural("key", n)    -> key_one or key_other depending on n (n replaces $1)
+//   list("key")         -> array, for texts separated by "|"
+//   first(["a", "b"])   -> first key that exists (theme variant, then common text)
+//   apply(root)         -> fills elements marked data-i18n, data-i18n-html, data-i18n-attr
 (() => {
   const B = window.Balade;
   if (B.I18n) return;
 
   const api = typeof chrome !== "undefined" && chrome.i18n && chrome.i18n.getMessage ? chrome.i18n : null;
 
-  // Hors extension : dossier racine, déduit de l'adresse de ce fichier (…/src/core/I18n.js).
+  // Outside the extension: root folder, inferred from this file's URL (.../src/core/I18n.js).
   const script = document.currentScript && document.currentScript.src;
   const root = script ? script.replace(/src\/core\/I18n\.js(\?.*)?$/, "") : "";
 
@@ -27,7 +27,7 @@
   function readLocale(code) {
     try {
       const xhr = new XMLHttpRequest();
-      xhr.open("GET", `${root}_locales/${code}/messages.json`, false); // une seule fois, au premier texte
+      xhr.open("GET", `${root}_locales/${code}/messages.json`, false); // once, on first use
       xhr.send();
       if (xhr.status && xhr.status !== 200) return {};
       return JSON.parse(xhr.responseText);
@@ -88,7 +88,7 @@
       root.querySelectorAll("[data-i18n]").forEach((el) => {
         el.textContent = I18n.t(el.dataset.i18n);
       });
-      // Textes avec un peu de balisage (<code>, <kbd>) : ils viennent de l'extension elle-même.
+      // Texts with a little markup (<code>, <kbd>): they come from the extension itself.
       root.querySelectorAll("[data-i18n-html]").forEach((el) => {
         el.innerHTML = I18n.t(el.dataset.i18nHtml);
       });

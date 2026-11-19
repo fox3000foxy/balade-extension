@@ -1,11 +1,11 @@
-// La flânerie : le curseur alterne trois humeurs, séparées par des pauses.
-//  - se promener : aller vers un point au hasard, tout près ou à l'autre bout de l'écran ;
-//  - gigoter     : quelques petits mouvements sur place, comme quelqu'un qui réfléchit ;
-//  - inspecter   : aller sur un élément de la page (les champs de saisie en priorité),
-//                  le survoler, parfois cliquer, et dans un champ vide, écrire un mot
-//                  fantôme puis l'effacer. Rien n'est réellement cliqué ni écrit.
-// Le pointeur change de forme en entrant sur un élément, comme le vrai :
-// main sur les liens et boutons, barre en I sur les champs, viseur sur les images.
+// Wandering: the cursor alternates three moods, separated by pauses.
+//  - strolling   : move toward a random point, nearby or across the screen;
+//  - fidgeting   : a few small movements on the spot, like someone thinking;
+//  - inspecting  : visit a page element (input fields first), hover,
+//                  sometimes click, and in an empty field type a ghost word
+//                  then erase it. Nothing is actually clicked or typed.
+// The pointer changes shape when entering an element, like the real one:
+// hand over links and buttons, I-beam over fields, crosshair over images.
 (() => {
   const { Behavior, M } = window.Balade;
 
@@ -26,7 +26,7 @@
       }
     }
 
-    /** Une pause ; de temps en temps, le curseur « réfléchit » (pointeur d'attente). */
+    /** A pause; occasionally the cursor "thinks" (busy pointer). */
     *pause(cursor) {
       const w = this.config.wander;
       const d = M.rand(w.pause[0], w.pause[1]) * cursor.temperament.patience * (w.pauseMul || 1);
@@ -39,14 +39,14 @@
       }
     }
 
-    // ---------- Humeurs ----------
+    // ---------- Moods ----------
 
     *stroll(cursor) {
       const w = this.config.wander;
       const target = M.chance(w.longStroll)
         ? this.stage.randomPoint(w.marginX, w.marginY)
         : this.stage.nearbyPoint(cursor, w.nearRadius, w.marginX, w.marginY);
-      // Une promenade n'a pas de cible précise : pas de geste de correction.
+      // A stroll has no precise target: no correction gesture.
       yield* this.motion.moveTo(cursor, target, { speed: w.strollSpeed, precise: false, width: 120 });
     }
 
@@ -73,14 +73,14 @@
       }
       this._last = el;
 
-      // Cible-fonction : si la page défile, le curseur suit l'élément.
+      // Function target: if the page scrolls, the cursor follows the element.
       const aim = this.stage.aimOn(el, cursor);
       const r = el.getBoundingClientRect();
       const hoverShape = this.stage.shapeFor(el);
       yield* this.motion.moveTo(cursor, aim, {
         speed: 0.75,
         width: Math.min(r.width, r.height),
-        // Le pointeur change de forme dès qu'il passe au-dessus de l'élément.
+        // The pointer changes shape as soon as it passes over the element.
         onStep: () => {
           cursor.shape = this.stage.contains(el, cursor) ? hoverShape : "arrow";
         }
@@ -102,9 +102,9 @@
       yield* this.stepAside(cursor, el, hoverShape);
     }
 
-    // ---------- Détails des visites ----------
+    // ---------- Visit details ----------
 
-    /** Survol + clic éventuel sur un lien, un bouton, un titre, une image… */
+    /** Hover + optional click on a link, button, heading, image... */
     *visitElement(cursor, el, aim) {
       const w = this.config.wander;
       cursor.focus = el;
@@ -119,22 +119,20 @@
       yield* this.motion.wait(M.rand(0.15, 0.3));
     }
 
-    /** Un champ de texte : clic, et parfois un mot fantôme. */
+    /** A text field: click, and sometimes a ghost word. */
     *visitField(cursor, el, aim) {
       const w = this.config.wander;
       cursor.focus = el;
       yield* this.hover(cursor, aim, M.rand(0.15, 0.4));
       yield* this.motion.click(cursor);
 
-      // On n'écrit que dans un champ vide, que l'utilisateur n'est pas en train d'utiliser.
-      const empty = el.isContentEditable ? !el.textContent.trim() : !el.value;
-      const busy = document.activeElement === el;
-      if (!empty || busy || !M.chance(w.ghostTypeChance)) {
+      // Only type in fields that are safe: empty, not a search/combobox, not in use.
+      if (!this.stage.isGhostSafe(el) || !M.chance(w.ghostTypeChance)) {
         yield* this.hover(cursor, aim, M.rand(0.3, 0.7));
         return;
       }
 
-      // Le pointeur s'écarte un peu pour ne pas masquer ce qu'il « écrit ».
+      // The pointer moves aside a little so it doesn't cover what it "types".
       const off = { x: M.rand(-20, 10), y: M.rand(12, 24) };
       const aside = () => {
         const p = aim();
@@ -146,11 +144,11 @@
       const ok = yield* this.typeGhost(cursor, el, M.pick(w.ghostWords), aside);
 
       if (ok) {
-        yield* this.hover(cursor, aside, M.rand(0.5, 1.1)); // on admire
+        yield* this.hover(cursor, aside, M.rand(0.5, 1.1)); // admire the result
         if (M.chance(0.6)) {
-          yield* this.eraseGhost(cursor, el, aside); // touche par touche
+          yield* this.eraseGhost(cursor, el, aside); // key by key
         } else {
-          // Tout sélectionner et supprimer d'un coup.
+          // Select all and delete in one go.
           yield* this.hover(cursor, aside, M.rand(0.15, 0.3));
           if (this.engine.sound) this.engine.sound.erase(cursor);
         }
@@ -160,8 +158,8 @@
     }
 
     /**
-     * Frappe irrégulière, caractère par caractère, en restant à côté du champ.
-     * @returns {boolean} false si le champ a quitté la vue en route.
+     * Irregular typing, character by character, staying next to the field.
+     * @returns {boolean} false if the field left view mid-way.
      */
     *typeGhost(cursor, el, word, anchor) {
       const sound = this.engine.sound;
@@ -169,7 +167,7 @@
         const ch = word[i];
         let d = M.rand(0.07, 0.15);
         if (ch === " ") d += M.rand(0.05, 0.12);
-        if (M.chance(0.05)) d += M.rand(0.2, 0.4); // hésitation
+        if (M.chance(0.05)) d += M.rand(0.2, 0.4); // hesitation
         yield* this.hover(cursor, anchor, d);
         if (!this.stage.isInView(el, cursor)) return false;
         cursor.ghost.text += ch;
@@ -188,7 +186,7 @@
       }
     }
 
-    /** Reste accroché à un point (souvent sur un élément) pendant `seconds`. */
+    /** Stays anchored to a point (often over an element) for `seconds` seconds. */
     *hover(cursor, anchor, seconds) {
       let t = seconds;
       while (t > 0) {
@@ -199,7 +197,7 @@
       }
     }
 
-    /** Se pousser un peu, pour laisser voir ce qu'on vient de regarder. */
+    /** Steps aside a little, to leave what was just watched visible. */
     *stepAside(cursor, el, hoverShape) {
       const target = this.stage.clampToScreen({
         x: cursor.x + M.rand(14, 30) * M.sign(),

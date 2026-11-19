@@ -1,6 +1,6 @@
-// L'attention partagée : quand vous vous arrêtez quelque part (souris immobile,
-// champ en cours de saisie), les curieux viennent se placer autour, à distance polie,
-// regardent un moment, puis repartent quand votre attention se déplace.
+// Shared attention: when you pause somewhere (still mouse or typing in a field),
+// curious cursors come and place themselves around it at a polite distance,
+// watch for a while, then leave when your attention moves.
 (() => {
   const { Behavior, M } = window.Balade;
 
@@ -11,7 +11,7 @@
       if (!att) return;
       const cfg = this.config.attention;
 
-      // Une place libre autour du point : l'angle le plus éloigné de ceux déjà pris.
+      // A free spot around the point: the angle farthest from those already taken.
       const taken = engine.cursors
         .filter((c) => c !== cursor && c.gatherAngle != null)
         .map((c) => c.gatherAngle);
@@ -42,7 +42,7 @@
         yield* this.motion.moveTo(cursor, spot, { speed: 0.85, precise: false, width: 60 });
         if (M.chance(cfg.bubbleChance)) cursor.say(M.pick(this.config.bubbles.curious), engine.time);
 
-        // On reste tant que votre attention ne bouge pas (avec un plafond).
+        // Stay as long as your attention doesn't move (with a time cap).
         let stay = M.rand(...cfg.stay);
         while (stay > 0 && engine.attention === att) {
           const pause = M.rand(0.6, 1.8);
@@ -56,7 +56,7 @@
             cursor.y = M.damp(cursor.y, p.y, 3, dt);
           }
           if (engine.attention !== att) break;
-          // Petit mouvement pour « mieux voir ».
+          // Small movement to "get a better look".
           const p = spot();
           yield* this.motion.moveTo(
             cursor,
@@ -64,7 +64,7 @@
             { speed: 0.6, precise: false, calm: 0.4 }
           );
         }
-        // Un temps de réaction avant de se disperser.
+        // A reaction pause before dispersing.
         yield* this.motion.wait(M.rand(0.15, 0.6) * cursor.temperament.patience);
       } finally {
         cursor.gatherAngle = null;

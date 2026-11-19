@@ -1,6 +1,6 @@
-// Classe de base des comportements. Un comportement est un script écrit comme
-// un générateur : `run(cursor)` décrit ce que fait le curseur, du début à la fin.
-// C'est ici qu'on ajoutera plus tard les comportements de « prédiction de tâche ».
+// Base class for behaviors. A behavior is a script written as
+// a generator: `run(cursor)` describes what the cursor does, start to finish.
+// This is where task-prediction behaviors will be added in the future.
 (() => {
   class Behavior {
     /** @param {Balade.Engine} engine */
@@ -11,13 +11,13 @@
       this.config = engine.config;
     }
 
-    /** Nom lisible, utile pour déboguer. */
+    /** Human-readable name, useful for debugging. */
     get name() {
       return this.constructor.name;
     }
 
     /**
-     * Le script du comportement. À redéfinir.
+     * The behavior script. Override in subclasses.
      * @param {Balade.Cursor} cursor
      */
     *run(cursor) { // eslint-disable-line require-yield

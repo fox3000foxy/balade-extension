@@ -1,22 +1,22 @@
-// La scène : dimensions de l'écran, repérage des éléments intéressants de la page,
-// et détection du plein écran.
-// Toutes les coordonnées sont celles de l'écran (viewport) : l'overlay est en position fixe.
+// The stage: screen dimensions, finding interesting page elements,
+// and full-screen detection.
+// All coordinates are viewport coordinates: the overlay is position:fixed.
 (() => {
   const { M } = window.Balade;
 
-  // Éléments qu'un humain regarderait ou viserait.
+  // Elements a human would look at or aim for.
   const INTERESTING = [
     "a[href]", "button", "input", "select", "textarea", "[role=button]",
     "[contenteditable=true]", "h1", "h2", "h3", "img", "video", "label"
   ].join(",");
 
-  // Champs où l'on tape du texte (pas les mots de passe, par discrétion).
+  // Fields where text is typed (not passwords, for privacy).
   const TEXT_INPUT_TYPES = new Set(["", "text", "search", "email", "url", "tel", "number"]);
 
   class Stage {
     constructor(config, hostTag) {
       this.interest = config.wander.interest;
-      this.hostTag = hostTag; // pour ignorer notre propre overlay
+      this.hostTag = hostTag; // to ignore our own overlay
       this._cache = [];
       this._cacheAt = -Infinity;
     }
@@ -29,7 +29,7 @@
       return window.innerHeight;
     }
 
-    /** Point au hasard dans la zone centrale de l'écran. */
+    /** Random point in the central area of the screen. */
     randomPoint(marginX, marginY) {
       return {
         x: M.rand(this.width * marginX, this.width * (1 - marginX)),
@@ -47,7 +47,7 @@
       };
     }
 
-    /** Point hors écran, à gauche ou à droite, pour entrer ou sortir. */
+    /** Off-screen point, left or right, for entering or leaving. */
     offscreenPoint(side, y) {
       return { x: side < 0 ? -40 : this.width + 40, y };
     }
@@ -60,9 +60,9 @@
       };
     }
 
-    // ---------- Éléments de la page ----------
+    // ---------- Page elements ----------
 
-    /** Le champ accepte-t-il du texte tapé ? */
+    /** Does this field accept typed text? */
     isTextField(el) {
       if (el.isContentEditable) return true;
       if (el.localName === "textarea") return !el.disabled && !el.readOnly;
@@ -73,7 +73,37 @@
       return false;
     }
 
-    /** Catégorie d'un élément, pour son attrait. */
+    /**
+     * True if el is safe for ghost typing:
+     * - empty value / content
+     * - not a search, combobox or autocomplete widget
+     * - not currently focused by the real user
+     */
+    isGhostSafe(el) {
+      // Must not be in use
+      if (document.activeElement === el) return false;
+      // Must be empty
+      const empty = el.isContentEditable ? !el.textContent.trim() : !el.value;
+      if (!empty) return false;
+      // Reject search / combobox / autocomplete roles and types
+      const role = (el.getAttribute("role") || "").toLowerCase();
+      if (role === "combobox" || role === "searchbox" || role === "listbox") return false;
+      const type = (el.getAttribute("type") || "").toLowerCase();
+      if (type === "search") return false;
+      if (el.getAttribute("aria-autocomplete")) return false;
+      if (el.getAttribute("aria-haspopup")) return false;
+      // Reject by name/id/placeholder heuristics (search bars, filters...)
+      const hint = [
+        el.getAttribute("name") || "",
+        el.getAttribute("id") || "",
+        el.getAttribute("placeholder") || "",
+        el.getAttribute("aria-label") || ""
+      ].join(" ").toLowerCase();
+      if (/search|filter|query|find|cherch|filtr/.test(hint)) return false;
+      return true;
+    }
+
+    /** Category of an element, for its attraction weight. */
     kindOf(el) {
       const tag = el.localName;
       if (tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable) return "field";
@@ -84,7 +114,7 @@
       return "other";
     }
 
-    /** Éléments visibles à l'écran (liste mise en cache 1 s, pour rester léger). */
+    /** Visible elements on screen (cached for 1 s, to stay lightweight). */
     visibleElements(now) {
       if (now - this._cacheAt < 1) return this._cache;
       this._cacheAt = now;
@@ -107,8 +137,8 @@
     }
 
     /**
-     * Rectangle d'un élément dans la vue d'un curseur (et non sur l'écran de l'utilisateur) :
-     * le curseur peut avoir un temps de retard sur votre défilement.
+     * Rectangle of an element in a cursor's view (not on the user's screen):
+     * the cursor may lag behind your scroll position.
      */
     rectInView(el, cursor) {
       const r = el.getBoundingClientRect();
@@ -118,13 +148,13 @@
     }
 
     /**
-     * Tire un élément visible, au hasard mais pas uniformément :
-     * poids = attrait de sa catégorie / (1 + distance / 400).
-     * Les champs de saisie et les éléments proches sont nettement favorisés.
+     * Picks a visible element randomly but not uniformly:
+     * weight = category interest / (1 + distance / 400).
+     * Input fields and nearby elements are strongly favoured.
      * @param {Balade.Cursor} cursor
      * @param {number} now
-     * @param {Element} [exclude] élément à ignorer (le dernier visité)
-     * @param {Set<Element>} [busy] éléments déjà regardés par d'autres curseurs
+     * @param {Element} [exclude] element to skip (the last visited)
+     * @param {Set<Element>} [busy] elements already watched by other cursors
      */
     pickElement(cursor, now, exclude, busy) {
       const list = this.visibleElements(now);
@@ -135,7 +165,7 @@
         const r = this.rectInView(el, cursor);
         const d = Math.hypot(r.left + r.width / 2 - cursor.x, r.top + r.height / 2 - cursor.y);
         let w = (this.interest[this.kindOf(el)] || 1) / (1 + d / 400);
-        // Déjà regardé par un autre curseur : beaucoup moins tentant (évite les attroupements).
+        // Already watched by another cursor: much less tempting (avoids clustering).
         if (busy && busy.has(el)) w *= 0.1;
         total += w;
         return w;
@@ -150,9 +180,9 @@
     }
 
     /**
-     * Où un humain viserait sur cet élément : près du début si l'élément est grand,
-     * jamais au centre exact. Le décalage est tiré une fois pour toutes ; le point est
-     * recalculé à chaque appel, dans la vue du curseur (il suit le défilement).
+     * Where a human would aim on this element: near the start if large,
+     * never the exact center. The offset is drawn once; the point is
+     * recomputed each call in the cursor's view (it follows scrolling).
      */
     aimOn(el, cursor) {
       const fx = M.rand(40, 60);
@@ -168,20 +198,20 @@
       };
     }
 
-    /** L'élément est-il visible dans la vue du curseur ? */
+    /** Is the element visible in the cursor's view? */
     isInView(el, cursor) {
       if (!el.isConnected) return false;
       const r = this.rectInView(el, cursor);
       return r.bottom > 0 && r.top < this.height && r.right > 0 && r.left < this.width;
     }
 
-    /** La pointe du curseur est-elle au-dessus de l'élément ? */
+    /** Is the cursor tip over the element? */
     contains(el, cursor) {
       const r = this.rectInView(el, cursor);
       return cursor.x >= r.left && cursor.x <= r.right && cursor.y >= r.top && cursor.y <= r.bottom;
     }
 
-    /** Pointeur adapté à l'élément survolé, comme le ferait le navigateur. */
+    /** Pointer shape matching the hovered element, as the browser would show. */
     shapeFor(el) {
       if (this.isTextField(el)) return "ibeam";
       const kind = this.kindOf(el);
@@ -191,12 +221,12 @@
       return "arrow";
     }
 
-    // ---------- Fond de page ----------
+    // ---------- Page background ----------
 
     /**
-     * Luminance relative (0 noir → 1 blanc) du fond visible à ce point de l'écran :
-     * on remonte depuis l'élément sous le point jusqu'au premier fond opaque.
-     * Renvoie null si le fond est une image ou un dégradé (on ne sait pas trancher).
+     * Relative luminance (0 black -> 1 white) of the visible background at a screen point:
+     * walks up from the element under the point to the first opaque background.
+     * Returns null if the background is an image or gradient (can't decide).
      */
     luminanceAt(x, y) {
       if (x < 0 || y < 0 || x >= this.width || y >= this.height) return null;
@@ -209,12 +239,12 @@
         if (lum != null) return lum;
         el = el.parentElement;
       }
-      // Rien d'opaque : fond du canevas, blanc par défaut, noir si la page se déclare sombre.
+      // No opaque background: canvas default, white unless the page declares dark.
       const scheme = getComputedStyle(document.documentElement).colorScheme || "";
       return /^dark/.test(scheme) ? 0.05 : 1;
     }
 
-    /** Luminance relative WCAG d'une couleur CSS rgb()/rgba() ; null si transparente ou illisible. */
+    /** WCAG relative luminance of a CSS rgb()/rgba() color; null if transparent or unparseable. */
     static luminance(color) {
       const m = /rgba?\(([^)]+)\)/.exec(color || "");
       if (!m) return null;
@@ -229,13 +259,13 @@
       return 0.2126 * lin(parts[0]) + 0.7152 * lin(parts[1]) + 0.0722 * lin(parts[2]);
     }
 
-    // ---------- Plein écran ----------
+    // ---------- Full screen ----------
 
     /**
-     * Vrai si une vidéo ou un élément est en plein écran (API Fullscreen),
-     * ou si la fenêtre de Chrome elle-même est en plein écran (F11, ⌃⌘F).
-     * Le plein écran du navigateur n'a pas d'API dédiée : on le déduit du
-     * media query display-mode, ou d'une fenêtre qui occupe exactement l'écran.
+     * True if a video or element is in full screen (Fullscreen API),
+     * or if the Chrome window itself is in full screen (F11).
+     * Browser full screen has no dedicated API: inferred from the
+     * display-mode media query, or a window that fills the screen exactly.
      */
     isFullscreen() {
       if (document.fullscreenElement) return true;

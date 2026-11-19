@@ -1,7 +1,7 @@
-// Nettoyage des pointeurs SVG importés par l'utilisateur.
-// Le SVG finit dans les pages que vous visitez : on n'en garde que des formes simples
-// (liste blanche d'éléments et d'attributs), sans script, sans lien, sans style, sans
-// référence externe. « currentColor » est conservé : il prendra la couleur du curseur.
+// Sanitizes SVG pointers imported by the user.
+// The SVG ends up in pages you visit: only simple shapes are kept
+// (allowlist of elements and attributes), no scripts, links, styles or external
+// references. "currentColor" is kept: it will take the cursor's color.
 (() => {
   const tr = (key, ...args) => window.Balade.I18n.t(key, ...args);
   const B = window.Balade || (window.Balade = { ready: false });
@@ -17,7 +17,7 @@
   const MAX_OUTPUT = 20000;
   const MAX_NODES = 400;
 
-  // Valeurs acceptées : couleurs littérales, nombres, données de tracé, transformations simples.
+  // Accepted values: literal colors, numbers, path data, simple transforms.
   const COLOR = /^(none|currentColor|#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%deg]+\))$/i;
   const SAFE = /^[\d\s.,eE+\-MmLlHhVvCcSsQqTtAaZz%]*$/;
   const TRANSFORM = /^[\s\d.,eE+\-()a-zA-Z]*$/;
@@ -41,14 +41,14 @@
    * @throws {Error} message lisible si le fichier n'est pas utilisable
    */
   function clean(text) {
-    if (typeof text !== "string" || text.length > MAX_INPUT) throw new Error("Fichier trop gros (60 Ko au plus).");
+    if (typeof text !== "string" || text.length > MAX_INPUT) throw new Error("File too large (60 KB max).");
     const doc = new DOMParser().parseFromString(text, "image/svg+xml");
     const root = doc.documentElement;
     if (!root || root.localName !== "svg" || doc.querySelector("parsererror")) {
       throw new Error(tr("svg_unreadable"));
     }
 
-    // viewBox : celle du fichier, sinon width/height.
+    // viewBox: from the file, or fall back to width/height.
     let vb = (root.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
     if (vb.length !== 4 || vb.some((n) => !Number.isFinite(n)) || vb[2] <= 0 || vb[3] <= 0) {
       const w = parseFloat(root.getAttribute("width"));
@@ -63,11 +63,11 @@
       for (const child of src.children) {
         const name = child.localName;
         if (!ELEMENTS.has(name) || name === "svg") {
-          // Un <svg> imbriqué ou un élément inconnu : on ne garde que ses enfants autorisés.
+          // A nested <svg> or unknown element: keep only its allowed children.
           if (name === "svg" || name === "a" || name === "switch") copy(child, dst);
           continue;
         }
-        if (++nodes > MAX_NODES) throw new Error("Dessin trop complexe (400 formes au plus).");
+        if (++nodes > MAX_NODES) throw new Error("Drawing too complex (400 shapes max).");
         const el = document.createElementNS("http://www.w3.org/2000/svg", name);
         for (const attr of child.attributes) {
           const a = attr.localName;

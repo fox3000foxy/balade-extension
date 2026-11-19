@@ -1,14 +1,29 @@
-# Journal des versions
+# Changelog
 
-## Documentation en anglais
+## 1.0.0
 
-- `README.md` passe en anglais, avec les images des quatre thèmes ; la version française
-  devient `README.fr.md`, avec un lien de l'une à l'autre.
-- Images des thèmes (en anglais) dans `docs/images/`.
-- Notes d'étude sur CursorSwarm en Markdown : `docs/research.fr.md` et `docs/research.en.md`
-  (formules en LaTeX, affichées par GitHub).
-- `demo.html` traduite en anglais.
-- L'interface de l'extension (menu, options, bulles) reste en français pour l'instant.
+### Internationalization
+- Menu, options page, game HUD, bubble phrases and SVG import errors now follow
+  the browser language (English or French) via `chrome.i18n` / `src/core/I18n.js`.
+- Two name lists: computing pioneers in English (Ada, Grace, Alan, Linus...),
+  the original French names in French (Alix, Bastien, Chloe...).
+- `_locales/en/messages.json` and `_locales/fr/messages.json` (145 keys each).
+
+### Field compatibility
+- Ghost typing now skips search bars, comboboxes and autocomplete fields
+  (`role=combobox/searchbox`, `type=search`, `aria-autocomplete`, `aria-haspopup`,
+  and name/id/placeholder heuristics). Cursors still visit and inspect those fields.
+
+### Documentation
+- `README.md` in English; French version at `README.fr.md`.
+- Theme screenshots in `docs/images/`.
+- Study notes on CursorSwarm (formulas, principles): `docs/research.en.md` and
+  `docs/research.fr.md`.
+- `demo.html` in English.
+
+### Code quality
+- All source comments translated to English.
+- Non-AZERTY characters (em-dashes, arrows, ellipsis, guillemets) removed from comments.
 
 ## 0.8.0 — Jeu du chat, concentration, enregistrement vidéo
 

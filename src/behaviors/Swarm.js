@@ -1,17 +1,17 @@
-// L'essaim à la demande (deux appuis sur Maj, le second maintenu) : tous les curseurs
-// viennent tourner autour de votre pointeur, puis se dispersent quand vous relâchez.
+// On-demand swarm (double Shift press, hold the second): all cursors
+// swirl around your pointer, then disperse when you release.
 //
-// Pilotage à la Reynolds, d'après nos notes d'étude (formules réécrites, valeurs à nous) :
-//  - une vitesse désirée = composante tangentielle (rotation) + ressort radial vers un anneau ;
-//  - l'anneau respire et a trois lobes qui tournent ;
-//  - le sens de rotation bascule en douceur (onde carrée adoucie par tanh) ;
-//  - alignement 70/30 avec les voisins proches ;
-//  - force de pilotage plafonnée, intégration d'Euler semi-implicite.
+// Reynolds-style steering, based on our study notes (formulas rewritten, our own values):
+//  - desired velocity = tangential component (rotation) + radial spring toward a ring;
+//  - the ring breathes and has three slowly rotating lobes;
+//  - rotation direction flips smoothly (square wave softened by tanh);
+//  - 70/30 alignment with nearby neighbors;
+//  - capped steering force, semi-implicit Euler integration.
 (() => {
   const { Behavior, M } = window.Balade;
 
-  // Angle (degrés) de la pointe de la flèche par rapport à son corps : sert à orienter
-  // la flèche dans le sens du vol.
+  // Angle (degrees) of the arrow tip relative to its body: used to orient
+  // the arrow in the direction of flight.
   const TIP_ANGLE = -111;
 
   class Swarm extends Behavior {
@@ -19,7 +19,7 @@
       const engine = this.engine;
       const cfg = this.config.swarm;
 
-      // Personnalité de vol, tirée une fois.
+      // Flight personality, drawn once.
       const fast = M.chance(0.2);
       const speed = fast ? M.rand(1000, 1400) : M.rand(350, 800);
       const force = fast ? M.rand(3000, 5000) : M.rand(800, 2000);
@@ -53,7 +53,7 @@
           let wx = tang * tx + rad * nx;
           let wy = tang * ty + rad * ny;
 
-          // Alignement avec les voisins à moins de 80 px.
+          // Alignment with neighbors within 80 px.
           let ax = 0;
           let ay = 0;
           let wsum = 0;
@@ -71,7 +71,7 @@
             wy = 0.7 * wy + 0.3 * (ay / wsum);
           }
 
-          // Vitesse et force plafonnées (plus larges quand on est loin de l'essaim).
+          // Capped speed and force (wider when far from the swarm).
           const far = Math.max(0, d - 160);
           const vmax = speed * (1.2 + Math.min(3, far / 90));
           const wl = Math.hypot(wx, wy);
@@ -92,7 +92,7 @@
           cursor.x += vx * dt;
           cursor.y += vy * dt;
 
-          // La flèche regarde où elle vole.
+          // The arrow faces where it flies.
           if (Math.hypot(vx, vy) > 40) {
             cursor.heading = (Math.atan2(vy, vx) * 180) / Math.PI - TIP_ANGLE;
           }
@@ -101,7 +101,7 @@
         cursor.heading = null;
       }
 
-      // Relâché : chacun s'éloigne un peu, dans la direction où il allait.
+      // Released: each cursor drifts away a little in the direction it was going.
       const sp = Math.hypot(vx, vy) || 1;
       const dist = M.rand(70, 200);
       const target = this.stage.clampToScreen({

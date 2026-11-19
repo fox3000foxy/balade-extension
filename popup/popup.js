@@ -1,13 +1,13 @@
-// Le menu : lit et enregistre les réglages (appliqués en direct sur la page),
-// lance ou range la balade dans l'onglet actif, et prend l'apparence du thème choisi.
+// The menu: reads and saves settings (applied live on the page),
+// starts or puts away the cursors in the active tab, and takes on the chosen theme's appearance.
 (() => {
   const { Settings, Themes, makePerso, I18n } = window.Balade;
   const $ = (id) => document.getElementById(id);
 
   const inExtension = typeof chrome !== "undefined" && chrome.tabs && chrome.scripting;
 
-  // Textes : chaque thème peut avoir ses propres mots (clé « <thème>_label_… » dans
-  // _locales), sinon le texte commun (« label_… »).
+  // Texts: each theme can have its own words (key "<theme>_label_..." in
+  // _locales), otherwise the common text ("label_...").
   const word = (key) => I18n.first([`${skin()}_label_${key}`, `label_${key}`]);
   const themeWord = (key, ...args) => I18n.first([`${skin()}_${key}`, key], ...args);
   const themePlural = (key, n) => {
@@ -29,7 +29,7 @@
     return tab ? tab.id : null;
   }
 
-  /** Hors extension (page de démo), le menu pilote la page qui l'affiche. */
+  /** Outside the extension (demo page), the menu drives the page that hosts it. */
   function hostBalade() {
     try {
       return window.parent !== window ? window.parent.Balade : null;
@@ -120,7 +120,7 @@
         setTimeout(renderExtras, 300);
         return;
       }
-      // L'identifiant du flux doit être demandé pendant le clic, depuis le menu.
+      // The stream ID must be requested immediately, during the click, from the menu.
       chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, (streamId) => {
         if (chrome.runtime.lastError || !streamId) {
           $("status").textContent = I18n.t("rec_failed");
@@ -142,9 +142,9 @@
     setTimeout(refreshStatus, 150);
   }
 
-  // ---------- Affichage ----------
+  // ---------- Display ----------
 
-  /** Habillage effectif : celui du thème, ou celui de départ du thème perso. */
+  /** Effective style: the theme's style, or the custom theme's base style. */
   function skin() {
     return settings.theme === "perso" && settings.custom ? settings.custom.base : settings.theme;
   }
@@ -214,7 +214,7 @@
     renderSite();
   }
 
-  // ---------- Ce site ----------
+  // ---------- This site ----------
 
   const host = () => (state.host || "").toLowerCase();
   const without = (list, h) => list.filter((x) => x !== h);
@@ -255,7 +255,7 @@
     renderLearned(h);
   }
 
-  /** Ce que Balade a appris sur ce site (nombre de clics retenus), avec « Oublier ». */
+  /** What Balade has learned on this site (number of retained clicks), with "Forget". */
   async function renderLearned(h) {
     const n = await window.Balade.Habits.count(h);
     $("learned").hidden = n === 0;
@@ -272,7 +272,7 @@
       if (!h) return;
       const ex = e.target.checked ? [...settings.excludedSites, h] : without(settings.excludedSites, h);
       await update({ excludedSites: ex, autoSites: without(settings.autoSites, h) });
-      setTimeout(refreshStatus, 400); // la page range ses curseurs d'elle-même
+      setTimeout(refreshStatus, 400); // the page puts its cursors away on its own
     });
     $("siteAuto").addEventListener("change", (e) => {
       const h = host();
@@ -281,8 +281,8 @@
         update({ autoSites: without(settings.autoSites, h) });
         return;
       }
-      // Le lancement automatique demande l'accès au site : Chrome affiche une confirmation.
-      // La demande doit partir tout de suite, pendant le clic.
+      // Auto-start requests site access: Chrome shows a confirmation dialog.
+      // The request must go out immediately, during the click.
       const ask = inExtension && chrome.permissions
         ? chrome.permissions.request({ origins: [`*://${h}/*`] })
         : Promise.resolve(true);
@@ -298,7 +298,7 @@
     render();
   }
 
-  // ---------- Raccourci ----------
+  // ---------- Shortcut ----------
 
   async function renderShortcut() {
     if (!inExtension || !chrome.commands) return;
@@ -315,14 +315,14 @@
     }
   }
 
-  // ---------- Branchements ----------
+  // ---------- Bindings ----------
 
   function bind() {
     $("toggle").addEventListener("click", toggle);
     bindSite();
     bindExtras();
     for (const id of ["count", "pace", "curiosity", "volume"]) {
-      // Pendant le glissement : affichage immédiat ; au relâchement : enregistrement.
+      // While sliding: show immediately; on release: save.
       $(id).addEventListener("input", (e) => {
         if (id === "count") $("count-out").textContent = e.target.value;
         if (id === "volume") $("volume-out").textContent = volumeText(+e.target.value);
@@ -352,7 +352,7 @@
     tabId = await getTabId();
     await refreshStatus();
     renderShortcut();
-    // Le nombre de curseurs varie pendant que le menu est ouvert.
+    // The cursor count changes while the menu is open.
     setInterval(refreshStatus, 1000);
   })();
 })();

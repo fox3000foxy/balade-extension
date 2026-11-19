@@ -1,9 +1,9 @@
-// Jeu du chat : le curseur fuit votre souris. Mêmes principes de pilotage que l'essaim
-// (vitesse désirée, force plafonnée), avec trois envies qui s'additionnent :
-//  - s'éloigner de la souris, d'autant plus fort qu'elle est proche ;
-//  - rester loin des bords de l'écran (sinon on se fait coincer) ;
-//  - ne pas se coller aux autres fuyards.
-// Quand il est loin du danger, il erre doucement.
+// Tag game: the cursor flees your mouse. Same steering principles as the swarm
+// (desired velocity, capped force), with three urges added together:
+//  - flee the mouse, more urgently as it gets closer;
+//  - stay away from screen edges (or you get cornered);
+//  - don't crowd the other fleeing cursors.
+// When far from danger, it wanders gently.
 (() => {
   const { Behavior, M } = window.Balade;
 
@@ -22,14 +22,14 @@
         const dt = yield;
         const W = this.stage.width;
         const H = this.stage.height;
-        // Pendant la partie, chacun joue sur votre écran.
+        // During the game, everyone plays on your screen.
         cursor.viewX = window.scrollX;
         cursor.viewY = window.scrollY;
 
         let wx = 0;
         let wy = 0;
 
-        // 1. Fuir la souris.
+        // 1. Flee the mouse.
         const m = engine.mouse;
         const dx = cursor.x - m.x;
         const dy = cursor.y - m.y;
@@ -40,19 +40,19 @@
           wx += (dx / d) * urgency;
           wy += (dy / d) * urgency;
         } else {
-          // 2. Errer quand on est tranquille.
+          // 2. Wander when at a safe distance.
           wanderA += M.rand(-1, 1) * 2.5 * dt;
           wx += Math.cos(wanderA) * vmax * 0.25;
           wy += Math.sin(wanderA) * vmax * 0.25;
         }
 
-        // 3. Les bords repoussent (et les coins encore plus).
+        // 3. Edges repel (corners more so).
         const margin = cfg.wall;
         const push = (dist) => (dist < margin ? Math.pow(1 - Math.max(0, dist) / margin, 2) * vmax * 1.8 : 0);
         wx += push(cursor.x) - push(W - cursor.x);
         wy += push(cursor.y) - push(H - cursor.y);
 
-        // 4. Ne pas se coller aux autres.
+        // 4. Don't crowd the others.
         for (const o of engine.cursors) {
           if (o === cursor || o.caught || o.leaving) continue;
           const ox = cursor.pageX - o.pageX;
@@ -64,7 +64,7 @@
           }
         }
 
-        // Pilotage : vitesse désirée plafonnée, force plafonnée.
+        // Steering: capped desired velocity, capped force.
         const wl = Math.hypot(wx, wy);
         const cap = vmax * 1.6;
         if (wl > cap) {

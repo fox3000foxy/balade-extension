@@ -1,11 +1,11 @@
-// Les trajets : une suite d'arcs de cercle enchaînés sans cassure.
+// Paths: a sequence of circular arcs joined without kinks.
 //
-// Principe : on dessine d'abord la forme dans un repère local, comme une « tortue »
-// qui part de (0, 0) avec un cap, et qui parcourt un ou plusieurs arcs de courbure
-// constante. On obtient un point d'arrivée E quelconque. Une similitude (rotation +
-// mise à l'échelle + translation) envoie ensuite (0, 0) sur A et E sur B.
-// Une similitude conserve les cercles et les angles : les arcs restent des arcs,
-// les raccords restent lisses, et le curseur arrive exactement sur la cible.
+// Principle: first draw the shape in a local frame, like a "turtle"
+// starting at (0,0) with a heading and walking one or more arcs of
+// constant curvature. This gives an arbitrary endpoint E. A similarity
+// (rotation + scale + translation) then maps (0,0) to A and E to B.
+// Similarities preserve circles and angles: arcs stay arcs,
+// joins stay smooth, and the cursor lands exactly on the target.
 (() => {
   const { M } = window.Balade;
   const DEG = Math.PI / 180;
@@ -14,7 +14,7 @@
     /** @param {{x:number,y:number}[]} points polyligne dense, du départ à l'arrivée */
     constructor(points) {
       this.points = points;
-      // Longueurs cumulées : le trajet est paramétré par la distance parcourue.
+      // Cumulative lengths: the path is parameterised by arc length.
       this.cum = [0];
       for (let i = 1; i < points.length; i++) {
         const a = points[i - 1];
@@ -30,7 +30,7 @@
       if (u <= 0 || this.length === 0) return pts[0];
       if (u >= 1) return pts[pts.length - 1];
       const target = u * this.length;
-      // Recherche dichotomique du segment.
+      // Binary search for the segment.
       let lo = 0;
       let hi = this.cum.length - 1;
       while (hi - lo > 1) {
@@ -53,11 +53,11 @@
     }
 
     /**
-     * Construit un trajet de A vers B, dans un style tiré selon la distance.
+     * Builds a path from A to B, in a style drawn from the distance.
      * @param {{x:number,y:number}} A
      * @param {{x:number,y:number}} B
      * @param {object} [opts]
-     * @param {number} [opts.calm=1]  < 1 : trajet plus droit (gestes appliqués, corrections)
+     * @param {number} [opts.calm=1]  < 1 : straighter path (precise gestures, corrections)
      */
     build(A, B, opts = {}) {
       const D = Math.hypot(B.x - A.x, B.y - A.y);
@@ -68,20 +68,20 @@
         const arcs = this._design(D, calm);
         const local = this._trace(arcs);
         const E = local[local.length - 1];
-        // Refuse les formes qui reviennent trop sur elles-mêmes (mise à l'échelle extrême).
+        // Reject shapes that double back too far (extreme scale factor).
         if (Math.hypot(E.x, E.y) > 0.55) return new Path(this._place(local, A, B));
       }
       return new Path([A, B]);
     }
 
     /**
-     * Choisit la suite d'arcs : [{ len, turn }] avec len en fraction de la longueur
-     * totale et turn = virage total de l'arc (radians, signé), plus le cap initial.
+     * Designs the arc sequence: [{ len, turn }] where len is a fraction of total
+     * length and turn is the arc's total turning angle (radians, signed), plus initial heading.
      */
     _design(D, calm) {
       const c = this.cfg;
       const s = M.sign();
-      // Les petits trajets restent presque droits, les grands peuvent s'arrondir franchement.
+      // Short paths stay nearly straight; long paths can curve more freely.
       const amp = calm * M.clamp(D / c.fullCurveAt, 0.25, 1);
       const r = Math.random();
       const pick = (styles) => {
@@ -99,7 +99,7 @@
 
       if (style === "arc") {
         const h0 = s * M.rand(4, 34) * DEG * amp;
-        // Arc symétrique (virage -2·h0), rendu un peu asymétrique au hasard.
+        // Symmetric arc (turn -2*h0), slightly randomised to be asymmetric.
         return { h0, arcs: [{ len: 1, turn: -2 * h0 * M.rand(0.75, 1.25) }] };
       }
       if (style === "s") {
@@ -114,8 +114,8 @@
         };
       }
       if (style === "hook") {
-        // Départ presque droit, puis le virage se resserre à l'approche : comme quand
-        // on « rattrape » une cible repérée tard.
+        // Nearly straight departure, then tightening into the target: like when
+        // you spot the target late and hook into it.
         const h0 = s * M.rand(18, 45) * DEG * amp;
         const k = M.rand(0.45, 0.65);
         return {
@@ -126,7 +126,7 @@
           ]
         };
       }
-      // "wave" : trois arcs alternés, de longueurs inégales.
+      // "wave": three alternating arcs of unequal lengths.
       const h0 = s * M.rand(8, 20) * DEG * amp;
       const a = M.rand(0.25, 0.35);
       const b = M.rand(0.3, 0.4);
@@ -140,7 +140,7 @@
       };
     }
 
-    /** Parcourt les arcs comme une tortue, en petits pas, dans le repère local. */
+    /** Walks the arcs turtle-style, in small steps, in the local frame. */
     _trace({ h0, arcs }) {
       const steps = this.cfg.samples;
       const pts = [{ x: 0, y: 0 }];
@@ -152,7 +152,7 @@
         const ds = arc.len / n;
         const dh = arc.turn / n;
         for (let i = 0; i < n; i++) {
-          // Pas centré : le cap au milieu du pas, pour suivre fidèlement le cercle.
+          // Midpoint step: use the heading at the middle of the step to follow the circle accurately.
           const hm = h + dh / 2;
           x += Math.cos(hm) * ds;
           y += Math.sin(hm) * ds;
@@ -163,12 +163,12 @@
       return pts;
     }
 
-    /** Similitude qui envoie (0,0) sur A et le dernier point local sur B. */
+    /** Similarity that maps (0,0) to A and the last local point to B. */
     _place(local, A, B) {
       const E = local[local.length - 1];
       const bx = B.x - A.x;
       const by = B.y - A.y;
-      // Nombre complexe z = (B - A) / E : rotation + échelle.
+      // Complex number z = (B - A) / E: rotation + scale.
       const den = E.x * E.x + E.y * E.y;
       const zr = (bx * E.x + by * E.y) / den;
       const zi = (by * E.x - bx * E.y) / den;

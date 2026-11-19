@@ -1,5 +1,5 @@
-// Anticiper : un curseur file vers l'élément que vous allez probablement cliquer
-// (deviné d'après votre geste ou vos habitudes), l'entoure, et attend de voir s'il a vu juste.
+// Anticipate: a cursor heads toward the element you will probably click
+// (guessed from your gesture or habits), hovers around it, and waits to see if it was right.
 (() => {
   const { Behavior, M } = window.Balade;
 
@@ -26,7 +26,7 @@
       cursor.predicting = el;
 
       try {
-        // Il faut arriver vite : on part sans geste de correction.
+        // Must arrive fast: no correction gesture.
         yield* this.motion.moveTo(cursor, aim, {
           speed: this.reason === "gesture" ? 2.4 : 1.2,
           precise: false,
@@ -39,7 +39,7 @@
         cursor.focus = el;
         if (social && this.reason === "habit" && M.chance(0.5)) cursor.say(M.pick(bubbles.predict), engine.time);
 
-        // On attend votre geste.
+        // Wait for your move.
         const wait = this.reason === "gesture" ? 1.6 : 4.5;
         let verdict = null;
         while (engine.time - since < wait + 1) {
@@ -63,7 +63,7 @@
         yield* this.motion.wait(M.rand(0.2, 0.5));
         cursor.focus = null;
         cursor.shape = "arrow";
-        // On laisse la place.
+        // Step aside.
         const away = this.stage.clampToScreen({ x: cursor.x + M.rand(30, 60) * M.sign(), y: cursor.y + M.rand(20, 40) });
         yield* this.motion.moveTo(cursor, away, { speed: 1.2, precise: false, calm: 0.5 });
       } finally {

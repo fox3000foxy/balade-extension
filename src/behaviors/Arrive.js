@@ -1,4 +1,4 @@
-// Entrée en scène : le curseur arrive d'un bord de l'écran, avec un petit « coucou ».
+// Enter: the cursor arrives from an edge of the screen, with a little "hello".
 (() => {
   const { Behavior } = window.Balade;
 

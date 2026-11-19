@@ -107,6 +107,8 @@
         el.getAttribute("aria-label") || ""
       ].join(" ").toLowerCase();
       if (/search|filter|query|find|cherch|filtr/.test(hint)) return false;
+      // Reject if the element lives inside a search landmark.
+      if (el.closest('[role="search"]')) return false;
       return true;
     }
 

@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balade — How it works</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --soft: #555;
+    --rule: #e4e4e4;
+    --bg: #fafafa;
+    --card: #fff;
+    --accent: #0d6efd;
+    --accent2: #E5484D;
+    --accent3: #30A46C;
+    --accent4: #F76B15;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 17px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif;
+         color: var(--ink); background: var(--bg); }
+  a { color: var(--accent); }
+  header { padding: 22px 48px; background: var(--card); border-bottom: 1px solid var(--rule);
+           display: flex; align-items: center; justify-content: space-between; }
+  header strong { font-size: 18px; }
+  header nav a { margin-left: 24px; text-decoration: none; color: var(--soft); font-size: 15px; }
+  .hero { padding: 72px 48px 56px; max-width: 760px; }
+  .hero h1 { font-size: 48px; line-height: 1.08; font-weight: 700; margin-bottom: 18px; }
+  .hero p { font-size: 19px; color: var(--soft); max-width: 580px; }
+  section { padding: 64px 48px; border-top: 1px solid var(--rule); }
+  section:nth-child(even) { background: var(--card); }
+  .wrap { max-width: 960px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .wrap.full { grid-template-columns: 1fr; }
+  h2 { font-size: 30px; font-weight: 700; margin-bottom: 10px; }
+  h3 { font-size: 17px; font-weight: 600; color: var(--soft); letter-spacing: .03em;
+       text-transform: uppercase; margin-bottom: 6px; }
+  p { color: var(--soft); margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+  .formula { font-family: ui-monospace, "Cascadia Code", monospace; font-size: 14px;
+             background: #f0f0f0; border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+             color: var(--ink); line-height: 1.8; overflow-x: auto; }
+  .canvas-wrap { background: var(--card); border: 1px solid var(--rule); border-radius: 16px;
+                 overflow: hidden; }
+  canvas { display: block; width: 100%; }
+  .controls { padding: 16px 20px; border-top: 1px solid var(--rule); display: flex;
+              flex-wrap: wrap; gap: 16px; align-items: center; }
+  .ctl { display: flex; flex-direction: column; gap: 4px; }
+  .ctl label { font-size: 13px; color: var(--soft); font-weight: 500; }
+  .ctl input[type=range] { width: 140px; accent-color: var(--accent); }
+  .ctl output { font-size: 13px; font-family: ui-monospace, monospace; color: var(--accent); }
+  .pill { display: inline-block; background: var(--accent); color: #fff; border-radius: 100px;
+          font-size: 13px; font-weight: 600; padding: 3px 11px; margin-right: 6px; vertical-align: middle; }
+  .pill.red { background: var(--accent2); }
+  .pill.green { background: var(--accent3); }
+  .pill.orange { background: var(--accent4); }
+  footer { padding: 48px; border-top: 1px solid var(--rule); color: var(--soft); font-size: 14px; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+
+<header>
+  <strong>Balade</strong>
+  <nav>
+    <a href="../demo.html">Demo</a>
+    <a href="research.en.md">Research notes</a>
+    <a href="../README.md">README</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>How it works</h1>
+  <p>No animation in Balade is linear, constant or synchronised. Every gesture
+     combines a curve, an easing, a duration that isn't proportional to distance,
+     and a little bounded randomness. Those four ingredients, applied everywhere,
+     are what make it feel alive.</p>
+</div>
+
+<!-- ═══════════════════════════════ 1. ARC PATHS ═══════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div>
+      <h3>Movement</h3>
+      <h2>Curved paths</h2>
+      <p>Every path from A to B is a circular arc, never a straight line.
+         The cursor is offset perpendicularly by a half-sine wave — zero at
+         both ends, maximum in the middle. The side is chosen randomly each time.</p>
+      <div class="formula">P(e) = A + e·(B−A) + sin(π·e)·bend·n̂<br>
+bend = ±U(4%, 14%) × min(d, 600 px)</div>
+      <p>Drag the slider to feel how the bend changes the perceived intent
+         of the gesture — a slight arc reads as natural, a straight line reads as mechanical.</p>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="c-arc" height="260"></canvas>
+      <div class="controls">
+        <div class="ctl">
+          <label>Bend</label>
+          <input type="range" id="s-bend" min="0" max="140" value="60">
+          <output id="o-bend">6%</output>
+        </div>
+        <div class="ctl">
+          <label>Direction</label>
+          <input type="range" id="s-side" min="-1" max="1" step="2" value="1">
+          <output id="o-side">right</output>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ 2. EASING ═══════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div class="canvas-wrap">
+      <canvas id="c-ease" height="260"></canvas>
+      <div class="controls">
+        <div class="ctl">
+          <label>Play</label>
+          <input type="range" id="s-ease-t" min="0" max="100" value="0">
+          <output id="o-ease-t">0%</output>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Timing</h3>
+      <h2>Easing: intention before position</h2>
+      <p>Raw progress <em>k = t/T</em> passes through two cubic curves.
+         The first 15% of the time uses <strong>easeInOut</strong> — a slow
+         start that snaps into motion. The rest uses <strong>easeOut</strong>
+         — decelerating to land on the target.</p>
+      <div class="formula">easeInOut(k) = 4k³  if k &lt; 0.5<br>
+           = 1 − (2−2k)³/2  otherwise<br><br>
+easeOut(k)   = 1 − (1−k)³</div>
+      <p>At k = 0.15 the cursor jumps from 1% to 39% of the path in
+         one frame — the wrist flick that launches a real mouse. Drag the
+         slider and compare the two curves.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ 3. FITTS ═══════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div>
+      <h3>Duration</h3>
+      <h2>Fitts's law: speed scales with distance</h2>
+      <p>Duration grows with the <em>square root</em> of distance, not linearly.
+         A path four times longer takes only 1.6× as long — just like a real hand,
+         which makes a fast ballistic gesture then slows to aim.</p>
+      <div class="formula">T = clamp(0.12 + 0.021·√d, 0.14, 0.9) / v</div>
+      <p>Drag the slider below and watch the bar reach the target.
+         Notice how the cursor at 900 px barely feels slower than at 100 px.</p>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="c-fitts" height="260"></canvas>
+      <div class="controls">
+        <div class="ctl">
+          <label>Distance</label>
+          <input type="range" id="s-dist" min="50" max="900" value="300">
+          <output id="o-dist">300 px</output>
+        </div>
+        <div class="ctl">
+          <label>Speed multiplier</label>
+          <input type="range" id="s-speed" min="0.3" max="2" step="0.1" value="1">
+          <output id="o-speed">1.0×</output>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ 4. COMBINED ═══════════════════════════════ -->
+<section>
+  <div class="wrap full">
+    <div>
+      <h3>Put together</h3>
+      <h2>Arc + easing + Fitts = a living gesture</h2>
+      <p>All three layers run at once. Each cursor picks a random target, computes
+         its duration from Fitts's law, draws a random arc, and eases through it.
+         The result: six cursors that never move in a straight line, never at constant
+         speed, and never arrive at the same time.</p>
+    </div>
+    <div class="canvas-wrap" style="margin-top:0">
+      <canvas id="c-combined" height="300"></canvas>
+      <div class="controls">
+        <div class="ctl">
+          <label>Cursors</label>
+          <input type="range" id="s-n" min="1" max="8" value="4">
+          <output id="o-n">4</output>
+        </div>
+        <div class="ctl">
+          <label>Bend</label>
+          <input type="range" id="s-cbend" min="0" max="140" value="70">
+          <output id="o-cbend">7%</output>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ 5. SWARM ═══════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div class="canvas-wrap">
+      <canvas id="c-swarm" height="320"></canvas>
+      <div class="controls">
+        <div class="ctl">
+          <label>Particles</label>
+          <input type="range" id="s-swarm-n" min="4" max="20" value="10">
+          <output id="o-swarm-n">10</output>
+        </div>
+        <div class="ctl">
+          <label>Move mouse here</label>
+          <output id="o-swarm-info" style="font-size:12px;color:#888">— attracts the swarm</output>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Idle behavior</h3>
+      <h2>The swarm: orbit, breathe, reverse</h2>
+      <p>When idle, cursors orbit a point using Reynolds-style steering.
+         The ring breathes (±18% over 11 s), warps into three lobes, and
+         the whole swarm reverses direction every ~29 s via a soft square wave.</p>
+      <div class="formula">R(t) = 135·(1 + 0.18·sin(0.55t))<br>
+lobes = 1 + 0.3·sin(3θ + 0.7t)<br>
+swirl(t) = tanh(3·cos(0.11t))</div>
+      <p>Move your mouse over the canvas — the target snaps to the pointer,
+         and you can part the swarm by moving through it quickly.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ 6. SOUND ═══════════════════════════════ -->
+<section>
+  <div class="wrap">
+    <div>
+      <h3>Sound</h3>
+      <h2>Notes that can't sound wrong</h2>
+      <p>Every click plays a note from an E pentatonic scale (0, 2, 4, 7, 9 semitones).
+         Any combination of notes in this scale stays consonant — no matter how many
+         cursors click at once, the result is musical, not cacophonous.</p>
+      <div class="formula">midi = 40 + 12·oct + PENTA[⌊5·x/W⌋]<br>
+pan  = clamp(1.6·x/W − 0.8, −0.8, 0.8)</div>
+      <p>The screen is divided into 5 vertical bands. Click anywhere below
+         to hear the note for that position. The pitch comes from the column,
+         the volume from the size of what was "dropped".</p>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="c-sound" height="260"></canvas>
+      <div class="controls">
+        <div class="ctl">
+          <label>Octave bias</label>
+          <input type="range" id="s-oct" min="1" max="5" value="3">
+          <output id="o-oct">3</output>
+        </div>
+        <div class="ctl">
+          <label>Volume</label>
+          <input type="range" id="s-vol" min="0" max="1" step="0.05" value="0.5">
+          <output id="o-vol">50%</output>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Balade · <a href="../README.md">README</a> · <a href="research.en.md">Research notes</a>
+     · <a href="research.fr.md">Notes de recherche</a></p>
+</footer>
+
+<script>
+// ─── Shared utilities ────────────────────────────────────────────────────────
+
+const PALETTE = ["#E5484D","#F76B15","#30A46C","#0090FF","#8E4EC6","#D6409F","#12A594","#AD7F58"];
+
+function easeInOut(k) {
+  return k < 0.5 ? 4*k*k*k : 1 - Math.pow(2 - 2*k, 3) / 2;
+}
+function easeOut(k) {
+  return 1 - Math.pow(1 - k, 3);
+}
+function ease(k) {
+  return k < 0.15 ? easeInOut(k / 0.15) * easeInOut(0.15) + (easeOut(k) - easeOut(0)) * 0
+    : easeOut(k);
+}
+function fittsT(d, v = 1) {
+  return Math.max(0.14, Math.min(0.9, 0.12 + 0.021 * Math.sqrt(d))) / v;
+}
+function arcPoint(A, B, e, bend) {
+  const dx = B.x - A.x, dy = B.y - A.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const ek = ease(e);
+  const offset = Math.sin(Math.PI * e) * bend;
+  return { x: A.x + ek * dx + offset * nx, y: A.y + ek * dy + offset * ny };
+}
+function dpr(canvas) {
+  const r = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * r;
+  canvas.height = rect.height * r;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(r, r);
+  return { ctx, W: rect.width, H: rect.height };
+}
+function dot(ctx, x, y, r, color) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fillStyle = color; ctx.fill();
+}
+function arrow(ctx, x, y, color, size = 14) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath();
+  // Simple arrow shape
+  ctx.moveTo(0, 0); ctx.lineTo(0, size * 1.1); ctx.lineTo(size*0.28, size*0.72);
+  ctx.lineTo(size*0.44, size*1.07); ctx.lineTo(size*0.62, size*0.99);
+  ctx.lineTo(size*0.44, size*0.65); ctx.lineTo(size*0.7, size*0.65); ctx.closePath();
+  ctx.fillStyle = color; ctx.fill();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.2; ctx.lineJoin = "round"; ctx.stroke();
+  ctx.restore();
+}
+
+// ─── 1. Arc paths ────────────────────────────────────────────────────────────
+
+(function() {
+  const canvas = document.getElementById("c-arc");
+  const sBend = document.getElementById("s-bend");
+  const oBend = document.getElementById("o-bend");
+  const sSide = document.getElementById("s-side");
+  const oSide = document.getElementById("o-side");
+  let t = 0, playing = true;
+
+  function draw() {
+    const { ctx, W, H } = dpr(canvas);
+    const bendPct = +sBend.value / 1000;
+    const side = +sSide.value;
+    oBend.value = (+sBend.value / 10).toFixed(0) + "%";
+    oSide.value = side > 0 ? "right" : "left";
+
+    const A = { x: W * 0.1, y: H * 0.5 };
+    const B = { x: W * 0.9, y: H * 0.5 };
+    const d = Math.hypot(B.x - A.x, B.y - A.y);
+    const bend = side * bendPct * Math.min(d, 600);
+
+    // Draw ghost path
+    ctx.beginPath();
+    for (let i = 0; i <= 60; i++) {
+      const p = arcPoint(A, B, i / 60, bend);
+      i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = "#ddd"; ctx.lineWidth = 2; ctx.stroke();
+
+    // Draw traveled path
+    ctx.beginPath();
+    for (let i = 0; i <= 60; i++) {
+      const e = i / 60;
+      if (e > t) break;
+      const p = arcPoint(A, B, e, bend);
+      i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = PALETTE[0]; ctx.lineWidth = 2.5; ctx.stroke();
+
+    // Endpoints
+    dot(ctx, A.x, A.y, 5, "#bbb");
+    dot(ctx, B.x, B.y, 5, "#bbb");
+
+    // Cursor
+    const cp = arcPoint(A, B, Math.min(t, 1), bend);
+    arrow(ctx, cp.x - 7, cp.y - 2, PALETTE[0], 14);
+
+    // Midpoint arc indicator
+    const mid = arcPoint(A, B, 0.5, bend);
+    ctx.beginPath(); ctx.moveTo((A.x+B.x)/2, (A.y+B.y)/2);
+    ctx.lineTo(mid.x, mid.y);
+    ctx.setLineDash([3, 3]); ctx.strokeStyle = "#ccc"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.setLineDash([]);
+    dot(ctx, mid.x, mid.y, 4, "#ccc");
+  }
+
+  let last = null;
+  function loop(ts) {
+    if (!last) last = ts;
+    const dt = (ts - last) / 1000; last = ts;
+    t = (t + dt * 0.5) % 1.3;
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  sBend.oninput = sSide.oninput = draw;
+})();
+
+// ─── 2. Easing ───────────────────────────────────────────────────────────────
+
+(function() {
+  const canvas = document.getElementById("c-ease");
+  const sT = document.getElementById("s-ease-t");
+  const oT = document.getElementById("o-ease-t");
+  let autoT = 0, dragging = false;
+
+  function draw(t) {
+    const { ctx, W, H } = dpr(canvas);
+    const pad = 28;
+    const tw = W - pad * 2, th = H - pad * 2 - 36;
+
+    // Axes
+    ctx.strokeStyle = "#e4e4e4"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, pad + th);
+    ctx.lineTo(pad + tw, pad + th); ctx.stroke();
+    ctx.fillStyle = "#bbb"; ctx.font = "11px system-ui";
+    ctx.fillText("progress k", pad + tw - 50, pad + th + 16);
+    ctx.fillText("position", pad - 2, pad - 8);
+
+    function plotCurve(fn, color, label, yOff) {
+      ctx.beginPath();
+      for (let i = 0; i <= 100; i++) {
+        const kk = i / 100;
+        const x = pad + kk * tw;
+        const y = pad + (1 - fn(kk)) * th;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = color; ctx.font = "12px system-ui";
+      ctx.fillText(label, pad + tw + 4, pad + (1 - fn(1)) * th + yOff);
+    }
+    plotCurve((k) => k, "#ddd", "linear", 0);
+    plotCurve(ease, PALETTE[0], "Balade", 4);
+
+    // Cursor dots at t
+    const k = t / 100;
+    function dotAt(fn, color) {
+      const x = pad + k * tw;
+      const y = pad + (1 - fn(k)) * th;
+      dot(ctx, x, y, 5, color);
+    }
+    dotAt((k) => k, "#ccc");
+    dotAt(ease, PALETTE[0]);
+
+    // Vertical line at t
+    const x = pad + k * tw;
+    ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, pad + th);
+    ctx.setLineDash([3, 3]); ctx.strokeStyle = "#ddd"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  let last = null;
+  function loop(ts) {
+    if (!last) last = ts;
+    const dt = (ts - last) / 1000; last = ts;
+    if (!dragging) {
+      autoT = (autoT + dt * 20) % 110;
+      sT.value = Math.min(100, autoT);
+    }
+    oT.value = Math.round(+sT.value) + "%";
+    draw(+sT.value);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  sT.addEventListener("mousedown", () => { dragging = true; });
+  sT.addEventListener("mouseup", () => { dragging = false; autoT = +sT.value; });
+  sT.oninput = () => draw(+sT.value);
+})();
+
+// ─── 3. Fitts ────────────────────────────────────────────────────────────────
+
+(function() {
+  const canvas = document.getElementById("c-fitts");
+  const sDist = document.getElementById("s-dist");
+  const oDist = document.getElementById("o-dist");
+  const sSpeed = document.getElementById("s-speed");
+  const oSpeed = document.getElementById("o-speed");
+  let t = 0, prev = 0;
+
+  function draw() {
+    const { ctx, W, H } = dpr(canvas);
+    const d = +sDist.value;
+    const v = +sSpeed.value;
+    const T = fittsT(d, v);
+    oDist.value = d + " px";
+    oSpeed.value = v.toFixed(1) + "×";
+
+    const margin = 40;
+    const availW = W - margin * 2;
+
+    // Background bar
+    ctx.fillStyle = "#f0f0f0"; ctx.beginPath();
+    ctx.roundRect(margin, H/2 - 10, availW, 20, 10); ctx.fill();
+
+    // Target line
+    const targetX = margin + (d / 900) * availW;
+    ctx.strokeStyle = "#ddd"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(targetX, H/2 - 24); ctx.lineTo(targetX, H/2 + 24); ctx.stroke();
+    ctx.fillStyle = "#bbb"; ctx.font = "11px system-ui"; ctx.textAlign = "center";
+    ctx.fillText(d + " px", targetX, H/2 + 36);
+
+    // Progress
+    const e = ease(Math.min(t / T, 1));
+    const cursorX = margin + e * (d / 900) * availW;
+    ctx.fillStyle = PALETTE[0]; ctx.beginPath();
+    ctx.roundRect(margin, H/2 - 10, cursorX - margin, 20, 10); ctx.fill();
+    arrow(ctx, cursorX - 7, H/2 - 16, PALETTE[0], 14);
+
+    // Duration label
+    ctx.textAlign = "left"; ctx.fillStyle = PALETTE[0]; ctx.font = "13px system-ui";
+    ctx.fillText("T = " + T.toFixed(2) + " s", margin, H/2 - 32);
+
+    // Comparison: linear duration would be d/900 * T_max
+    const linearT = (d / 900) * 0.9;
+    ctx.fillStyle = "#bbb";
+    ctx.fillText("linear would be " + linearT.toFixed(2) + " s", margin + 120, H/2 - 32);
+  }
+
+  let last = null;
+  function loop(ts) {
+    if (!last) last = ts;
+    const dt = (ts - last) / 1000; last = ts;
+    t += dt;
+    const d = +sDist.value, v = +sSpeed.value;
+    if (t > fittsT(d, v) + 0.4) t = 0;
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  sDist.oninput = sSpeed.oninput = () => { t = 0; };
+})();
+
+// ─── 4. Combined ─────────────────────────────────────────────────────────────
+
+(function() {
+  const canvas = document.getElementById("c-combined");
+  const sN = document.getElementById("s-n");
+  const oN = document.getElementById("o-n");
+  const sCbend = document.getElementById("s-cbend");
+  const oCbend = document.getElementById("o-cbend");
+
+  let agents = [];
+  function mkAgent(i, W, H) {
+    const A = { x: Math.random() * W * 0.8 + W * 0.1, y: Math.random() * H * 0.7 + H * 0.15 };
+    const B = { x: Math.random() * W * 0.8 + W * 0.1, y: Math.random() * H * 0.7 + H * 0.15 };
+    const d = Math.hypot(B.x - A.x, B.y - A.y);
+    const bendPct = (Math.random() * 0.1 + 0.04) * (+sCbend.value / 70);
+    const bend = (Math.random() < 0.5 ? 1 : -1) * bendPct * Math.min(d, 600);
+    const T = fittsT(d, 0.7 + Math.random() * 0.6);
+    return { A, B, d, bend, T, t: Math.random() * T, color: PALETTE[i % PALETTE.length] };
+  }
+
+  function ensureAgents(n, W, H) {
+    while (agents.length < n) agents.push(mkAgent(agents.length, W, H));
+    agents.length = n;
+  }
+
+  let last = null;
+  function loop(ts) {
+    if (!last) last = ts;
+    const dt = (ts - last) / 1000; last = ts;
+    const { ctx, W, H } = dpr(canvas);
+    const n = +sN.value;
+    oN.value = n;
+    oCbend.value = (+sCbend.value / 10).toFixed(0) + "%";
+    ensureAgents(n, W, H);
+
+    for (const ag of agents) {
+      ag.t += dt;
+      if (ag.t > ag.T + 0.3) {
+        // new target
+        ag.A = { ...arcPoint(ag.A, ag.B, 1, ag.bend) };
+        ag.B = { x: Math.random() * W * 0.8 + W * 0.1, y: Math.random() * H * 0.7 + H * 0.15 };
+        const d2 = Math.hypot(ag.B.x - ag.A.x, ag.B.y - ag.A.y);
+        const bp = (Math.random() * 0.1 + 0.04) * (+sCbend.value / 70);
+        ag.bend = (Math.random() < 0.5 ? 1 : -1) * bp * Math.min(d2, 600);
+        ag.T = fittsT(d2, 0.7 + Math.random() * 0.6);
+        ag.d = d2; ag.t = 0;
+      }
+      // draw trail
+      ctx.beginPath();
+      const steps = 40;
+      for (let i = 0; i <= steps; i++) {
+        const e = i / steps;
+        if (e > ag.t / ag.T) break;
+        const p = arcPoint(ag.A, ag.B, e, ag.bend);
+        i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = ag.color + "55"; ctx.lineWidth = 1.5; ctx.stroke();
+
+      const cp = arcPoint(ag.A, ag.B, Math.min(ag.t / ag.T, 1), ag.bend);
+      arrow(ctx, cp.x - 7, cp.y - 2, ag.color, 14);
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  sN.oninput = sCbend.oninput = () => {};
+})();
+
+// ─── 5. Swarm ────────────────────────────────────────────────────────────────
+
+(function() {
+  const canvas = document.getElementById("c-swarm");
+  const sSwarmN = document.getElementById("s-swarm-n");
+  const oSwarmN = document.getElementById("o-swarm-n");
+  let mouse = null;
+  canvas.addEventListener("mousemove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
+  });
+  canvas.addEventListener("mouseleave", () => { mouse = null; });
+
+  let particles = [];
+  function ensureParticles(n) {
+    while (particles.length < n) {
+      const ang = Math.random() * Math.PI * 2;
+      particles.push({
+        x: 0, y: 0, vx: 0, vy: 0,
+        orbit: 70 + Math.random() * 100,
+        spin: 0.8 + Math.random() * 1.0,
+        curl: (Math.random() - 0.5) * 2,
+        speed: 300 + Math.random() * 450,
+        force: 700 + Math.random() * 1100,
+        color: PALETTE[particles.length % PALETTE.length]
+      });
+    }
+    particles.length = n;
+  }
+
+  let time = 0, last = null;
+  function loop(ts) {
+    if (!last) last = ts;
+    const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
+    time += dt;
+    const n = +sSwarmN.value; oSwarmN.value = n;
+    ensureParticles(n);
+    const { ctx, W, H } = dpr(canvas);
+    const cx = W / 2, cy = H / 2;
+
+    const target = mouse || {
+      x: cx + 0.28 * W * Math.sin(0.37 * time),
+      y: cy + 0.25 * H * Math.sin(0.53 * time + 1)
+    };
+
+    const R = 90 * (1 + 0.18 * Math.sin(0.55 * time));
+    const swirl = Math.tanh(3 * Math.cos(0.11 * time));
+
+    for (const p of particles) {
+      const dx = p.x - target.x, dy = p.y - target.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const nx = dx / dist, ny = dy / dist;
+      const tx = -ny, ty = nx;
+      const theta = Math.atan2(dy, dx);
+      const rc = R * (1 + 0.3 * Math.sin(3 * theta + 0.7 * time)) + 0.55 * (p.orbit - 120);
+      const rad = Math.max(-2600, Math.min(1400, 4 * (rc - dist)));
+      const tang = 300 * (0.7 + 0.2 * p.spin) * swirl;
+      const far = Math.max(0, Math.min(1, (dist - rc) / 600));
+      const wx = (tang + 400 * p.curl * far) * tx + rad * nx;
+      const wy = (tang + 400 * p.curl * far) * ty + rad * ny;
+      const vmax = p.speed * (1.3 + Math.min(3.2, Math.max(0, dist - 180) / 90));
+      const vlen = Math.hypot(p.vx, p.vy);
+      let fx = 6 * (wx - p.vx), fy = 6 * (wy - p.vy);
+      const fmax = p.force * (1.4 + Math.min(5, Math.max(0, dist - 180) / 50));
+      const fl = Math.hypot(fx, fy);
+      if (fl > fmax) { fx = fx / fl * fmax; fy = fy / fl * fmax; }
+      p.vx += fx * dt; p.vy += fy * dt;
+      const vl2 = Math.hypot(p.vx, p.vy);
+      if (vl2 > vmax) { p.vx = p.vx / vl2 * vmax; p.vy = p.vy / vl2 * vmax; }
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (!isFinite(p.x)) { p.x = target.x; p.y = target.y; p.vx = 0; p.vy = 0; }
+    }
+
+    // Draw ring guide
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, R, 0, Math.PI * 2);
+    ctx.strokeStyle = "#f0f0f0"; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Target
+    dot(ctx, target.x, target.y, 4, "#ddd");
+
+    // Particles
+    for (const p of particles) {
+      const angle = Math.atan2(p.vy, p.vx) * 180 / Math.PI + 128;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((angle * Math.PI / 180));
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(0, 15.4); ctx.lineTo(3.9, 10.1);
+      ctx.lineTo(6.1, 15.0); ctx.lineTo(8.7, 13.6); ctx.lineTo(6.4, 9.4);
+      ctx.lineTo(10.5, 9.4); ctx.closePath();
+      ctx.fillStyle = p.color; ctx.fill();
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.restore();
+    }
+    requestAnimationFrame(loop);
+  }
+  // Init positions near center
+  const { ctx, W, H } = dpr(canvas);
+  for (let i = 0; i < 20; i++) {
+    ensureParticles(1);
+    particles[0].x = W / 2 + (Math.random() - 0.5) * 60;
+    particles[0].y = H / 2 + (Math.random() - 0.5) * 60;
+  }
+  requestAnimationFrame(loop);
+})();
+
+// ─── 6. Sound / pentatonic ───────────────────────────────────────────────────
+
+(function() {
+  const canvas = document.getElementById("c-sound");
+  const sOct = document.getElementById("s-oct");
+  const oOct = document.getElementById("o-oct");
+  const sVol = document.getElementById("s-vol");
+  const oVol = document.getElementById("o-vol");
+  const PENTA = [0, 2, 4, 7, 9];
+  const NAMES = ["E", "F#", "G#", "B", "C#"];
+  let audioCtx = null;
+  let ripples = [];
+
+  function getAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playNote(x, W) {
+    const oct = +sOct.value;
+    const vol = +sVol.value;
+    const band = Math.min(4, Math.floor(5 * x / W));
+    const midi = 40 + 12 * oct + PENTA[band];
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+    const ac = getAudio();
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    const pan = ac.createStereoPanner();
+    pan.pan.value = Math.max(-0.8, Math.min(0.8, 1.6 * x / W - 0.8));
+    osc.connect(gain); gain.connect(pan); pan.connect(ac.destination);
+    osc.frequency.value = freq;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(vol * 0.4, ac.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 1.6);
+    osc.start(); osc.stop(ac.currentTime + 1.6);
+    return { band, midi, freq };
+  }
+
+  canvas.addEventListener("click", (e) => {
+    const r = canvas.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const { W } = dpr(canvas);
+    const note = playNote(x, W);
+    ripples.push({ x, y: r.height / 2, r: 5, maxR: 40, band: note.band, t: 0 });
+  });
+
+  function draw() {
+    const { ctx, W, H } = dpr(canvas);
+    const oct = +sOct.value; oOct.value = oct;
+    const vol = +sVol.value; oVol.value = Math.round(vol * 100) + "%";
+    const bw = W / 5;
+
+    for (let i = 0; i < 5; i++) {
+      const midi = 40 + 12 * oct + PENTA[i];
+      const freq = 440 * Math.pow(2, (midi - 69) / 12);
+      ctx.fillStyle = i % 2 === 0 ? "#fafafa" : "#f4f4f4";
+      ctx.fillRect(i * bw, 0, bw, H);
+      ctx.fillStyle = "#bbb";
+      ctx.font = "bold 15px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(NAMES[i], i * bw + bw / 2, H / 2 - 14);
+      ctx.font = "12px system-ui";
+      ctx.fillStyle = "#ccc";
+      ctx.fillText(freq.toFixed(0) + " Hz", i * bw + bw / 2, H / 2 + 8);
+      ctx.fillText("MIDI " + midi, i * bw + bw / 2, H / 2 + 24);
+      // Band dividers
+      if (i > 0) {
+        ctx.strokeStyle = "#e4e4e4"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(i * bw, 0); ctx.lineTo(i * bw, H); ctx.stroke();
+      }
+    }
+    ctx.fillStyle = "#bbb"; ctx.font = "11px system-ui"; ctx.textAlign = "center";
+    ctx.fillText("← click anywhere to hear the note for that column →", W / 2, H - 10);
+
+    // Ripples
+    ripples = ripples.filter(rp => rp.r < rp.maxR);
+    for (const rp of ripples) {
+      rp.r += 1.5; rp.t += 0.05;
+      const alpha = 1 - rp.r / rp.maxR;
+      ctx.beginPath(); ctx.arc(rp.x, H/2, rp.r, 0, Math.PI*2);
+      ctx.strokeStyle = PALETTE[rp.band % PALETTE.length] + Math.round(alpha * 255).toString(16).padStart(2,"0");
+      ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+
+  function loop() { draw(); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+  sOct.oninput = sVol.oninput = draw;
+})();
+</script>
+</body>
+</html>

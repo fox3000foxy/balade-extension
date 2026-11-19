@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — Six ambient features, memory and performance
+
+### New ambient features (all visual only, nothing sent to the page)
+- **Reading ambiance**: element interest adapts to page kind — headings on articles, fields on forms (`Stage.pageKind`).
+- **Scroll hint**: past 85% of a long page, a free cursor drifts up and points toward the top.
+- **First-visit tour**: on unknown sites (fewer than 5 recorded clicks), the first cursor becomes a guide visiting nav, search, main content and headings (`Guide` behavior, `Habits.isNew`).
+- **Focus companion**: starting focus mode keeps one cursor that "works" beside you in a corner, and cheers when break starts (`Companion` behavior).
+- **Contrast inspector**: 20% of heading/link visits linger with a remark when WCAG contrast is below 4.5 (`Stage.contrastOf`).
+- **Site weather**: cursor arrival pace follows felt load time — fanfare under 800 ms (with a cheer), lazy above 2.5 s (`arrivalMood` from navigation timing).
+
+### Memory leaks plugged
+- `Renderer.unmount`: restores `data-balade-typing` placeholders, drops `hud`, cancellable fade-out timer (no double overlay on fast toggle).
+- `Habits.load`: disposes previous watcher first (no stacked listeners).
+- `Sound`: cancellable deferred context close; `clearTimeout` on restart.
+- `Engine.destroy`: invalidates element cache, drops prediction element, clears closures.
+
+### Performance
+- Background sampling: max 2 cursors per frame round-robin, interval 0.35 s → 1 s.
+- `visibleElements`: O(1) host-tag check instead of `closest()` per element.
+
 ## 1.1.0 — Bug fixes, cross-site persistence
 
 ### Bug fixes

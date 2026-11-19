@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Balade - cursors that stroll around any page</title>
+<meta name="description" content="Balade: a Chrome MV3 extension with autonomous animated cursors. Pretty but useless. The science of bringing virtual things to life.">
+<style>
+:root{
+  --blue:#3e63dd; --red:#e5484d; --green:#30a46c; --violet:#8e4ec6; --orange:#e8830c;
+  --ink:#0d0d12;
+  --bg:#0d0d12; --card:#16161d; --text:#ececf1; --body:#a8a8b5; --muted:#7c7c8a;
+  --line:#2a2a35; --formula:#1d1d29; --stage:#101016; --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 36px rgba(0,0,0,.35);
+  --track:#34343f; --knob:#fff; --strike:#4a4a58;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+[data-theme=light]{
+  --bg:#f5f5f7; --card:#fff; --text:#17171c; --body:#55555f; --muted:#8b8b97;
+  --line:#e4e4ea; --formula:#f3f4fa; --stage:#fafafc; --shadow:0 1px 2px rgba(0,0,0,.04),0 12px 32px rgba(20,20,40,.06);
+  --track:#dcdce4; --strike:#b6b6c0;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+a{color:inherit}
+h1,h2,h3{letter-spacing:-.03em;font-weight:800;line-height:1.05}
+
+/* theme toggle */
+.themebtn{position:fixed;top:14px;right:14px;z-index:50;border:1px solid rgba(255,255,255,.2);background:rgba(20,20,28,.7);color:#fff;backdrop-filter:blur(8px);padding:8px 14px;border-radius:99px;font:600 13px var(--font);cursor:pointer}
+[data-theme=light] .themebtn{background:rgba(255,255,255,.85);color:#000;border-color:rgba(0,0,0,.12)}
+
+/* HERO */
+.hero{position:relative;min-height:100svh;background:var(--ink);color:#fff;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 20px 60px;
+  background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1px);background-size:26px 26px}
+.hero::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 30%,var(--ink) 95%);pointer-events:none}
+.hero svg.layer{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.hero .content{position:relative;z-index:3}
+.badge{display:inline-flex;gap:8px;align-items:center;padding:7px 14px;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:13px;color:#cfcfd8;background:rgba(255,255,255,.05);margin-bottom:28px}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.hero h1{font-size:clamp(84px,22vw,300px);letter-spacing:-.065em;line-height:.9}
+.hero p.sub{color:#8e8e9a;font-size:clamp(16px,2.4vw,24px);margin-top:18px}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;font-weight:600;text-decoration:none;font-size:15px;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn.primary{background:#fff;color:#000}
+.btn.ghost{border:1px solid rgba(255,255,255,.22);color:#fff;background:rgba(255,255,255,.05)}
+.hero .gif{margin:44px auto 0;max-width:560px;width:100%;border-radius:18px;border:1px solid rgba(255,255,255,.12);display:block;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.cur{will-change:transform}
+.tag{font:600 12px var(--font)}
+
+/* SECTIONS */
+section.block{max-width:1060px;margin:0 auto;padding:110px 22px 20px}
+.eyebrow{font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px}
+[data-theme=dark] .eyebrow{color:#7d98f5}
+section h2{font-size:clamp(34px,6vw,60px);margin-bottom:18px}
+.lead{font-size:clamp(18px,2.2vw,22px);color:var(--body);max-width:720px}
+.grid{display:grid;gap:18px;margin-top:40px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{background:var(--card);border-radius:20px;padding:26px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.card h3{font-size:21px;margin-bottom:8px;letter-spacing:-.02em}
+.card p{color:var(--body);font-size:15px}
+.formula{margin:14px 0;padding:14px 16px;background:var(--formula);border-radius:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;overflow-x:auto;white-space:nowrap}
+.formula b{color:#7d98f5}
+[data-theme=light] .formula b{color:var(--blue)}
+.manifesto{font-size:clamp(26px,4.4vw,46px);font-weight:800;letter-spacing:-.035em;line-height:1.12;max-width:900px}
+.manifesto em{font-style:normal;color:#7d98f5}
+[data-theme=light] .manifesto em{color:var(--blue)}
+.manifesto s{color:var(--strike);text-decoration-thickness:3px}
+
+/* controls, extension menu style */
+.ctl{display:flex;align-items:center;gap:12px;font-size:14px;margin-top:12px}
+.ctl label{min-width:92px;color:var(--body)}
+.ctl output{min-width:52px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:5px;border-radius:5px;background:var(--track);outline:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--blue);box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--blue);cursor:pointer}
+.tg{position:relative;width:44px;height:26px;flex:none}
+.tg input{opacity:0;position:absolute;inset:0;margin:0;cursor:pointer;z-index:2}
+.tg span{position:absolute;inset:0;border-radius:99px;background:var(--track);transition:.2s}
+.tg span::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:.2s}
+.tg input:checked+span{background:var(--blue)}
+.tg input:checked+span::after{transform:translateX(18px)}
+.toggles{margin-top:16px;display:grid;gap:10px}
+.toggles .row{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--body)}
+canvas{display:block;width:100%;border-radius:12px;background:var(--stage);border:1px solid var(--line);margin-top:14px}
+.stage{background:var(--ink);border-radius:22px;overflow:hidden;position:relative;margin-top:36px;border:1px solid var(--line);background-image:radial-gradient(rgba(255,255,255,.1) 1px,transparent 1px);background-size:22px 22px}
+.stage canvas{border:0;background:transparent;margin:0;border-radius:0;height:420px}
+.stage .ctrl{position:absolute;left:14px;bottom:14px;display:flex;gap:10px;flex-wrap:wrap}
+.pill{padding:5px 12px;border-radius:99px;color:#fff;font-size:12px;font-weight:700}
+
+.tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.tbl td,.tbl th{padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
+.tbl th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+.big{font-size:56px;font-weight:800;letter-spacing:-.05em;color:#7d98f5;line-height:1}
+[data-theme=light] .big{color:var(--blue)}
+.note{color:var(--muted);font-size:15px;margin-top:14px}
+
+.pointers{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
+.pt{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--body);font-weight:600;box-shadow:var(--shadow)}
+
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-top:36px}
+.gallery figure{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.gallery img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--formula)}
+.gallery figcaption{padding:12px 16px;font-weight:700;font-size:14px;text-transform:capitalize}
+
+footer{margin-top:130px;background:#08080b;color:#9a9aa6;padding:70px 22px;text-align:center;border-top:1px solid var(--line)}
+footer h3{color:#fff;font-size:34px;margin-bottom:10px}
+footer a{color:#fff}
+
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+</style>
+</head>
+<body>
+<button class="themebtn" id="themeBtn" type="button">Light mode</button>
+
+<!-- 1. HERO -->
+<header class="hero" id="top">
+  <svg class="layer" id="heroSvg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs><g id="arrow"><path d="M3 2 L3 21 L8 16.4 L11.6 23 L14.4 21.7 L10.9 15.2 L17.5 14.6 Z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></g></defs>
+  </svg>
+  <div class="content">
+    <div class="badge"><i></i> Ghost - default</div>
+    <h1>Balade</h1>
+    <p class="sub">cursors that stroll around any page</p>
+    <div class="btns">
+      <a class="btn primary" href="https://github.com/fox3000foxy/balade-extension">View on GitHub</a>
+      <a class="btn ghost" href="https://github.com/fox3000foxy/balade-extension/releases">v1.3.0 / MV3</a>
+      <a class="btn ghost" href="how-it-works.html">How it works</a>
+    </div>
+    <img class="gif" src="images/promo-ghost.gif" alt="Balade with the Ghost theme in action" loading="lazy" onerror="this.style.display='none'">
+  </div>
+</header>
+
+<!-- 2. MANIFESTO -->
+<section class="block reveal" id="manifesto">
+  <div class="eyebrow">Manifesto</div>
+  <h2>Useless. So what?</h2>
+  <p class="manifesto">Balade saves you <em>zero</em> time. It secures nothing, converts nobody and measures nothing. It just makes little cursors <em>live</em> on your pages, because simulating a human, gesture by gesture, is one of the most beautiful problems you can give yourself.</p>
+  <p class="lead" style="margin-top:26px">Pretty but useless. That is the whole point: an excuse to explore the science of motion, attention and social life, using arrows.</p>
+</section>
+
+<!-- 3. SCIENCE OF MOTION -->
+<section class="block reveal" id="motion">
+  <div class="eyebrow">The science of motion</div>
+  <h2>Move like someone.</h2>
+  <p class="lead">A cursor that slides in a straight line at constant speed is a robot. A human speeds up, slows down, curves, hesitates. Here are the ingredients.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>Fitts' law</h3>
+      <p>The time to reach a target depends on its distance and its size.</p>
+      <div class="formula">MT = <b>a</b> + <b>b</b> * log2(D / W + 1)</div>
+      <div class="ctl"><label>Distance D</label><input id="fD" type="range" min="50" max="1200" value="400"><output id="fDo"></output></div>
+      <div class="ctl"><label>Width W</label><input id="fW" type="range" min="8" max="200" value="40"><output id="fWo"></output></div>
+      <p style="margin-top:12px">Estimated time: <b id="fMT" style="color:#7d98f5"></b>, difficulty <b id="fID"></b> bits</p>
+    </div>
+
+    <div class="card">
+      <h3>Minimum jerk</h3>
+      <p>The position profile that minimizes sudden jolts. It is the signature of human reaching movements.</p>
+      <div class="formula">s(t) = <b>10t^3 - 15t^4 + 6t^5</b>, t = time / T, in [0, 1]</div>
+      <canvas id="mjCv" width="520" height="190"></canvas>
+      <div class="ctl"><label>Progress t</label><input id="mjT" type="range" min="0" max="100" value="35"><output id="mjO"></output></div>
+    </div>
+
+    <div class="card">
+      <h3>Time warp</h3>
+      <p>The speed peak lands before the midpoint: a sharp start, a long deceleration to aim. Each cursor keeps its own curve for life.</p>
+      <div class="formula">u = minjerk(<b>t^q</b>), q in [0.68, 0.85]</div>
+    </div>
+
+    <div class="card">
+      <h3>Arcs</h3>
+      <p>A hand draws arcs, not lines. The extension traces circular arcs turtle-style, then applies a similarity (rotation + scale + translation) to land exactly on target.</p>
+      <div class="formula">trace(h0, arcs) then <b>rotate + scale</b> onto target</div>
+    </div>
+
+    <div class="card">
+      <h3>Spring (Euler)</h3>
+      <p>The cursor chases its target as if on a rubber band. Move your mouse over the box.</p>
+      <div class="formula">a = <b>k</b>(target - x) - <b>c</b> * v ; v += a*dt ; x += v*dt</div>
+      <canvas id="spCv" width="520" height="190"></canvas>
+      <div class="ctl"><label>Stiffness k</label><input id="spK" type="range" min="2" max="60" value="22"><output id="spKo"></output></div>
+      <div class="ctl"><label>Damping c</label><input id="spC" type="range" min="1" max="20" value="6"><output id="spCo"></output></div>
+    </div>
+
+    <div class="card">
+      <h3>Reynolds</h3>
+      <p>For wandering and group life: steering behaviors (wander, separation, cohesion). A force steers the cursor, never a teleport. Try the switches on the simulation below.</p>
+      <div class="formula">F = <b>v_desired</b> - v_current ; |F| &lt;= F_max</div>
+      <div class="toggles">
+        <div class="row">Wander <span class="tg"><input id="tgWander" type="checkbox" checked><span></span></span></div>
+        <div class="row">Separation <span class="tg"><input id="tgSep" type="checkbox" checked><span></span></span></div>
+        <div class="row">Cohesion <span class="tg"><input id="tgCoh" type="checkbox"><span></span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:56px;font-size:26px">The 5 Ghost pointers</h3>
+  <div class="pointers" id="pointers"></div>
+</section>
+
+<!-- 4. COGNITION -->
+<section class="block reveal" id="cognition">
+  <div class="eyebrow">Simulated cognition</div>
+  <h2>Wanting to go somewhere.</h2>
+  <p class="lead">Moving well is not enough. You need a reason to move.</p>
+
+  <div class="grid g3">
+    <div class="card"><h3>Satiety</h3><p>A visited spot loses its appeal, then slowly regains it.</p></div>
+    <div class="card"><h3>Novelty</h3><p>Whatever just appeared attracts. The eye follows change.</p></div>
+    <div class="card"><h3>Markov</h3><p>The next state depends on the current one: explore, read, hesitate, rest.</p></div>
+    <div class="card"><h3>Anticipation</h3><p>Aim slightly ahead of a moving target, like a real gaze.</p></div>
+    <div class="card"><h3>Roles</h3><p>Leader, follower, curious, shy. Each one has its own tempo.</p></div>
+    <div class="card"><h3>Moods</h3><p>Calm, excited, tired: speed, tremor and pauses all change.</p></div>
+  </div>
+
+  <div class="stage reveal">
+    <canvas id="simCv" width="1000" height="420"></canvas>
+    <div class="ctrl">
+      <span class="pill" style="background:var(--red)">Lea</span>
+      <span class="pill" style="background:var(--green)">Ada</span>
+      <span class="pill" style="background:var(--blue)">Alan</span>
+    </div>
+  </div>
+  <p class="note">Live mini-simulation: dots fade when visited (satiety) and light up again over time. Click to drop a novelty. The Reynolds switches above really drive this simulation.</p>
+</section>
+
+<!-- 5. PERF -->
+<section class="block reveal" id="perf">
+  <div class="eyebrow">Performance</div>
+  <h2>Useless, but not slow.</h2>
+  <p class="lead">A few micro-optimizations measured on the internal bench (200,000 gestures x 24 steps).</p>
+  <div class="grid g3">
+    <div class="card"><div class="big">4x</div><h3 style="margin-top:10px">Rotation</h3><p>Iterative heading rotation (complex multiply) instead of cos/sin per step. Bit-exact. The sin table was 3x <em>slower</em>, Taylor 5 wrong.</p></div>
+    <div class="card"><div class="big">3x</div><h3 style="margin-top:10px">Triple angle</h3><p>sin(3t + p) expanded from the already-known cos/sin, no atan2. The cosine pre-filter was slower than plain acos: rejected.</p></div>
+    <div class="card"><div class="big">2x</div><h3 style="margin-top:10px">Distances</h3><p>Neighbors tested on squared distances, sqrt reserved for the close few. Sampled gesture curves: zero Math.pow per frame.</p></div>
+  </div>
+</section>
+
+<!-- 6. THEMES -->
+<section class="block reveal" id="themes">
+  <div class="eyebrow">Themes</div>
+  <h2>Five boards, five characters.</h2>
+  <div class="gallery" id="gallery"></div>
+</section>
+
+<!-- 7. FOOTER -->
+<footer>
+  <h3>Balade</h3>
+  <p><a href="https://github.com/fox3000foxy/balade-extension">github.com/fox3000foxy/balade-extension</a></p>
+  <p style="margin-top:14px">Nothing is ever sent to the page. The cursors live in their own corner and write to nobody.</p>
+</footer>
+
+<script>
+const $=s=>document.querySelector(s), NS="http://www.w3.org/2000/svg";
+const COL={red:"#e5484d",green:"#30a46c",blue:"#3e63dd",violet:"#8e4ec6",orange:"#e8830c"};
+const GRID="rgba(140,140,155,.35)", AXIS="rgba(140,140,155,.6)";
+
+/* theme toggle (dark by default) */
+$("#themeBtn").onclick=()=>{
+  const r=document.documentElement,light=r.dataset.theme!=="light";
+  r.dataset.theme=light?"light":"dark";
+  $("#themeBtn").textContent=light?"Dark mode":"Light mode";
+};
+
+/* Ghost pointers (SVG) */
+const P={
+ Arrow:c=>`<svg width="40" height="40" viewBox="0 0 26 28"><path d="M3 2 L3 21 L8 16.4 L11.6 23 L14.4 21.7 L10.9 15.2 L17.5 14.6 Z" fill="${c}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+ Hand:c=>`<svg width="40" height="40" viewBox="0 0 28 30"><path d="M10 3a2 2 0 0 1 4 0v8l1-1a2 2 0 0 1 3 1l1 0a2 2 0 0 1 3 1v8c0 4-3 7-7 7h-2c-3 0-5-2-6-4l-3-6a2 2 0 0 1 3-2l2 2z" fill="${c}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>`,
+ Text:c=>`<svg width="40" height="40" viewBox="0 0 28 30"><path d="M8 4h4a2 2 0 0 1 2 2 2 2 0 0 1 2-2h4M14 6v18M8 26h4a2 2 0 0 0 2-2 2 2 0 0 0 2 2h4" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 4h4a2 2 0 0 1 2 2 2 2 0 0 1 2-2h4M14 6v18M8 26h4a2 2 0 0 0 2-2 2 2 0 0 0 2 2h4" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+ Crosshair:c=>`<svg width="40" height="40" viewBox="0 0 28 28"><g stroke-linecap="round"><path d="M14 2v24M2 14h24" stroke="#fff" stroke-width="5"/><path d="M14 2v24M2 14h24" stroke="${c}" stroke-width="2.4"/></g></svg>`,
+ Busy:c=>`<svg width="40" height="40" viewBox="0 0 30 30"><path d="M3 2 L3 20 L7.6 15.8 L10.8 21.7 L13.3 20.5 L10.1 14.7 L16.2 14.2 Z" fill="${c}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><circle cx="21" cy="21" r="6" fill="none" stroke="#e5484d" stroke-width="2.4" stroke-dasharray="26 12"><animateTransform attributeName="transform" type="rotate" from="0 21 21" to="360 21 21" dur="1s" repeatCount="indefinite"/></circle></svg>`
+};
+const ptCols={Arrow:COL.red,Hand:COL.green,Text:COL.violet,Crosshair:COL.blue,Busy:COL.red};
+$("#pointers").innerHTML=Object.keys(P).map(k=>`<div class="pt">${P[k](ptCols[k])}${k}</div>`).join("");
+
+/* hero: cursors + trails */
+(function(){
+  const svg=$("#heroSvg");
+  const defs=[
+   {n:"Lea",c:COL.red,  d:"M120 700 C300 380 520 820 760 460 S1150 300 1320 180"},
+   {n:"Ada",c:COL.green,d:"M1300 760 C1100 520 900 880 640 640 S300 300 180 160"},
+   {n:"Alan",c:COL.blue,d:"M200 120 C420 260 380 560 700 520 S1100 620 1260 470"},
+   {n:"Grace",c:COL.violet,d:"M700 860 C760 640 980 700 1020 420 S1180 120 1380 140"},
+   {n:"Tim",c:COL.orange,d:"M60 460 C260 520 360 280 560 330 S900 180 1100 260"}
+  ];
+  const items=defs.map((d,i)=>{
+    const tr=document.createElementNS(NS,"path");
+    tr.setAttribute("d",d.d);tr.setAttribute("fill","none");tr.setAttribute("stroke",d.c);
+    tr.setAttribute("stroke-width","5");tr.setAttribute("stroke-linecap","round");tr.setAttribute("opacity",".45");
+    svg.appendChild(tr);
+    const g=document.createElementNS(NS,"g");g.setAttribute("class","cur");
+    g.innerHTML=`<use href="#arrow" fill="${d.c}"/><g transform="translate(18,26)"><rect rx="11" ry="11" width="${d.n.length*8+22}" height="22" fill="${d.c}"/><text class="tag" x="11" y="15" fill="#fff">${d.n}</text></g>`;
+    svg.appendChild(g);
+    return {tr,g,len:tr.getTotalLength(),off:i*.19};
+  });
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  function frame(t){
+    items.forEach(it=>{
+      let u=reduce?.55:((t/14000+it.off)%1);
+      const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
+      const p=it.tr.getPointAtLength(e*it.len);
+      it.g.setAttribute("transform",`translate(${p.x},${p.y})`);
+    });
+    if(!reduce)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* Fitts */
+(function(){
+  const D=$("#fD"),W=$("#fW");
+  function u(){const d=+D.value,w=+W.value,id=Math.log2(d/w+1);
+    $("#fDo").textContent=d+"px";$("#fWo").textContent=w+"px";
+    $("#fID").textContent=id.toFixed(2);$("#fMT").textContent=Math.round(100+150*id)+" ms";}
+  D.oninput=W.oninput=u;u();
+})();
+
+/* Minimum jerk */
+(function(){
+  const cv=$("#mjCv"),ctx=cv.getContext("2d"),r=$("#mjT"),o=$("#mjO");
+  const mj=t=>10*t**3-15*t**4+6*t**5;
+  function draw(){
+    const w=cv.width,h=cv.height,t=r.value/100,pad=24;ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle=GRID;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-pad,h-pad);ctx.moveTo(pad,pad);ctx.lineTo(pad,h-pad);ctx.stroke();
+    ctx.strokeStyle=AXIS;ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(pad,h-pad);ctx.lineTo(w-pad,pad);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle="#6f8cf0";ctx.lineWidth=3;ctx.beginPath();
+    for(let i=0;i<=100;i++){const x=pad+(w-2*pad)*i/100,y=h-pad-(h-2*pad)*mj(i/100);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+    const x=pad+(w-2*pad)*t,y=h-pad-(h-2*pad)*mj(t);
+    ctx.fillStyle=COL.red;ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill();
+    o.textContent="s="+mj(t).toFixed(2);
+  }
+  r.oninput=draw;draw();
+})();
+
+/* Spring */
+(function(){
+  const cv=$("#spCv"),ctx=cv.getContext("2d"),K=$("#spK"),C=$("#spC");
+  let tx=260,ty=95,x=60,y=95,vx=0,vy=0,last=0,auto=true;
+  cv.addEventListener("pointermove",e=>{const b=cv.getBoundingClientRect();tx=(e.clientX-b.left)*cv.width/b.width;ty=(e.clientY-b.top)*cv.height/b.height;auto=false;});
+  cv.addEventListener("pointerleave",()=>auto=true);
+  const trail=[];
+  function step(t){
+    const dt=Math.min(.03,(t-last)/1000||.016);last=t;
+    if(auto){tx=260+180*Math.cos(t/900);ty=95+60*Math.sin(t/650*1.3);}
+    const k=+K.value,c=+C.value;
+    vx+=(k*(tx-x)-c*vx)*dt*8;vy+=(k*(ty-y)-c*vy)*dt*8;x+=vx*dt;y+=vy*dt;
+    trail.push([x,y]);if(trail.length>40)trail.shift();
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle="rgba(110,140,240,.6)";ctx.lineWidth=3;ctx.lineCap="round";ctx.beginPath();trail.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.stroke();
+    ctx.strokeStyle=AXIS;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(tx,ty,8,0,7);ctx.stroke();
+    ctx.fillStyle=COL.green;ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill();
+    $("#spKo").textContent=k;$("#spCo").textContent=c;
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+
+/* Cognition mini-simulation: Reynolds switches really drive it */
+(function(){
+  const cv=$("#simCv"),ctx=cv.getContext("2d"),W=cv.width,H=cv.height;
+  const flags=()=>({wander:$("#tgWander").checked,sep:$("#tgSep").checked,coh:$("#tgCoh").checked});
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  const spots=Array.from({length:14},()=>({x:rnd(60,W-60),y:rnd(50,H-50),food:1,nov:0}));
+  const mj=t=>10*t**3-15*t**4+6*t**5;
+  const mk=(n,c,mood)=>({n,c,x:rnd(100,W-100),y:rnd(80,H-80),from:null,to:null,t:0,T:1,rest:0,trail:[],mood,cur:spots[0]});
+  const ag=[mk("Lea",COL.red,1.1),mk("Ada",COL.green,.8),mk("Alan",COL.blue,1.4)];
+  function pick(a){
+    let best=null,bs=-1e9;
+    spots.forEach(s=>{
+      const d=Math.hypot(s.x-a.x,s.y-a.y);
+      const sc=s.food*2+s.nov*3-d/400+Math.random()*.6;
+      if(sc>bs){bs=sc;best=s}
+    });
+    return best;
+  }
+  function go(a){
+    const s=pick(a);a.cur=s;
+    a.from={x:a.x,y:a.y};
+    a.to={x:s.x+rnd(-8,8),y:s.y+rnd(-8,8)};
+    const d=Math.hypot(a.to.x-a.from.x,a.to.y-a.from.y)||1;
+    a.T=(.5+.0016*d)/a.mood;a.t=0;
+    const nx=-(a.to.y-a.from.y)/d,ny=(a.to.x-a.from.x)/d,off=rnd(-.2,.2)*d*(flags().wander?1:0);
+    a.c1={x:(a.from.x+a.to.x)/2+nx*off,y:(a.from.y+a.to.y)/2+ny*off};
+  }
+  cv.addEventListener("pointerdown",e=>{
+    const b=cv.getBoundingClientRect();
+    spots.push({x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height,food:1,nov:1});
+    if(spots.length>22)spots.shift();
+  });
+  ag.forEach(go);
+  let last=0;
+  function step(ts){
+    const dt=Math.min(.05,(ts-last)/1000||.016);last=ts;
+    spots.forEach(s=>{s.food=Math.min(1,s.food+dt*.08);s.nov=Math.max(0,s.nov-dt*.15);});
+    ag.forEach(a=>{
+      if(a.rest>0){a.rest-=dt;}
+      else{
+        const f=flags(), others=ag.filter(o=>o!==a);
+        // Separation: push away from close neighbors. Cohesion: drift to center.
+        let ox=0,oy=0;
+        if(f.sep||f.coh){
+          let cx=0,cy=0,n=0;
+          others.forEach(o=>{const dx=a.x-o.x,dy=a.y-o.y,d=Math.hypot(dx,dy);if(d<110){cx+=o.x;cy+=o.y;n++;if(f.sep&&d>1){ox+=dx/d*(1-d/110)*60;oy+=dy/d*(1-d/110)*60;}}});
+          if(f.coh&&n>0){ox+=(cx/n-a.x)*.6;oy+=(cy/n-a.y)*.6;}
+        }
+        a.t+=dt/a.T;
+        const u=Math.min(1,a.t),s=mj(u),q=1-s;
+        a.x=q*q*a.from.x+2*q*s*a.c1.x+s*s*a.to.x+ox*dt;
+        a.y=q*q*a.from.y+2*q*s*a.c1.y+s*s*a.to.y+oy*dt;
+        if(u>=1){a.cur.food=0;a.cur.nov=0;a.rest=rnd(.2,1.2)/a.mood;go(a);}
+      }
+      a.trail.push([a.x,a.y]);if(a.trail.length>60)a.trail.shift();
+    });
+    ctx.clearRect(0,0,W,H);
+    spots.forEach(s=>{ctx.fillStyle=`rgba(255,255,255,${.12+.5*s.food})`;ctx.beginPath();ctx.arc(s.x,s.y,4+4*s.nov+3*s.food,0,7);ctx.fill();});
+    ag.forEach(a=>{
+      ctx.strokeStyle=a.c;ctx.globalAlpha=.5;ctx.lineWidth=4;ctx.lineCap="round";ctx.beginPath();
+      a.trail.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.stroke();ctx.globalAlpha=1;
+      ctx.save();ctx.translate(a.x,a.y);ctx.fillStyle=a.c;ctx.strokeStyle="#fff";ctx.lineWidth=1.8;ctx.lineJoin="round";
+      ctx.beginPath();ctx.moveTo(3,2);ctx.lineTo(3,21);ctx.lineTo(8,16.4);ctx.lineTo(11.6,23);ctx.lineTo(14.4,21.7);ctx.lineTo(10.9,15.2);ctx.lineTo(17.5,14.6);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle=a.c;const w=a.n.length*8+20;ctx.beginPath();ctx.roundRect(18,26,w,22,11);ctx.fill();
+      ctx.fillStyle="#fff";ctx.font="700 12px -apple-system,Segoe UI,sans-serif";ctx.fillText(a.n,28,41);
+      ctx.restore();
+    });
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+
+/* Theme gallery: the 5 real theme boards */
+$("#gallery").innerHTML=[["ghost","ghost"],["classic","classic"],["zine","riso-zine"],["pebbles","clay-pebbles"],["notebook","field-notebook"]].map(([label,file])=>
+ `<figure><img src="images/theme-${file}.png" alt="${label} theme" loading="lazy" onerror="this.style.opacity=.2"><figcaption>${label}</figcaption></figure>`).join("");
+
+/* Scroll reveal */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}}),{threshold:.12});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

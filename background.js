@@ -14,30 +14,44 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
   }
 });
 
-// Cross-page persistence: when a tab navigates, re-inject and restart if Balade
-// was running. The page itself saves cursor state to chrome.storage.session before
-// unloading; Engine.start() reads it and places cursors at their last positions.
-chrome.webNavigation.onCommitted.addListener(async ({ tabId, frameId, transitionType }) => {
-  if (frameId !== 0) return; // top frame only
-  // Only follow link clicks and typed URLs — not reloads or back/forward.
-  const persist = ["link", "typed", "auto_bookmark", "generated", "keyword"].includes(transitionType);
-  if (!persist) return;
+// Cross-page persistence: the page notifies us when Balade starts/stops
+// (sender.tab.id tells us which tab). On navigation completion we re-inject
+// if it was running. The page itself saves cursor snapshots to
+// chrome.storage.session; Engine.start() reads them and places cursors at
+// their last relative positions. This works cross-site because the flag is
+// set while the old page is still alive — unlike scripting it after
+// onCommitted, when the old document is already gone.
+const navKey = (tabId) => `balade.nav.${tabId}`;
+
+async function setNavFlag(tabId, running) {
   try {
-    const st = await self.BaladeInject.status(tabId);
-    if (st.state === "running") {
-      // Page is about to reload. Mark this tab so onCompleted re-starts Balade.
-      await chrome.storage.session.set({ [`balade.nav.${tabId}`]: true });
-    }
+    if (running) await chrome.storage.session.set({ [navKey(tabId)]: true });
+    else await chrome.storage.session.remove(navKey(tabId));
   } catch (_) {}
+}
+
+// Drop stale flags when a tab closes so we never re-inject into a recycled ID.
+chrome.tabs.onRemoved.addListener((tabId) => {
+  chrome.storage.session.remove(navKey(tabId)).catch(() => {});
 });
 
 chrome.webNavigation.onCompleted.addListener(async ({ tabId, frameId }) => {
   if (frameId !== 0) return;
-  const key = `balade.nav.${tabId}`;
-  const result = await chrome.storage.session.get(key);
-  if (!result[key]) return;
-  await chrome.storage.session.remove(key);
+  const key = navKey(tabId);
+  let flagged = false;
   try {
+    flagged = !!(await chrome.storage.session.get(key))[key];
+  } catch (_) { return; }
+  if (!flagged) return;
+  await chrome.storage.session.remove(key).catch(() => {});
+  try {
+    const st = await self.BaladeInject.status(tabId);
+    if (st.state === "running") {
+      // Auto-start script already running (or user restarted manually):
+      // re-arm the flag so the *next* navigation persists too.
+      await chrome.storage.session.set({ [key]: true });
+      return;
+    }
     await self.BaladeInject.toggle(tabId);
   } catch (_) {}
 });
@@ -76,6 +90,10 @@ async function setRecording(state) {
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (!msg || msg.target === "offscreen") return;
+  if (msg.type === "balade-state" && sender.tab && sender.tab.id != null) {
+    setNavFlag(sender.tab.id, !!msg.running);
+    return; // no reply needed
+  }
   (async () => {
     if (msg.type === "rec-start") {
       await ensureOffscreen();

@@ -1,6 +1,24 @@
 # Changelog
 
-## 1.0.0
+## 1.1.0 — Bug fixes, cross-site persistence
+
+### Bug fixes
+- `Engine._learnClick` no longer poisons the element cache (passed `this.time + 2`).
+- Renderer reuses a single `getBoundingClientRect` for ghost text + selection (was 2x per frame).
+- `inject.ensureLoaded` shares one pending promise per tab (fixes double-injection race).
+- Engine timers are capped and guarded so one bad timer can't break a frame.
+- `Engine.destroy` clears timers, pair history and click history.
+- Popup toggle button is restored on error; status poll is 2s and cleared on unload.
+
+### Performance
+- `_meetings` throttled to 4 Hz and capped at 30 cursors (was O(n^2) every frame).
+- Element cache invalidated on scroll/resize; search-hint regex hoisted.
+
+### Cross-site persistence
+- Pages notify the service worker when Balade starts/stops; navigation re-injects
+  even across sites (the old `onCommitted` scripting ran on a detached document).
+- Snapshots saved periodically (2s) + on hide/unload, kept 30s, clamped to 0-1.
+- Stale per-tab flags are dropped on tab close; re-armed when already running.
 
 ### Internationalization
 - Menu, options page, game HUD, bubble phrases and SVG import errors now follow

@@ -13,15 +13,28 @@
   let unsubscribe = null;
 
   const SESSION_KEY = "balade.crosspage";
-  const SNAPSHOT_TTL = 4000; // ms — ignore stale snapshots (slow loads)
+  const SNAPSHOT_TTL = 30000; // ms — ignore stale snapshots, but allow slow cross-site loads
 
   function release() {
     if (unsubscribe) unsubscribe();
     unsubscribe = null;
   }
 
-  // Save cursor state before the page unloads so the next page can restore it.
-  window.addEventListener("beforeunload", () => {
+  // Tell the service worker whether Balade is running in this tab, so it can
+  // re-inject after a navigation (even cross-site, where the old page is gone
+  // before webNavigation fires). Fire-and-forget: the SW may be asleep.
+  function notifyRunning(running) {
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: "balade-state", running }).catch(() => {});
+      }
+    } catch (_) {}
+  }
+
+  // Save cursor state so the next page can restore it. Called periodically and
+  // on page hide/unload — beforeunload alone is unreliable because the async
+  // storage write may not flush, and it never fires in some cases (bfcache...).
+  function saveSnapshot() {
     if (!engine || !engine.running || !engine.cursors.length) return;
     const W = window.innerWidth || 1, H = window.innerHeight || 1;
     const snapshot = {
@@ -31,18 +44,22 @@
         .map((c) => ({
           name: c.name,
           colorIndex: c.colorIndex,
-          rx: c.screenX / W,  // relative 0-1
-          ry: c.screenY / H
+          rx: Math.min(1, Math.max(0, c.screenX / W)),  // relative 0-1
+          ry: Math.min(1, Math.max(0, c.screenY / H))
         }))
     };
     try {
-      // chrome.storage.session is async but beforeunload is synchronous.
-      // We use a fire-and-forget write; the browser usually lets microtasks
-      // run before tearing down the page.
       if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.session) {
-        chrome.storage.session.set({ [SESSION_KEY]: snapshot });
+        chrome.storage.session.set({ [SESSION_KEY]: snapshot }).catch(() => {});
       }
     } catch (_) {}
+  }
+
+  let snapshotTimer = 0;
+  window.addEventListener("beforeunload", saveSnapshot);
+  // visibilitychange fires reliably on navigation, unlike beforeunload's flush.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") saveSnapshot();
   });
 
   async function loadSnapshot() {
@@ -61,6 +78,7 @@
   /** @returns {Promise<"running"|"stopped"|"excluded">} */
   B.toggle = async () => {
     if (engine && engine.running && !engine.stopping) {
+      saveSnapshot(); // keep a fresh snapshot in case the tab navigates mid-exit
       engine.stop(); // graceful exit
       return "stopped";
     }
@@ -80,6 +98,8 @@
       if (B.engine === mine) {
         B.engine = null;
         release();
+        notifyRunning(false);
+        if (snapshotTimer) { clearInterval(snapshotTimer); snapshotTimer = 0; }
       }
     };
     B.engine = engine;
@@ -90,6 +110,11 @@
       else mine.applySettings(s);
     });
     engine.start(snapshot);
+    notifyRunning(true);
+    // Periodic snapshot so a navigation always finds a fresh one, even if
+    // beforeunload/visibilitychange didn't flush (cross-site, crash...).
+    if (snapshotTimer) clearInterval(snapshotTimer);
+    snapshotTimer = setInterval(saveSnapshot, 2000);
     return "running";
   };
 

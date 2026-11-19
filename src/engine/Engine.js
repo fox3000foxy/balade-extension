@@ -573,6 +573,9 @@
 
       const side = M.sign();
       const start = this.stage.offscreenPoint(side, M.rand(0.15, 0.85) * this.stage.height);
+      // Arrival mood (site weather): fanfare pops in faster, lazy drifts in slower.
+      const mood = this.arrivalMood || "steady";
+      const paceMul = mood === "fanfare" ? 1.35 : mood === "lazy" ? 0.65 : 1;
       const c = new Cursor({
         id: this._nextId++,
         x: start.x,
@@ -582,7 +585,7 @@
         name: M.pick(freeNames.length ? freeNames : cfg.names),
         colorIndex: freeColors.length ? M.pick(freeColors) : Math.floor(M.rand(0, slots))
       });
-      c.setBehavior(new Arrive(this));
+      c.setBehavior(new Arrive(this, paceMul));
       this.cursors.push(c);
       // Return from break: announce it.
       if (this.focus && this.focus.phase === "break" && this.config.social.enabled) {

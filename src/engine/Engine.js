@@ -401,7 +401,12 @@
           a.wiggle(this.time);
           this._later(0.08, () => b.wiggle(this.time));
           this.sound.greet(a);
-          if (M.chance(cfg.sayOnGreet)) M.pick([a, b]).say(M.pick(this.config.bubbles.greet), this.time);
+          // R&D: greetings carry mood; loners tease instead of saying hi.
+          if (a.temperament.role === "loner" || b.temperament.role === "loner") {
+            if (M.chance(0.35)) (M.chance(0.5) ? a : b).tease(M.chance(0.5) ? b : a, this.time, this.config.bubbles.tease);
+          } else if (M.chance(cfg.sayOnGreet)) {
+            M.pick([a, b]).say(M.pick(this.config.bubbles.greet), this.time);
+          }
 
           // One of them, if wandering, follows the other for a while.
           // R&D axis 3: role-driven. Followers tag along eagerly, leaders

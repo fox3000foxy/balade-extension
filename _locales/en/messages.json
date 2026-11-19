@@ -332,6 +332,14 @@
   "bubbles_cheer": {
     "message": "bravo!|yay!|hooray!|sent!|well done"
   },
+  "bubbles_tease": {
+    "message": "slowpoke!|show-off|copycat|hey, my spot!|again?",
+    "description": "Teasing lines between cursors"
+  },
+  "bubbles_seen": {
+    "message": "seen it|old news|been here|meh, again",
+    "description": "Lines for already-visited elements (satiety)"
+  },
   "svg_unreadable": {
     "message": "This file isn't a readable SVG."
   },

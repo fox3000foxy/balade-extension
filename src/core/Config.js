@@ -175,7 +175,10 @@
       curious: L("bubbles_curious"),
       inspect: L("bubbles_inspect"),
       click: L("bubbles_click"),
-      cheer: L("bubbles_cheer")
+      cheer: L("bubbles_cheer"),
+      // R&D: teasing between cursors, and "already seen" lines for satiety.
+      tease: L("bubbles_tease"),
+      seen: L("bubbles_seen"),
     },
 
     // Theme and display options (overridden by menu settings).

@@ -71,10 +71,17 @@
       this.lastBumpSound = -Infinity;
 
       // Temperament: each cursor has its own way of moving.
+      // R&D axis 1: motor signatures. Each cursor keeps its own time warp
+      // (speed-peak position) and first-try precision for life, so a cursor
+      // is recognizable by how it moves. Patient cursors aim true;
+      // impatient ones overshoot and correct.
+      const patience = M.rand(0.6, 1.6);
       this.temperament = {
         pace: M.rand(0.8, 1.25),     // speed multiplier
-        patience: M.rand(0.6, 1.6),  // pause and reaction time multiplier
-        curiosity: M.rand(0, 0.3)    // extra urge to inspect the page
+        patience,                     // pause and reaction time multiplier
+        curiosity: M.rand(0, 0.3),    // extra urge to inspect the page
+        peakWarp: M.rand(0.68, 0.85), // own speed-peak position
+        precise: Math.random() < M.clamp(1.4 - patience, 0.15, 0.95)
       };
 
       this.behavior = null;

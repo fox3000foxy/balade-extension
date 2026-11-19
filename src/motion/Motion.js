@@ -79,15 +79,22 @@
       }
 
       const c = this.cfg;
-      const speed = (opts.speed || 1) * cursor.temperament.pace * (c.speedMul || 1);
+      const t = cursor.temperament;
+      const speed = (opts.speed || 1) * t.pace * (c.speedMul || 1);
       const width = opts.width || c.defaultWidth;
       const precise = opts.precise !== false;
 
-      if (precise && dist > c.correction.minDist && M.chance(c.correction.chance)) {
+      // R&D axis 1: correction is a per-cursor trait. Patient cursors usually
+      // aim true on the first try; impatient ones overshoot along the motion
+      // (humans miss beyond, not short) and correct.
+      const needCorrection = precise && dist > c.correction.minDist &&
+        (t.precise ? Math.random() > 0.85 : M.chance(c.correction.chance));
+      if (needCorrection) {
         // 1. Primary gesture, aiming slightly off-target.
         const ux = (p0.x - cursor.x) / dist;
         const uy = (p0.y - cursor.y) / dist;
-        const along = M.clamp(M.rand(...c.correction.along) * dist, -c.correction.maxAlong, c.correction.maxAlong);
+        const overshoot = t.precise ? 0 : M.rand(0, 0.05); // impatient: past the target
+        const along = M.clamp((M.rand(...c.correction.along) + overshoot) * dist, -c.correction.maxAlong, c.correction.maxAlong);
         const across = M.clamp(M.rand(-1, 1) * c.correction.across * dist, -c.correction.maxAcross, c.correction.maxAcross);
         const miss = { x: ux * along - uy * across, y: uy * along + ux * across };
         yield* this._segment(cursor, get, miss, { ...opts, speed, width });
@@ -120,7 +127,8 @@
 
       const path = this.paths.build(start, end0, { calm: opts.calm });
       const dur = this.duration(dist, opts.width, opts.speed);
-      const curve = this.makeCurve(M.rand(...this.cfg.peakWarp));
+      // R&D axis 1: the cursor's own warp, not a fresh draw per gesture.
+      const curve = this.makeCurve(cursor.temperament.peakWarp);
 
       let t = 0;
       for (;;) {

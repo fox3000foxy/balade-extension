@@ -327,11 +327,19 @@
     _meetings() {
       const cfg = this.config.social;
       if (!cfg.enabled || this.swarmHeld || this.time - this._lastGreet < cfg.greetCooldown) return;
+      // Purge stale pair entries so the Map doesn't grow unboundedly.
+      if (this._pairs.size > 50) {
+        const cutoff = this.time - cfg.pairCooldown;
+        for (const [k, t] of this._pairs) if (t < cutoff) this._pairs.delete(k);
+      }
       const list = this.cursors.filter((c) => !c.leaving && !c.ghost && c.screenY > 0 && c.screenY < window.innerHeight);
-      for (let i = 0; i < list.length; i++) {
-        for (let j = i + 1; j < list.length; j++) {
+      // Pick a random starting pair offset so we don't always scan from the same corner.
+      const start = Math.floor(Math.random() * Math.max(1, list.length));
+      for (let ii = 0; ii < list.length; ii++) {
+        const i = (start + ii) % list.length;
+        for (let jj = i + 1; jj < list.length; jj++) {
           const a = list[i];
-          const b = list[j];
+          const b = list[jj];
           if (Math.hypot(a.screenX - b.screenX, a.screenY - b.screenY) > cfg.meetDistance) continue;
           const key = a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`;
           if (this.time - (this._pairs.get(key) || -Infinity) < cfg.pairCooldown) continue;
@@ -352,6 +360,7 @@
         }
       }
     }
+
 
     /** Your clicks draw attention: nearby cursors get a small push toward them. */
     _reactToClick(x, y) {

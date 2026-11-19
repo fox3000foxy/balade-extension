@@ -53,11 +53,13 @@
           let wx = tang * tx + rad * nx;
           let wy = tang * ty + rad * ny;
 
-          // Alignment with neighbors within 80 px.
+          // Alignment with up to 8 nearest neighbors within 80 px (O(n) cap).
           let ax = 0;
           let ay = 0;
           let wsum = 0;
+          let neighborCount = 0;
           for (const o of engine.cursors) {
+            if (neighborCount >= 8) break;
             if (o === cursor || o.behavior == null || !(o.behavior instanceof Swarm)) continue;
             const od = Math.hypot(o.pageX - cursor.pageX, o.pageY - cursor.pageY);
             if (od > 80) continue;
@@ -65,6 +67,7 @@
             ax += o.vx * w;
             ay += o.vy * w;
             wsum += w;
+            neighborCount++;
           }
           if (wsum > 0) {
             wx = 0.7 * wx + 0.3 * (ax / wsum);

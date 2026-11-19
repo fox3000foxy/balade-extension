@@ -180,8 +180,14 @@
         ghostToggle,
         ghostToggleEl: null,   // the real DOM element being overlaid
         ghostToggleSvg: null,  // svg markup, rebuilt when size changes
+        ghostToggleUntil: 0,   // engine time after which the toggle auto-hides
+        ghostFor: null,
+        ghostSelActive: false,
+        ghostSelColor: null,
         key: null,
-        tagText: null
+        tagText: null,
+        pipWidth: 90,          // cached offsetWidth of the pip tag
+        pipWidthKey: null      // tagText value when pipWidth was last measured
       };
       this.views.set(cursor.id, view);
       return view;
@@ -266,38 +272,35 @@
      * @param {object} v  - view object from _create
      * @param {string} color - the cursor's color
      */
-    /** color may be a resolved hex string or a cursor object (resolved internally). */
+    /**
+     * Marks the ghost selection as active; the render loop does the first
+     * positioning on the next RAF so we don't force a layout outside the frame.
+     * color may be a resolved hex string or a cursor object (resolved internally).
+     */
     showGhostSel(v, colorOrCursor) {
       if (!v.ghostFor) return;
-      const color = colorOrCursor && typeof colorOrCursor === "object"
+      v.ghostSelColor = colorOrCursor && typeof colorOrCursor === "object"
         ? this.theme.palette[colorOrCursor.colorIndex % this.theme.palette.length]
         : colorOrCursor;
-      const p = v.ghostPad;
-      const r = v.ghostFor.getBoundingClientRect();
-      const s = v.ghostSel;
-      s.style.transform = `translate(${r.left + p.l}px, ${r.top + p.t}px)`;
-      s.style.width = `${Math.max(0, r.width - p.l - p.r)}px`;
-      s.style.height = `${Math.max(0, r.height - p.t - p.b)}px`;
-      s.style.background = color;
-      s.style.opacity = "0.28";
-      s.classList.add("on");
+      v.ghostSelActive = true;
     }
 
     hideGhostSel(v) {
+      v.ghostSelActive = false;
       v.ghostSel.classList.remove("on");
     }
 
-    /** Records the element to overlay; the render loop does the actual positioning. */
-    showGhostToggle(el, cursor, isRadio) {
+    /** Records the element to overlay; auto-hides after `duration` seconds. */
+    showGhostToggle(el, cursor, isRadio, duration = 1.4) {
       const v = this.views.get(cursor.id);
       if (!v) return;
       v.ghostToggleEl = el;
       v.ghostToggleIsRadio = isRadio;
       v.ghostToggleSvg = null; // force rebuild on first frame
+      v.ghostToggleUntil = (this._now || 0) + duration;
     }
 
     hideGhostToggle(el) {
-      // Find the view that owns this element and clear it.
       for (const v of this.views.values()) {
         if (v.ghostToggleEl === el) {
           v.ghostToggleEl = null;
@@ -336,7 +339,12 @@
         let line = 0;
         let right = -Infinity;
         for (const p of row) {
-          const w = p.v.tag.offsetWidth || 90;
+          // Cache offsetWidth per tag text to avoid a forced layout every frame.
+          if (p.v.pipWidthKey !== p.v.tagText) {
+            p.v.pipWidth = p.v.tag.offsetWidth || 90;
+            p.v.pipWidthKey = p.v.tagText;
+          }
+          const w = p.v.pipWidth || 90;
           let left = Math.max(p.x - w / 2, right + 6, 8);
           if (left + w > W - 8) {
             line++;
@@ -349,8 +357,9 @@
       }
     }
 
-    render(cursors, squash) {
+    render(cursors, squash, now = 0) {
       if (!this.layer) return;
+      this._now = now;
       const t = this.theme;
       const W = window.innerWidth;
       const H = window.innerHeight;
@@ -416,7 +425,11 @@
           v.focus.classList.remove("on");
         }
 
-        // Ghost toggle: reposition every frame so it tracks scrolling.
+        // Ghost toggle: reposition every frame, auto-hide after its lifetime expires.
+        if (v.ghostToggleEl && now > v.ghostToggleUntil) {
+          v.ghostToggle.style.display = "none";
+          v.ghostToggleEl = null;
+        }
         if (v.ghostToggleEl && v.ghostToggleEl.isConnected) {
           const r = v.ghostToggleEl.getBoundingClientRect();
           // Hide when scrolled out of view.
@@ -453,8 +466,21 @@
           v.ghost.style.height = `${Math.max(0, r.height - p.t - p.b)}px`;
           if (v.ghostText.textContent !== c.ghost.text) v.ghostText.textContent = c.ghost.text;
           v.ghost.classList.add("on");
+          // Ghost selection: position inside RAF so no forced layout outside frame.
+          if (v.ghostSelActive && v.ghostPad) {
+            const rg = c.ghost.el.getBoundingClientRect();
+            const pg = v.ghostPad;
+            const s = v.ghostSel;
+            s.style.transform = `translate(${rg.left + pg.l}px, ${rg.top + pg.t}px)`;
+            s.style.width = `${Math.max(0, rg.width - pg.l - pg.r)}px`;
+            s.style.height = `${Math.max(0, rg.height - pg.t - pg.b)}px`;
+            s.style.background = v.ghostSelColor || color;
+            s.style.opacity = "0.28";
+            s.classList.add("on");
+          }
         } else if (v.ghostFor) {
           v.ghost.classList.remove("on");
+          v.ghostSelActive = false;
           v.ghostSel.classList.remove("on");
           v.ghostText.textContent = "";
           // Restore the placeholder.

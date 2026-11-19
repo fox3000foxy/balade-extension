@@ -462,7 +462,7 @@
           v.ghostToggleEl = null;
         }
 
-        if (c.ghost && c.ghost.el.isConnected) {
+        if (c.ghost && c.ghost.el && c.ghost.el.isConnected) {
           if (v.ghostFor !== c.ghost.el) this._styleGhost(v, c.ghost.el);
           // Ghost theme: live-update text color to the cursor's current color.
           if (this.theme.ghostColor === "cursor") v.ghostText.style.color = color;

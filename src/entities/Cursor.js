@@ -168,8 +168,16 @@
           this.routine.return();
         } catch (err) { /* already finished */ }
       }
+      // Build the new routine first: if run() throws, keep a clean state
+      // instead of an assigned behavior with a stale routine.
+      let routine = null;
+      try {
+        routine = behavior.run(this);
+      } catch (err) {
+        console.warn("[Balade] Error starting a behavior:", err);
+      }
       this.behavior = behavior;
-      this.routine = behavior.run(this);
+      this.routine = routine;
       this._resetPose();
     }
 

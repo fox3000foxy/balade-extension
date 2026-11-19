@@ -163,11 +163,11 @@
       if (!this.running || this.stopping) return;
       this.stopping = true;
       for (const c of this.cursors) this._sendAway(c);
-      // Safety net: if a Leave gesture never finishes (exception, detached
-      // target...), don't leave the overlay up forever — force teardown.
-      this._later(6, () => {
-        if (this.stopping && this.cursors.length > 0) this.destroy();
-      });
+      // Safety net: timers don't run while stopping (step skips them), so use
+      // a wall-clock timeout, not engine time. Force teardown if Leave stalls.
+      setTimeout(() => {
+        if (this.stopping && this.cursors.length > 0 && this.running) this.destroy();
+      }, 6000);
     }
 
     /** Immediate stop. */
@@ -225,9 +225,19 @@
     frame(now) {
       const dt = Math.min((now - this._last) / 1000, this.config.dtMax);
       this._last = now;
-      if (dt > 0) this.step(dt);
-      if (!this.running) return;
-      this.renderer.render(this.cursors, this.config.cursor.squash, this.time);
+      // One bad frame must never kill the loop: always re-arm the rAF.
+      try {
+        if (dt > 0) this.step(dt);
+        if (!this.running) return;
+        this.renderer.render(this.cursors, this.config.cursor.squash, this.time);
+      } catch (err) {
+        if (!this._frameErrors || this.time - this._frameErrors.at > 5) {
+          console.warn("[Balade] frame error (loop kept alive):", err);
+          this._frameErrors = { at: this.time, n: 0 };
+        }
+        if (this._frameErrors) this._frameErrors.n++;
+        if (!this.running) return;
+      }
       this._raf = requestAnimationFrame(this._frame);
     }
 
@@ -544,8 +554,9 @@
     }
 
     _onBehaviorDone(c) {
+      const idx = this.cursors.indexOf(c);
       if (c.leaving) {
-        this.cursors.splice(this.cursors.indexOf(c), 1);
+        if (idx >= 0) this.cursors.splice(idx, 1);
         return;
       }
       c.setBehavior(this.chooseBehavior(c));

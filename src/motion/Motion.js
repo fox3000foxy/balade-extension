@@ -80,7 +80,7 @@
 
       const c = this.cfg;
       const t = cursor.temperament;
-      const speed = (opts.speed || 1) * t.pace * (c.speedMul || 1);
+      const speed = Math.max(0.05, (opts.speed || 1) * t.pace * (c.speedMul || 1)); // never 0: dur would be Infinity
       const width = opts.width || c.defaultWidth;
       const precise = opts.precise !== false;
 
@@ -132,7 +132,10 @@
 
       let t = 0;
       for (;;) {
-        t += yield;
+        const step = yield;
+        // A non-finite dt (background tab, clock glitch) must never poison
+        // the gesture: treat as zero progress, the next frame recovers.
+        t += Number.isFinite(step) ? step : 0;
         const k = Math.min(1, t / dur);
         const u = this.progress(curve, k);
         const p = path.at(u);
@@ -150,8 +153,12 @@
 
     /** Waits `seconds` seconds. */
     *wait(seconds) {
+      const total = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
       let t = 0;
-      while (t < seconds) t += yield;
+      while (t < total) {
+        const step = yield;
+        t += Number.isFinite(step) ? step : 0;
+      }
     }
 
     /** A click: the cursor presses down, a small sound, then a brief gesture. */

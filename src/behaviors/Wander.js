@@ -258,10 +258,12 @@
 
     /** Stays anchored to a point (often over an element) for `seconds` seconds. */
     *hover(cursor, anchor, seconds) {
-      let t = seconds;
+      let t = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
       while (t > 0) {
-        t -= yield;
+        const step = yield;
+        t -= Number.isFinite(step) ? step : 0;
         const p = anchor();
+        if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
         cursor.x = p.x;
         cursor.y = p.y;
       }

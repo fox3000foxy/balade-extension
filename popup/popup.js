@@ -18,7 +18,7 @@
       ghostTyping: "Écrivent dans les champs", showNames: "Portent leur prénom", hideFullscreen: "Se cachent en plein écran",
       social: "Bavardent entre eux", reactive: "Réagissent à vos gestes", swarmHint: "rassembler les spécimens",
       adaptDark: "S'adaptent à la nuit", site: "Terrain", siteExclude: "Zone protégée", siteAuto: "Lâcher dès l'arrivée",
-      anticipate: "Devinent vos gestes", learn: "Retiennent vos habitudes",
+      anticipate: "Devinent vos gestes", learn: "Retiennent vos habitudes", extras: "Expériences",
       running: (n) => `Relevé du jour · ${n} spécimen${n > 1 ? "s" : ""}`, stopped: "Relevé du jour · aucun spécimen" }
   };
   const DEFAULT_WORDS = {
@@ -29,7 +29,7 @@
     adaptDark: "Adapter aux pages sombres", site: "Ce site", siteExclude: "Ne jamais lancer ici",
     siteAuto: "Lancer automatiquement ici",
     anticipate: "Deviner mes gestes", learn: "Apprendre mes habitudes",
-    shortcut: "lance ou range les curseurs"
+    shortcut: "lance ou range les curseurs", extras: "Jeux et outils"
   };
 
   const TOGGLES = ["ghostTyping", "showNames", "social", "reactive", "anticipate", "learn", "adaptDark", "hideFullscreen"];
@@ -66,7 +66,13 @@
       try {
         host = window.parent.location.hostname;
       } catch (err) { /* autre origine */ }
-      state = hb ? { state: on ? "running" : "stopped", count: on ? e.cursors.filter((c) => !c.leaving).length : 0, host }
+      state = hb ? {
+        state: on ? "running" : "stopped",
+        count: on ? e.cursors.filter((c) => !c.leaving).length : 0,
+        host,
+        game: on && e.game ? { caught: e.game.caught, total: e.game.total } : null,
+        focus: on && e.focus ? { phase: e.focus.phase, left: Math.max(0, Math.round((e.focus.until - Date.now()) / 1000)) } : null
+      }
                  : { state: "unavailable", count: 0, host: "" };
     }
     if (state.state !== "unavailable" && state.host && Settings.isExcluded(settings, state.host) && state.state !== "running") {
@@ -74,6 +80,72 @@
     }
     renderStatus();
     renderSite();
+    renderExtras();
+  }
+
+  // ---------- Jeux et outils ----------
+
+  /** Appelle une fonction de Balade dans la page (extension) ou dans la page hôte (démo). */
+  async function callPage(name, args = []) {
+    if (inExtension) return self.BaladeInject.call(tabId, name, args);
+    const hb = hostBalade();
+    return hb ? hb[name](...args) : null;
+  }
+
+  async function recState() {
+    if (!inExtension || !chrome.storage.session) return null;
+    return (await chrome.storage.session.get("balade.rec"))["balade.rec"] || null;
+  }
+
+  async function renderExtras() {
+    const ok = state.state === "running" || state.state === "stopped";
+    const game = state.game;
+    const focus = state.focus;
+    const g = $("gameBtn");
+    g.disabled = !ok;
+    g.setAttribute("aria-pressed", String(!!game));
+    g.textContent = game ? `Arrêter le jeu (${game.caught} / ${game.total})` : "Jouer au chat";
+    const f = $("focusBtn");
+    f.disabled = !ok;
+    f.setAttribute("aria-pressed", String(!!focus));
+    const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    f.textContent = focus
+      ? `${focus.phase === "focus" ? "Finir la concentration" : "Finir la pause"} (${mmss(focus.left)})`
+      : "Concentration · 25 min";
+    const r = $("recBtn");
+    const rec = await recState();
+    r.hidden = !inExtension || !chrome.tabCapture;
+    r.disabled = !rec && state.state === "unavailable";
+    r.setAttribute("aria-pressed", String(!!rec));
+    r.textContent = rec ? `Arrêter l'enregistrement (${mmss(Math.round((Date.now() - rec.startedAt) / 1000))})` : "Enregistrer une vidéo de l'onglet";
+  }
+
+  function bindExtras() {
+    $("gameBtn").addEventListener("click", async () => {
+      const wasPlaying = !!state.game;
+      await callPage(wasPlaying ? "stopGame" : "startGame");
+      setTimeout(refreshStatus, 200);
+      if (inExtension && !wasPlaying) window.close(); // place au jeu
+    });
+    $("focusBtn").addEventListener("click", async () => {
+      await callPage(state.focus ? "stopFocus" : "startFocus", [25]);
+      setTimeout(refreshStatus, 200);
+    });
+    $("recBtn").addEventListener("click", async () => {
+      if (await recState()) {
+        chrome.runtime.sendMessage({ type: "rec-stop" });
+        setTimeout(renderExtras, 300);
+        return;
+      }
+      // L'identifiant du flux doit être demandé pendant le clic, depuis le menu.
+      chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, (streamId) => {
+        if (chrome.runtime.lastError || !streamId) {
+          $("status").textContent = "Enregistrement impossible sur cette page";
+          return;
+        }
+        chrome.runtime.sendMessage({ type: "rec-start", streamId, tabId, host: state.host }, () => setTimeout(renderExtras, 300));
+      });
+    });
   }
 
   async function toggle() {
@@ -272,6 +344,7 @@
   function bind() {
     $("toggle").addEventListener("click", toggle);
     bindSite();
+    bindExtras();
     for (const id of ["count", "pace", "curiosity", "volume"]) {
       // Pendant le glissement : affichage immédiat ; au relâchement : enregistrement.
       $(id).addEventListener("input", (e) => {
@@ -301,6 +374,6 @@
     await refreshStatus();
     renderShortcut();
     // Le nombre de curseurs varie pendant que le menu est ouvert.
-    setInterval(refreshStatus, 1500);
+    setInterval(refreshStatus, 1000);
   })();
 })();

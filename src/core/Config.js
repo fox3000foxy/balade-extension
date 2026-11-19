@@ -154,7 +154,19 @@
       minDistance: 100        // en dessous, pas le temps d'arriver avant vous (px)
     },
 
+    // Jeu du chat : attrapez les curseurs avec votre souris.
+    game: {
+      danger: 260,       // distance à laquelle votre souris fait fuir (px)
+      wall: 90,          // les bords repoussent en deçà (px)
+      catchRadius: 20    // attrapé si votre pointeur passe à moins de… (px)
+    },
+
+    // Mode concentration : les curseurs s'en vont, puis reviennent pour la pause.
+    focus: { minutes: 25, breakMinutes: 5 },
+
     bubbles: {
+      caught: ["attrapé !", "zut", "eh !", "pas juste", "bien joué"],
+      breakTime: ["pause !", "on souffle ?", "c'est l'heure", "coucou, pause"],
       predict: ["par ici ?", "c'est là ?", "je parie…", "ici, non ?"],
       right: ["je le savais !", "bingo", "tiens donc", "on se connaît"],
       wrong: ["oups", "raté", "ah non"],

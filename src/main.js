@@ -46,5 +46,22 @@
     return "running";
   };
 
+  /** Démarre la balade si besoin. Renvoie false si le site est exclu. */
+  async function ensureRunning() {
+    if (engine && engine.running && !engine.stopping) return true;
+    return (await B.toggle()) === "running";
+  }
+
+  B.startGame = async () => ((await ensureRunning()) ? (B.engine.startGame(), "game") : "excluded");
+  B.stopGame = () => {
+    if (B.engine) B.engine.endGame();
+    return "stopped";
+  };
+  B.startFocus = async (minutes) => ((await ensureRunning()) ? (B.engine.startFocus(minutes), "focus") : "excluded");
+  B.stopFocus = () => {
+    if (B.engine) B.engine.stopFocus();
+    return "stopped";
+  };
+
   B.ready = true;
 })();

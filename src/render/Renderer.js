@@ -18,6 +18,11 @@
               transform-origin: 0 100%; transition: opacity .18s ease, transform .18s ease; }
     .bubble.on { opacity: 1; transform: none; }
     .cur.pip .bubble { display: none; }
+    .hud { position: absolute; pointer-events: none; }
+    .hud.top { left: 50%; top: 14px; transform: translateX(-50%) !important; font-size: 14px !important; padding: 6px 14px !important; }
+    .hud.top:not(.on) { transform: translate(-50%, -6px) !important; }
+    .hud.corner { right: 14px; bottom: 14px; opacity: 0; }
+    .hud.corner.on { opacity: .85; }
     .cur.bub-left .bubble { left: auto !important; right: 6px; }
     .cur.bub-below .bubble { bottom: auto !important; top: 44px; }
     .layer.nonames .cur:not(.pip) .tag { display: none; }
@@ -66,6 +71,11 @@
       const style = document.createElement("style");
       style.textContent = BASE_STYLE + Object.values(Themes).map((t) => t.css).join("\n");
       this.layer = document.createElement("div");
+      this.hud = {
+        top: Object.assign(document.createElement("div"), { className: "bubble hud top" }),
+        corner: Object.assign(document.createElement("div"), { className: "bubble hud corner" })
+      };
+      this.layer.append(this.hud.top, this.hud.corner);
       shadow.append(style, this.layer);
       this._applyLayerClass();
       document.documentElement.appendChild(this.host);
@@ -103,6 +113,18 @@
     setShowNames(show) {
       this.showNames = show;
       this._applyLayerClass();
+    }
+
+    /** Petit affichage fixe : "top" (jeu) ou "corner" (minuteur). null pour le cacher. */
+    setHud(slot, text) {
+      const el = this.hud && this.hud[slot];
+      if (!el) return;
+      if (text == null) {
+        el.classList.remove("on");
+        return;
+      }
+      if (el.textContent !== text) el.textContent = text;
+      el.classList.add("on");
     }
 
     /** Cache ou montre tous les curseurs (plein écran). */

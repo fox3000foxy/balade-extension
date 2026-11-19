@@ -1,5 +1,19 @@
 # Journal des versions
 
+## 0.8.0 — Jeu du chat, concentration, enregistrement vidéo
+
+- **Jouer au chat** (menu, « Jeux et outils ») : tous les curseurs fuient votre souris
+  (pilotage à force plafonnée, bords et voisins qui repoussent, quelques rapides) ; on en
+  attrape un en passant dessus. Compteur et chrono en haut de l'écran, meilleur temps gardé
+  dans le stockage de l'extension (jamais dans celui du site). Échap arrête la partie.
+- **Concentration · 25 min** : les curseurs s'en vont, un discret minuteur reste dans le coin ;
+  à la fin, ils reviennent pour 5 minutes de pause (« pause ! », petit arpège).
+- **Enregistrer une vidéo de l'onglet** : capture de l'onglet (chrome.tabCapture), enregistrée
+  en WebM dans un document hors écran, téléchargée automatiquement à l'arrêt (2 minutes au
+  plus). Badge « REC » sur l'icône pendant l'enregistrement ; le son de l'onglet reste audible.
+- Nouvelles autorisations : `tabCapture`, `offscreen`, `downloads` (pour l'enregistrement).
+- Correctif : les éléments masqués du menu (`hidden`) l'étaient vraiment.
+
 ## 0.7.0 — Personnalisation
 
 - **Page « Personnalisation »** (lien dans le menu, ou clic droit sur l'icône → Options) :

@@ -1,7 +1,7 @@
 // Le moteur : la boucle d'animation, la population de curseurs, le défilement,
 // la souris de l'utilisateur, le plein écran, et le choix du comportement suivant.
 (() => {
-  const { M, Cursor, Motion, Stage, Renderer, Sound, Settings, Habits, Predictor, Arrive, Leave, Wander, Gather, Follow, Swarm, Anticipate } = window.Balade;
+  const { M, Cursor, Motion, Stage, Renderer, Sound, Settings, Habits, Predictor, Arrive, Leave, Wander, Gather, Follow, Swarm, Anticipate, Flee } = window.Balade;
 
   class Engine {
     constructor(config) {
@@ -45,6 +45,11 @@
       this.predictionHits = 0;
       this._userClicks = []; // { el, time } : vos clics récents
 
+      // Jeu du chat et mode concentration.
+      this.game = null;  // { start, total, caught, done, doneAt, text }
+      this.focus = null; // { phase: "focus" | "break", until (ms, horloge murale) }
+      this._hudAt = 0;
+
       this._onPointerMove = (e) => {
         const now = performance.now();
         const dtm = Math.max(1, now - this.mouse._t) / 1000;
@@ -57,7 +62,10 @@
         this.predictor.addSample(e.clientX, e.clientY, now / 1000);
       };
       this._onKeyDown = (e) => {
-        if (e.key === "Escape") this.stop();
+        if (e.key === "Escape") {
+          if (this.game) this.endGame();
+          else this.stop();
+        }
         const sh = this._shift;
         if (e.key === "Shift") {
           if (!e.repeat) {
@@ -189,11 +197,16 @@
       }
 
       if (!this.stopping) {
-        this._regulatePopulation(dt);
         this._runTimers();
-        this._trackAttention(dt);
-        this._checkSwarm();
-        this._predictGesture();
+        this._updateFocus();
+        if (this.game) {
+          this._updateGame();
+        } else {
+          this._regulatePopulation(dt);
+          this._trackAttention(dt);
+          this._checkSwarm();
+          this._predictGesture();
+        }
       }
 
       for (const c of [...this.cursors]) {
@@ -205,8 +218,8 @@
       const sx = window.scrollX;
       const sy = window.scrollY;
       for (const c of this.cursors) c.updateScreen(sx, sy);
-      this._avoidMouse(dt);
-      if (!this.stopping) this._meetings();
+      if (!this.game) this._avoidMouse(dt);
+      if (!this.stopping && !this.game) this._meetings();
       this._sampleBackgrounds();
       for (const c of this.cursors) c.updateSignals(dt, this.config.cursor, this.time);
 
@@ -219,7 +232,8 @@
      * Choisit ce que fait un curseur quand son comportement se termine.
      * C'est le point d'extension pour les futurs comportements (prédiction de tâche…).
      */
-    chooseBehavior(cursor) { // eslint-disable-line no-unused-vars
+    chooseBehavior(cursor) {
+      if (this.game && !cursor.caught) return new Flee(this);
       if (this.swarmHeld) return new Swarm(this);
       return new Wander(this);
     }
@@ -466,6 +480,12 @@
     _regulatePopulation(dt) {
       const p = this.config.population;
 
+      // Concentration : tout le monde reste dehors.
+      if (this.focus && this.focus.phase === "focus") {
+        for (const c of this.cursors) this._sendAway(c);
+        return;
+      }
+
       this._nextPopulationChange -= dt;
       if (this._nextPopulationChange <= 0) {
         // De temps en temps, quelqu'un arrive ou s'en va, puis on revient vers la cible.
@@ -509,6 +529,144 @@
       });
       c.setBehavior(new Arrive(this));
       this.cursors.push(c);
+      // Retour de pause : on l'annonce.
+      if (this.focus && this.focus.phase === "break" && this.config.social.enabled) {
+        this._later(M.rand(0.8, 1.6), () => this._alive(c) && c.say(M.pick(this.config.bubbles.breakTime), this.time, 2.2));
+      }
+      return c;
+    }
+
+    // ---------- Jeu du chat ----------
+
+    /** Attrapez-les tous : chaque curseur fuit votre souris ; on l'attrape en passant dessus. */
+    startGame() {
+      if (this.game || this.stopping) return;
+      this.swarmHeld = false;
+      // Toute l'équipe en jeu, tout de suite.
+      const present = () => this.cursors.filter((c) => !c.leaving);
+      while (present().length < this.config.population.target) this._spawn();
+      const players = present();
+      for (const c of players) {
+        c.caught = false;
+        c.setBehavior(new Flee(this));
+      }
+      this.game = { start: this.time, total: players.length, caught: 0, done: false, doneAt: 0 };
+      this.sound.cheer();
+      this._hudGame();
+    }
+
+    endGame() {
+      if (!this.game) return;
+      this.game = null;
+      this.renderer.setHud("top", null);
+      for (const c of this.cursors) c.caught = false;
+    }
+
+    _updateGame() {
+      const g = this.game;
+      if (g.done) {
+        if (this.time - g.doneAt > 3.5) this.endGame();
+        return;
+      }
+      const m = this.mouse;
+      const r = this.config.game.catchRadius;
+      if (this.time - m.movedAt < 1) {
+        for (const c of this.cursors) {
+          if (c.caught || c.leaving) continue;
+          if (Math.hypot(c.screenX - m.x, c.screenY - m.y) < r) this._catch(c);
+        }
+      }
+      if (this.time - this._hudAt > 0.2 && this.game && !this.game.done) this._hudGame();
+    }
+
+    _catch(c) {
+      const g = this.game;
+      c.caught = true;
+      c.wiggle(this.time);
+      this.sound.boing(c);
+      if (this.config.social.enabled) c.say(M.pick(this.config.bubbles.caught), this.time, 1.4);
+      g.caught++;
+      this._later(0.5, () => this._sendAway(c));
+      if (g.caught >= g.total) this._winGame();
+      else this._hudGame();
+    }
+
+    async _winGame() {
+      const g = this.game;
+      g.done = true;
+      g.doneAt = this.time;
+      const t = this.time - g.start;
+      this.sound.cheer();
+      const best = await Engine.bestTime(t);
+      const record = best == null || t <= best;
+      if (this.game === g) {
+        this.renderer.setHud("top", `Tous attrapés en ${Engine.fmt(t)} !` + (record ? " Nouveau record !" : ` Record : ${Engine.fmt(best)}`));
+      }
+    }
+
+    _hudGame() {
+      const g = this.game;
+      this._hudAt = this.time;
+      this.renderer.setHud("top", `Chat · ${g.caught} / ${g.total} · ${Engine.fmt(this.time - g.start)} · Échap pour arrêter`);
+    }
+
+    static fmt(seconds) {
+      const s = Math.max(0, Math.round(seconds));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    }
+
+    /** Meilleur temps (gardé dans le stockage de l'extension, jamais dans celui du site). */
+    static async bestTime(candidate) {
+      const key = "balade.best.chat";
+      try {
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          const prev = (await chrome.storage.local.get(key))[key];
+          if (prev == null || candidate < prev) await chrome.storage.local.set({ [key]: candidate });
+          return prev == null ? null : prev;
+        }
+      } catch (err) { /* pas de record */ }
+      Engine._best = Engine._best == null ? null : Engine._best;
+      const prev = Engine._best;
+      if (prev == null || candidate < prev) Engine._best = candidate;
+      return prev;
+    }
+
+    // ---------- Mode concentration ----------
+
+    /** Les curseurs s'en vont pendant `minutes`, puis reviennent pour la pause. */
+    startFocus(minutes) {
+      const f = this.config.focus;
+      this.endGame();
+      this.focus = { phase: "focus", until: Date.now() + (minutes || f.minutes) * 60000 };
+      this._updateFocus(true);
+    }
+
+    stopFocus() {
+      this.focus = null;
+      this.renderer.setHud("corner", null);
+    }
+
+    _updateFocus(force) {
+      const f = this.focus;
+      if (!f) return;
+      const now = Date.now();
+      if (now >= f.until) {
+        if (f.phase === "focus") {
+          // Fin de la concentration : la pause commence, tout le monde revient.
+          f.phase = "break";
+          f.until = now + this.config.focus.breakMinutes * 60000;
+          this._spawnCooldown = 0;
+          this.sound.cheer();
+        } else {
+          this.stopFocus();
+          return;
+        }
+      }
+      if (force || this.time - this._hudAt > 0.5) {
+        this._hudAt = this.time;
+        const left = (f.until - now) / 1000;
+        this.renderer.setHud("corner", `${f.phase === "focus" ? "Concentration" : "Pause"} · ${Engine.fmt(left)}`);
+      }
     }
 
     // ---------- Défilement ----------

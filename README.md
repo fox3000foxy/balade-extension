@@ -67,6 +67,13 @@ Chaque curseur regarde le fond sous lui et adapte son pointeur s'il est sombre
 
 Deux interrupteurs du menu les règlent : « Bavarder entre eux » et « Réagir à ce que je fais ».
 
+## Jeux et outils
+
+Dans le menu :
+- **Jouer au chat** : attrapez les curseurs avec votre souris (Échap pour arrêter).
+- **Concentration · 25 min** : les curseurs s'en vont, puis reviennent pour la pause.
+- **Enregistrer une vidéo de l'onglet** : un fichier WebM téléchargé à l'arrêt (2 minutes au plus).
+
 ## Personnalisation
 
 Lien « Personnaliser… » en bas du menu (ou clic droit sur l'icône → Options) : vos prénoms,
@@ -90,6 +97,7 @@ dans l'ordre de `FILES` (`lib/inject.js`), qui est aussi celui des `<script>` de
 | `lib/inject.js` | injection des scripts, lancer/ranger, état de l'onglet |
 | `popup/` | le menu (HTML, CSS aux quatre habillages, JS) |
 | `options/` | la page de personnalisation |
+| `offscreen/` | enregistrement vidéo (document hors écran) |
 | `core/SvgSanitizer.js` | nettoyage des pointeurs SVG importés |
 | `core/Config.js` | réglages internes du mouvement |
 | `core/Settings.js` | réglages de l'utilisateur : stockage et traduction en paramètres |
@@ -99,7 +107,7 @@ dans l'ordre de `FILES` (`lib/inject.js`), qui est aussi celui des `<script>` de
 | `world/Stage.js` | écran, éléments de la page, où viser, fond, plein écran |
 | `world/Predictor.js` | anticipation du geste |
 | `world/Habits.js` | apprentissage des enchaînements de clics (local) |
-| `behaviors/*.js` | arrivée, départ, flânerie, attention (`Gather`), suivre (`Follow`), essaim (`Swarm`), anticiper (`Anticipate`) |
+| `behaviors/*.js` | arrivée, départ, flânerie, attention (`Gather`), suivre (`Follow`), essaim (`Swarm`), anticiper (`Anticipate`), fuir (`Flee`) |
 | `render/Themes.js` | les quatre thèmes et leurs pointeurs |
 | `render/FontLoader.js` | polices embarquées pour l'overlay |
 | `render/Renderer.js` | overlay en Shadow DOM, étiquettes, repères de bord, texte fantôme |

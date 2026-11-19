@@ -21,6 +21,8 @@
     social: true,         // rencontres et bulles
     reactive: true,       // attention partagée, réactions à vos gestes, essaim à la demande
     adaptDark: true,      // pointeurs adaptés aux fonds sombres
+    anticipate: true,     // deviner l'élément que vous visez
+    learn: true,          // apprendre vos enchaînements de clics (en local)
     excludedSites: [],    // sites où Balade ne se lance jamais (noms d'hôte)
     autoSites: []         // sites où Balade se lance tout seul (noms d'hôte)
   });
@@ -43,6 +45,8 @@
     s.social = !!s.social;
     s.reactive = !!s.reactive;
     s.adaptDark = !!s.adaptDark;
+    s.anticipate = !!s.anticipate;
+    s.learn = !!s.learn;
     const hosts = (list) =>
       [...new Set((Array.isArray(list) ? list : []).map((h) => String(h).trim().toLowerCase()).filter(Boolean))].slice(0, 200);
     s.excludedSites = hosts(s.excludedSites);
@@ -132,6 +136,8 @@
       config.social.reactive = s.reactive;
       config.attention.enabled = s.reactive;
       config.adaptDark = s.adaptDark;
+      config.predict.enabled = s.anticipate;
+      config.predict.learn = s.learn;
       return config;
     },
 

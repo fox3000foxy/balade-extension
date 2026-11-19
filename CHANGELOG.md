@@ -1,5 +1,20 @@
 # Journal des versions
 
+## 0.6.0 — Anticipation du geste, apprentissage des habitudes
+
+- **Deviner mes gestes** : pendant que vous déplacez la souris, Balade cherche l'élément
+  cliquable visé (cône autour de la direction, distance restante estimée par v² / 2|a| quand
+  vous freinez, habitudes du site). Si une cible l'emporte nettement, le curseur libre le plus
+  proche y file et l'entoure ; « je le savais ! » s'il a vu juste. Sur nos gestes de test :
+  5 bonnes réponses sur 6, aucune mauvaise.
+- **Apprendre mes habitudes** : chaîne de Markov locale des clics, site par site
+  (« après A, vous cliquez souvent B »). Après un clic, si la suite habituelle est assez sûre
+  (au moins 3 observations, 40 % ou plus), un curseur va vous attendre sur l'élément suivant.
+- **Confidentialité** : tout reste sur l'ordinateur (`chrome.storage.local`). Seule l'identité
+  des éléments cliqués est retenue (balise, libellé, chemin du lien), jamais ce que vous tapez.
+  Section « Ce site » du menu : nombre de clics appris et bouton « Oublier ».
+- `Balade.engine.predictor.lastGuess` dans la console pour voir le raisonnement de la dernière prédiction.
+
 ## 0.5.0 — Réglages par site, pages sombres
 
 - **Ce site** (dans le menu) : « Ne jamais lancer ici » et « Lancer automatiquement ici »,

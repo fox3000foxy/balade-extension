@@ -1,7 +1,7 @@
 // Le moteur : la boucle d'animation, la population de curseurs, le défilement,
 // la souris de l'utilisateur, le plein écran, et le choix du comportement suivant.
 (() => {
-  const { M, Cursor, Motion, Stage, Renderer, Sound, Settings, Arrive, Leave, Wander, Gather, Follow, Swarm } = window.Balade;
+  const { M, Cursor, Motion, Stage, Renderer, Sound, Settings, Habits, Predictor, Arrive, Leave, Wander, Gather, Follow, Swarm, Anticipate } = window.Balade;
 
   class Engine {
     constructor(config) {
@@ -39,6 +39,12 @@
       this.swarmHeld = false;
       this._shift = { down: false, lastUp: -Infinity, armedAt: null };
 
+      // Anticipation et habitudes.
+      this.habits = new Habits(location.hostname);
+      this.predictor = new Predictor(this);
+      this.predictionHits = 0;
+      this._userClicks = []; // { el, time } : vos clics récents
+
       this._onPointerMove = (e) => {
         const now = performance.now();
         const dtm = Math.max(1, now - this.mouse._t) / 1000;
@@ -48,6 +54,7 @@
         this.mouse.x = e.clientX;
         this.mouse.y = e.clientY;
         this.mouse.movedAt = this.time;
+        this.predictor.addSample(e.clientX, e.clientY, now / 1000);
       };
       this._onKeyDown = (e) => {
         if (e.key === "Escape") this.stop();
@@ -75,7 +82,10 @@
         this._shift.armedAt = null;
         this.swarmHeld = false;
       };
-      this._onPointerDown = (e) => this._reactToClick(e.clientX, e.clientY);
+      this._onPointerDown = (e) => {
+        this._reactToClick(e.clientX, e.clientY);
+        this._learnClick(e.target);
+      };
       this._onSubmit = () => this._cheer();
       this._onFocusIn = (e) => {
         if (e.target && e.target.nodeType === 1 && this.stage.isTextField(e.target)) this._focusEl = e.target;
@@ -97,6 +107,8 @@
       this.renderer.setShowNames(this.config.showNames);
       this.renderer.mount();
       this.sound.start();
+      this.habits.enabled = this.config.predict.learn;
+      this.habits.load();
       window.addEventListener("pointermove", this._onPointerMove, { passive: true });
       window.addEventListener("keydown", this._onKeyDown, true);
       window.addEventListener("keyup", this._onKeyUp, true);
@@ -134,6 +146,8 @@
       window.removeEventListener("resize", this._onFullscreenChange);
       this.renderer.unmount();
       this.sound.close();
+      this.habits.save();
+      this.habits.dispose();
       this.cursors = [];
       this.running = false;
       this.stopping = false;
@@ -149,6 +163,7 @@
       this.renderer.setShowNames(this.config.showNames);
       this.sound.setVolume(this.config.sound.volume);
       if (!this.config.adaptDark) for (const c of this.cursors) c.onDark = false;
+      this.habits.enabled = this.config.predict.learn;
       this._checkFullscreen(true);
     }
 
@@ -178,6 +193,7 @@
         this._runTimers();
         this._trackAttention(dt);
         this._checkSwarm();
+        this._predictGesture();
       }
 
       for (const c of [...this.cursors]) {
@@ -353,6 +369,69 @@
         });
         this._later(d + 0.28, () => c.push(0, -170));
       }
+    }
+
+    // ---------- Anticipation ----------
+
+    _predictGesture() {
+      const cfg = this.config.predict;
+      if (!cfg.enabled || !this.config.social.reactive || this.swarmHeld) return;
+      const guess = this.predictor.predict(performance.now() / 1000);
+      if (guess) this._anticipate(guess.el, "gesture");
+    }
+
+    /** Mémorise votre clic, puis devine éventuellement la suite d'après vos habitudes. */
+    _learnClick(target) {
+      if (this.stopping || !target || target.nodeType !== 1) return;
+      const key = this.habits.record(target, this.time);
+      if (!key) return;
+      this._userClicks.push({ el: target, time: this.time });
+      if (this._userClicks.length > 20) this._userClicks.shift();
+
+      const cfg = this.config.predict;
+      if (!cfg.enabled || !cfg.learn || !this.config.social.reactive) return;
+      const next = this.habits.predictNext(key);
+      if (!next) return;
+      this._later(M.rand(0.4, 1.0), () => {
+        const el = this.stage.visibleElements(this.time + 2).find((e) => Habits.keyOf(e) === next.key);
+        if (el) this._anticipate(el, "habit");
+      });
+    }
+
+    /** Envoie le curseur libre le plus proche vers l'élément deviné. */
+    _anticipate(el, reason) {
+      if (this.cursors.some((c) => c.predicting)) return;
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      let best = null;
+      let bestD = Infinity;
+      for (const c of this.cursors) {
+        if (c.leaving || c.ghost) continue;
+        const b = c.behavior;
+        if (b instanceof Swarm || b instanceof Gather || b instanceof Anticipate) continue;
+        const d = Math.hypot(c.screenX - cx, c.screenY - cy);
+        if (d < bestD) {
+          bestD = d;
+          best = c;
+        }
+      }
+      if (best) best.setBehavior(new Anticipate(this, el, reason));
+    }
+
+    /**
+     * Le curseur avait-il vu juste ? "right" si vous avez cliqué l'élément ou si votre
+     * souris est dessus, "wrong" si vous avez cliqué ailleurs, sinon null (on attend).
+     */
+    judgePrediction(el, since) {
+      for (const k of this._userClicks) {
+        if (k.time < since) continue;
+        return el === k.el || el.contains(k.el) || k.el.contains(el) ? "right" : "wrong";
+      }
+      const r = el.getBoundingClientRect();
+      const m = this.mouse;
+      if (this.time - m.movedAt < 2 && m.x >= r.left && m.x <= r.right && m.y >= r.top && m.y <= r.bottom) return "right";
+      return null;
     }
 
     // ---------- Essaim à la demande ----------

@@ -18,6 +18,7 @@
       ghostTyping: "Écrivent dans les champs", showNames: "Portent leur prénom", hideFullscreen: "Se cachent en plein écran",
       social: "Bavardent entre eux", reactive: "Réagissent à vos gestes", swarmHint: "rassembler les spécimens",
       adaptDark: "S'adaptent à la nuit", site: "Terrain", siteExclude: "Zone protégée", siteAuto: "Lâcher dès l'arrivée",
+      anticipate: "Devinent vos gestes", learn: "Retiennent vos habitudes",
       running: (n) => `Relevé du jour · ${n} spécimen${n > 1 ? "s" : ""}`, stopped: "Relevé du jour · aucun spécimen" }
   };
   const DEFAULT_WORDS = {
@@ -27,10 +28,11 @@
     social: "Bavarder entre eux", reactive: "Réagir à ce que je fais", swarmHint: "appeler l'essaim autour du pointeur",
     adaptDark: "Adapter aux pages sombres", site: "Ce site", siteExclude: "Ne jamais lancer ici",
     siteAuto: "Lancer automatiquement ici",
+    anticipate: "Deviner mes gestes", learn: "Apprendre mes habitudes",
     shortcut: "lance ou range les curseurs"
   };
 
-  const TOGGLES = ["ghostTyping", "showNames", "social", "reactive", "adaptDark", "hideFullscreen"];
+  const TOGGLES = ["ghostTyping", "showNames", "social", "reactive", "anticipate", "learn", "adaptDark", "hideFullscreen"];
 
   let settings = null;
   let tabId = null;
@@ -191,9 +193,21 @@
     };
     ex.forEach((h2) => add(h2, "ex"));
     au.forEach((h2) => add(h2, "au"));
+    renderLearned(h);
+  }
+
+  /** Ce que Balade a appris sur ce site (nombre de clics retenus), avec « Oublier ». */
+  async function renderLearned(h) {
+    const n = await window.Balade.Habits.count(h);
+    $("learned").hidden = n === 0;
+    $("learnedText").textContent = `${n} clic${n > 1 ? "s" : ""} appris ici, gardés sur cet ordinateur.`;
   }
 
   function bindSite() {
+    $("forget").addEventListener("click", async () => {
+      await window.Balade.Habits.forget(host());
+      renderLearned(host());
+    });
     $("siteExclude").addEventListener("change", async (e) => {
       const h = host();
       if (!h) return;

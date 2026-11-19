@@ -142,7 +142,22 @@
       holdBefore: 0.18     // maintien nécessaire avant de déclencher (s)
     },
 
+    // Anticipation du geste et apprentissage des habitudes.
+    predict: {
+      enabled: true,
+      learn: true,
+      cooldown: 1.2,          // entre deux prédictions (s)
+      minSpeed: 450,          // vitesse de souris minimale pour tenter une prédiction (px/s)
+      brakeAccel: 1500,       // décélération à partir de laquelle on considère que vous freinez (px/s²)
+      minShare: 0.5,          // part du score que la meilleure cible doit avoir (en freinage)
+      minShareBallistic: 0.85, // … et avant de freiner (bien plus exigeant)
+      minDistance: 100        // en dessous, pas le temps d'arriver avant vous (px)
+    },
+
     bubbles: {
+      predict: ["par ici ?", "c'est là ?", "je parie…", "ici, non ?"],
+      right: ["je le savais !", "bingo", "tiens donc", "on se connaît"],
+      wrong: ["oups", "raté", "ah non"],
       greet: ["salut !", "coucou", "hé !", "yo", "bonjour", "re !"],
       curious: ["hmm ?", "oh", "intéressant", "qu'est-ce que c'est ?", "je regarde"],
       inspect: ["oh !", "hmm…", "joli", "tiens", "ah, ça", "pas mal"],

@@ -35,6 +35,17 @@ Chaque thème dessine cinq pointeurs (flèche, main, texte, viseur, attente), to
 Le pointeur change comme dans un vrai navigateur : main sur les liens et boutons,
 barre en I sur les champs, viseur sur les images, attente pendant certaines pauses.
 
+## Anticipation et habitudes
+
+- **Deviner mes gestes** : d'après la direction et le freinage de votre souris, un curseur
+  file vers l'élément que vous visez, souvent avant vous.
+- **Apprendre mes habitudes** : Balade retient vos enchaînements de clics sur chaque site et
+  vient vous attendre sur l'étape suivante quand elle est assez prévisible.
+
+Tout reste sur cet ordinateur ; seule l'identité des éléments cliqués est retenue, jamais ce
+que vous tapez. Le menu affiche ce qui a été appris sur le site et permet de l'oublier.
+Pensez à exclure les sites sensibles (section « Ce site »).
+
 ## Réglages par site
 
 Dans le menu, la section « Ce site » permet de ne jamais lancer Balade sur un site (utile pour
@@ -78,8 +89,10 @@ dans l'ordre de `FILES` (`lib/inject.js`), qui est aussi celui des `<script>` de
 | `entities/Cursor.js` | position, vue de la page, tempérament, micro-signaux |
 | `motion/Path.js` | trajets en arcs de cercle enchaînés |
 | `motion/Motion.js` | gestes : loi de Fitts, minimum jerk, visée + correction, clic |
-| `world/Stage.js` | écran, éléments de la page, où viser, plein écran |
-| `behaviors/*.js` | arrivée, départ, flânerie, attention (`Gather`), suivre (`Follow`), essaim (`Swarm`) |
+| `world/Stage.js` | écran, éléments de la page, où viser, fond, plein écran |
+| `world/Predictor.js` | anticipation du geste |
+| `world/Habits.js` | apprentissage des enchaînements de clics (local) |
+| `behaviors/*.js` | arrivée, départ, flânerie, attention (`Gather`), suivre (`Follow`), essaim (`Swarm`), anticiper (`Anticipate`) |
 | `render/Themes.js` | les quatre thèmes et leurs pointeurs |
 | `render/FontLoader.js` | polices embarquées pour l'overlay |
 | `render/Renderer.js` | overlay en Shadow DOM, étiquettes, repères de bord, texte fantôme |

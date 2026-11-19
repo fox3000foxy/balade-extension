@@ -62,6 +62,7 @@
       this.wiggleAt = -Infinity; // début du dernier tortillement (salut)
       this.gatherAngle = null;   // place prise autour d'un point d'attention
       this.onDark = false;       // le fond sous le curseur est sombre
+      this.predicting = null;    // élément deviné, pendant une anticipation
       this.nextBgSample = 0;
 
       // Hauteur de « voix » propre à ce curseur (en degrés de gamme) pour les sons.

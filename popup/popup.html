@@ -25,6 +25,7 @@
       <h2 id="t-site"><span data-label="site">Ce site</span> · <span id="host"></span></h2>
       <label class="switch"><span data-label="siteExclude">Ne jamais lancer ici</span><input type="checkbox" id="siteExclude"></label>
       <label class="switch"><span data-label="siteAuto">Lancer automatiquement ici</span><input type="checkbox" id="siteAuto"></label>
+      <p class="learned" id="learned" hidden><span id="learnedText"></span> <button type="button" class="link" id="forget">Oublier</button></p>
       <details class="sites" id="sites" hidden>
         <summary id="sitesSummary"></summary>
         <ul id="sitesList"></ul>
@@ -67,6 +68,8 @@
       <label class="switch"><span data-label="social">Bavarder entre eux</span><input type="checkbox" id="social"></label>
       <label class="switch"><span data-label="reactive">Réagir à ce que je fais</span><input type="checkbox" id="reactive"></label>
       <p class="hint swarm-hint"><kbd>Maj</kbd> <kbd>Maj</kbd> maintenu : <span data-label="swarmHint">appeler l'essaim autour du pointeur</span></p>
+      <label class="switch"><span data-label="anticipate">Deviner mes gestes</span><input type="checkbox" id="anticipate"></label>
+      <label class="switch"><span data-label="learn">Apprendre mes habitudes</span><input type="checkbox" id="learn"></label>
       <label class="switch"><span data-label="adaptDark">Adapter aux pages sombres</span><input type="checkbox" id="adaptDark"></label>
       <label class="switch"><span data-label="hideFullscreen">Se cacher en plein écran</span><input type="checkbox" id="hideFullscreen"></label>
     </section>
@@ -81,6 +84,7 @@
   <script src="../src/core/namespace.js"></script>
   <script src="../src/core/Settings.js"></script>
   <script src="../src/render/Themes.js"></script>
+  <script src="../src/world/Habits.js"></script>
   <script src="../lib/inject.js"></script>
   <script src="popup.js"></script>
 </body>

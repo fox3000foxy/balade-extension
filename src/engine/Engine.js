@@ -190,6 +190,7 @@
       this._userClicks = [];
       this.stage.invalidateCache();
       if (this.predictor) this.predictor.lastGuess = null;
+      this._companion = null;
       this._onScroll = null;
       this.onDestroy = null;
       this.running = false;
@@ -531,9 +532,12 @@
     _regulatePopulation(dt) {
       const p = this.config.population;
 
-      // Focus mode: everyone stays out.
+      // Focus mode: everyone stays out, except one companion that "works" beside you.
       if (this.focus && this.focus.phase === "focus") {
-        for (const c of this.cursors) this._sendAway(c);
+        for (const c of this.cursors) {
+          if (c === this._companion && !c.leaving && c.behavior instanceof Companion) continue;
+          this._sendAway(c);
+        }
         return;
       }
 
@@ -689,11 +693,16 @@
       const f = this.config.focus;
       this.endGame();
       this.focus = { phase: "focus", until: Date.now() + (minutes || f.minutes) * 60000 };
+      // Keep one cursor as a working companion; promote a wanderer if possible.
+      const cand = this.cursors.find((c) => !c.leaving) || null;
+      this._companion = cand;
+      if (cand) cand.setBehavior(new Companion(this));
       this._updateFocus(true);
     }
 
     stopFocus() {
       this.focus = null;
+      this._companion = null;
       this.renderer.setHud("corner", null);
     }
 

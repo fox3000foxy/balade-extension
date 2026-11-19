@@ -19,8 +19,21 @@
     if (!el) return null;
     const tag = el.localName;
     const id = el.id && !/\d{4,}|[a-f0-9]{8,}/i.test(el.id) ? el.id : "";
+    // Associated <label for="id"> text (Zendesk-style forms use external labels).
+    let labelText = "";
+    try {
+      if (el.id) {
+        const lab = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+        if (lab) labelText = lab.innerText || "";
+      }
+      if (!labelText && el.localName === "input") {
+        const wrap = el.closest("label");
+        if (wrap) labelText = wrap.innerText || "";
+      }
+    } catch (_) {}
     let text =
       el.getAttribute("aria-label") ||
+      labelText ||
       (["a", "button", "summary", "label"].includes(tag) ? el.innerText : "") ||
       el.getAttribute("placeholder") ||
       el.getAttribute("name") ||

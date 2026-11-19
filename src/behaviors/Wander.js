@@ -192,6 +192,7 @@
       yield* this.motion.moveTo(cursor, aside, { speed: 1.4, precise: false, calm: 0.4 });
 
       cursor.ghost = { el, text: "" };
+      cursor.shape = "ibeam"; // keep the text shape while typing, even aside
       // R&D: sometimes type a word from the page's own heading — it looks
       // like the cursor actually read something. Read locally, stays in the
       // overlay, never touches the field value.

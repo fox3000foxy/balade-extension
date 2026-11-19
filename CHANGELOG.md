@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.3.1 — Ghost typing and interaction freeze fixes
+
+### Bug fixes
+- Cursor visits no longer crash on the persisted format version (`data.v` is
+  the number 1): visits live in a separate in-memory map. This was aborting
+  every field visit before click and typing.
+- Ghost typing reserved to free-text fields (text, textarea, contentEditable):
+  no more ghost words in email, number, url or tel inputs.
+- Ghost-typing placeholders reconciled every second: interrupted ghosts
+  (re-render, SPA navigation, behavior switch) no longer leave dead fields.
+- `keyOf` reads associated `<label>` text: no more satiety collisions between
+  label-less fields, predictions improve too.
+- Satiety remarks instead of skipping visits: cursors always click and type,
+  with an occasional already-seen line.
+- Frame loop survives one bad frame (try/catch, rAF always re-armed, throttled
+  warning); gestures validate time steps; teardown always notifies.
+- Ghost typing holds the I-beam shape for the whole word.
+
 ## 1.3.0 — Motor signatures, simulated cognition, social roles, moods
 
 ### Per-cursor motor signatures

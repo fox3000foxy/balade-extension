@@ -239,6 +239,27 @@ footer a{color:#fff}
     <div class="card"><div class="big">3x</div><h3 style="margin-top:10px">Triple angle</h3><p>sin(3t + p) expanded from the already-known cos/sin, no atan2. The cosine pre-filter was slower than plain acos: rejected.</p></div>
     <div class="card"><div class="big">2x</div><h3 style="margin-top:10px">Distances</h3><p>Neighbors tested on squared distances, sqrt reserved for the close few. Sampled gesture curves: zero Math.pow per frame.</p></div>
   </div>
+
+  <h3 style="margin-top:56px;font-size:26px">Every replacement, won or rejected</h3>
+  <p class="lead">The base formulas stay readable where they are cheap (Fitts' log2 runs once per gesture). Everything below was measured on the internal bench: 200,000 gestures x 24 steps, plus targeted micro-benchmarks.</p>
+  <div class="card" style="margin-top:24px;overflow-x:auto">
+  <table class="tbl">
+    <tr><th>Base formula</th><th>Replacement</th><th>Result</th></tr>
+    <tr><td>cos/sin per arc step (Path._trace)</td><td>Iterative heading rotation (complex multiply)</td><td>Kept: ~4x, bit-exact (drift 1e-16)</td></tr>
+    <tr><td>Math.pow(t, q) per frame (Motion.progress)</td><td>64-entry curve sampled per gesture, indexed read</td><td>Kept: zero pow per frame, error &lt; 5e-4</td></tr>
+    <tr><td>atan2 + sin(3t+p) per cursor per frame (Swarm)</td><td>Triple-angle from known (cos, sin), shared per-frame oscillations</td><td>Kept: ~3x, exact to 4e-15</td></tr>
+    <tr><td>hypot in neighbor/crowd scans (Swarm, Flee)</td><td>Squared distances, sqrt only for the close few</td><td>Kept: ~2x</td></tr>
+    <tr><td>closest(hostTag) per element (Stage)</td><td>O(1) tag check (overlay lives in shadow DOM)</td><td>Kept: no more DOM climb per element</td></tr>
+    <tr><td>O(n^2) meetings at 60 Hz, N backgrounds per frame</td><td>Meetings at 4 Hz capped at 30, backgrounds 2/frame round-robin</td><td>Kept: ~5x fewer layout reads per second</td></tr>
+    <tr><td>48 path samples per gesture</td><td>24 samples</td><td>Kept: invisible at 60 fps, half the allocs</td></tr>
+    <tr><td>Math.cos/sin per step</td><td>256-entry sin table</td><td>Rejected: 3x <em>slower</em> (memory &gt; FPU)</td></tr>
+    <tr><td>Math.cos/sin per step</td><td>Taylor order 5</td><td>Rejected: slower and wrong (error 0.5 near +-pi)</td></tr>
+    <tr><td>acos per candidate (Predictor)</td><td>Cosine pre-filter, acos only for survivors</td><td>Rejected: cos costs as much as acos, survivors pay both</td></tr>
+    <tr><td>Math.pow(x, 2) (Flee edges)</td><td>k*k written out</td><td>Neutral (45 vs 43 ms): kept for readability</td></tr>
+    <tr><td>Fitts log2 once per gesture</td><td>Lookup table / approximation</td><td>Not attempted: nanoseconds, readability wins</td></tr>
+  </table>
+  </div>
+  <p class="note" style="margin-top:16px">The full interactive lab with live demos: <a href="how-it-works.html" style="color:var(--blue)">How it works</a> - arcs, easing, Fitts, combined gestures, swarm, sound.</p>
 </section>
 
 <!-- 6. THEMES -->

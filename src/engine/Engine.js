@@ -785,7 +785,7 @@
           s.from = { x: c.viewX, y: c.viewY };
           s.to = { x: tx, y: ty };
           s.t = 0;
-          s.q = M.rand(...this.config.motion.peakWarp);
+          s.curve = this.motion.makeCurve(M.rand(...this.config.motion.peakWarp));
           s.dur = M.clamp(0.25 + 0.00055 * dist, cfg.duration[0], cfg.duration[1]) /
             ((this.config.motion.speedMul || 1) * c.temperament.pace);
         }
@@ -793,7 +793,7 @@
         if (s.phase === "moving") {
           s.t += dt;
           const k = Math.min(1, s.t / s.dur);
-          const u = Motion.minimumJerk(Math.pow(k, s.q));
+          const u = this.motion.progress(s.curve, k);
           c.viewX = s.from.x + (s.to.x - s.from.x) * u;
           c.viewY = s.from.y + (s.to.y - s.from.y) * u;
           if (k >= 1) {

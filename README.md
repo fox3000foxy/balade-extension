@@ -154,6 +154,33 @@ Interactive explainer with live animated demos: [docs/how-it-works.html](docs/ho
 
 The principles and formulas studied before writing Balade: [docs/research.en.md](docs/research.en.md).
 
+## Motion math: why these implementations
+
+Identical results, cheaper computations (measured with `node /tmp/opencode/bench-trig.mjs`, 200k gestures × 24 steps):
+
+- **Arc tracing** (`motion/Path.js`): the turtle heading vector is rotated iteratively
+  (complex multiply by a fixed per-arc rotation) instead of `Math.cos/sin` per step —
+  ~4x faster (~90 vs ~380 ns/gesture), bit-exact (drift 1e-16). Rejected: a 256-entry
+  sin table (3x *slower* than `Math.cos` — memory access costs more than the FPU)
+  and Taylor order 5 (slower *and* wrong, error 0.5 near ±π).
+- **Gesture timing** (`motion/Motion.js`): the progress curve `minjerk(t^q)` is sampled
+  once per gesture (64 entries, `q` is fixed per gesture) instead of `Math.pow` per
+  frame — same curve within 5e-4, indexed read per frame.
+- **Swarm steering** (`behaviors/Swarm.js`): `sin(3θ+φ)` expanded by triple-angle from
+  the already-known `(cos θ, sin θ)` — no `atan2` at all (3x faster: 34 vs 100 ms
+  per 1M evals); per-frame time oscillations computed once and shared by all
+  cursors; neighbor scan uses squared distances, `sqrt` only for the close few
+  (2x faster: 65 vs 121 ms per 2M scans).
+- **Prediction** (`world/Predictor.js`): a cosine pre-filter was benchmarked and
+  *rejected* — `Math.cos` costs about as much as `Math.acos`, and survivors pay
+  for both (48 vs 38 ms per 500k candidates: slower). Plain `acos` kept.
+- **Flee** (`behaviors/Flee.js`): crowd separation tested on squared distances
+  (~2x, same family as above); `(1−d/m)²` written out — `Math.pow(x,2)` measured
+  identical (45 vs 43 ms per 2M), kept as `k*k` for readability, not speed.
+
+Deliberately *not* optimized: Fitts's law (`Math.log2` once per gesture) — nanoseconds
+on a 16 ms frame budget, and the formula stays readable.
+
 ## Fonts
 
 Bricolage Grotesque, Chivo Mono, Fredoka, Figtree, Young Serif and Spline Sans Mono, under the

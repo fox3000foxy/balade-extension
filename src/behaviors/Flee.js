@@ -48,7 +48,12 @@
 
         // 3. Edges repel (corners more so).
         const margin = cfg.wall;
-        const push = (dist) => (dist < margin ? Math.pow(1 - Math.max(0, dist) / margin, 2) * vmax * 1.8 : 0);
+        // (1 - d/m)^2 written out: Math.pow(x, 2) has call overhead for a square.
+        const push = (dist) => {
+          if (dist >= margin) return 0;
+          const k = 1 - Math.max(0, dist) / margin;
+          return k * k * vmax * 1.8;
+        };
         wx += push(cursor.x) - push(W - cursor.x);
         wy += push(cursor.y) - push(H - cursor.y);
 
@@ -57,8 +62,10 @@
           if (o === cursor || o.caught || o.leaving) continue;
           const ox = cursor.pageX - o.pageX;
           const oy = cursor.pageY - o.pageY;
-          const od = Math.hypot(ox, oy);
-          if (od > 0 && od < 60) {
+          // Squared-distance test: same result as hypot < 60, no sqrt.
+          const od2 = ox * ox + oy * oy;
+          if (od2 > 0 && od2 < 3600) {
+            const od = Math.sqrt(od2); // normalized push still needs the length
             wx += (ox / od) * (1 - od / 60) * 300;
             wy += (oy / od) * (1 - od / 60) * 300;
           }

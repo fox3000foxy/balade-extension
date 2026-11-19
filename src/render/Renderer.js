@@ -201,9 +201,12 @@
         v.root.style.removeProperty("--ct");
       }
       v.root.style.setProperty("--c2", t.second ? t.second(color) : color);
-      // Text caret: in the cursor's color (red pencil in the Notebook theme).
+      // Text caret: cursor color when ghostColor:"cursor", red pencil in Notebook, dark in Classic.
       const css = this.cssId || this.themeId;
-      v.caret.style.background = css === "carnet" ? "#C2412D" : css === "classique" && this.themeId !== "perso" ? "#1B1D21" : color;
+      v.caret.style.background = t.ghostColor === "cursor" ? color
+        : css === "carnet" ? "#C2412D"
+        : css === "classique" && this.themeId !== "perso" ? "#1B1D21"
+        : color;
     }
 
     /** Copies the field's typography and content box, once per ghost word. */
@@ -213,7 +216,12 @@
       g.style.font = cs.font;
       g.style.letterSpacing = cs.letterSpacing;
       const fieldLum = window.Balade.Stage.luminance(cs.backgroundColor);
-      g.style.color = fieldLum != null && fieldLum < 0.3 ? cs.color : this.theme.text;
+      // Ghost theme: text in the cursor's own color; others: theme text color (dark/light).
+      if (this.theme.ghostColor === "cursor") {
+        g.style.color = this._ghostCursorColor || this.theme.text;
+      } else {
+        g.style.color = fieldLum != null && fieldLum < 0.3 ? cs.color : this.theme.text;
+      }
       // Covers the placeholder with the field's background, as when actually typing.
       const bg = cs.backgroundColor;
       g.style.background = bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent" ? bg : "transparent";
@@ -319,7 +327,11 @@
         }
 
         if (c.ghost && c.ghost.el.isConnected) {
-          if (v.ghostFor !== c.ghost.el) this._styleGhost(v, c.ghost.el);
+          if (v.ghostFor !== c.ghost.el) {
+            this._ghostCursorColor = c.color;
+            this._styleGhost(v, c.ghost.el);
+            this._ghostCursorColor = null;
+          }
           const r = c.ghost.el.getBoundingClientRect();
           const p = v.ghostPad;
           v.ghost.style.transform = `translate(${r.left + p.l}px, ${r.top + p.t}px)`;

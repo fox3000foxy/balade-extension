@@ -433,5 +433,8 @@
   },
   "names_list": {
     "message": "Ada|Grace|Alan|Linus|Tim|Brendan|Margaret|Vint|Doug|Ken|Dennis|Radia|Barbara|Guido|Bjarne|James"
+  },
+  "theme_fantome": {
+    "message": "Ghost"
   }
 }

@@ -22,6 +22,48 @@
   };
 
   const THEMES = {
+    // ---------------------------------------------------------------- Fantome
+    // Original v0.1 look: cursor body filled with the cursor's own color,
+    // white outline. Ghost text and caret also use the cursor's color.
+    fantome: {
+      label: tr("theme_fantome"),
+      size: 26,
+      font: null, // system font
+      palette: ["#E5484D", "#F76B15", "#30A46C", "#0090FF", "#8E4EC6", "#D6409F", "#12A594", "#AD7F58"],
+      hot: { ...HOT_COMMON, wait: { x: 4, y: 2.5 } },
+      text: "#1B1D21",
+      ghostColor: "cursor", // ghost text and caret use the cursor's color, not theme.text
+      svg(shape, color) {
+        const body = `fill="${color}" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"`;
+        const halo = (d) =>
+          `<path d="${d}" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>` +
+          `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>`;
+        switch (shape) {
+          case "hand": return `<path d="${HAND}" ${body}/>`;
+          case "ibeam": return halo(IBEAM_SOFT);
+          case "crosshair": return halo("M12 3 V21 M3 12 H21");
+          case "wait":
+            return (
+              `<path d="${ARROW}" ${body}/>` +
+              `<circle cx="18" cy="18" r="3.6" fill="${color}" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>` +
+              `<g class="spin" style="transform-origin:18px 18px"><path d="M18 14.4 A3.6 3.6 0 0 1 21.6 18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></g>`
+            );
+          default: return `<path d="${ARROW}" ${body}/>`;
+        }
+      },
+      tag: (c) => c.name,
+      css: `
+        .theme-fantome .tag { background: var(--c); color: #fff; border-radius: 9px 9px 9px 3px;
+          font: 600 11px/16px system-ui, -apple-system, "Segoe UI", sans-serif; padding: 2px 7px;
+          box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+        .theme-fantome .focus { border: 1.5px solid var(--c); border-radius: 5px; }
+        .theme-fantome .cur svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+        .theme-fantome .cur.dark svg { filter: brightness(1.2) drop-shadow(0 0 3px rgba(255,255,255,.4)); }
+        .theme-fantome .bubble { background: #fff; color: #1B1D21; border: 1px solid #D5D9DF; border-radius: 10px 10px 10px 2px;
+          padding: 3px 9px; font: 500 12px/16px system-ui, -apple-system, "Segoe UI", sans-serif; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+      `
+    },
+
     // ---------------------------------------------------------------- Classique
     classique: {
       label: tr("theme_classique"),

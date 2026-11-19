@@ -29,7 +29,7 @@
     autoSites: []         // sites where Balade starts automatically (hostnames)
   });
 
-  const THEMES = ["classique", "zine", "galets", "carnet"];
+  const THEMES = ["fantome", "classique", "zine", "galets", "carnet"];
   const HEX = /^#[0-9a-f]{6}$/i;
 
   /** Custom theme: base, palette (#rrggbb colors), imported pointer (already sanitized). */

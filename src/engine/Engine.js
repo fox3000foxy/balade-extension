@@ -732,6 +732,19 @@
       const tx = window.scrollX;
       const ty = window.scrollY;
 
+      // Scroll hint: near the bottom of a long scrollable page, one cursor
+      // drifts to the top area and points up — purely visual, no scrolling.
+      this._scrollHintAt = this._scrollHintAt || 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (max > window.innerHeight * 2 && ty > max * 0.85 && this.time > this._scrollHintAt) {
+        this._scrollHintAt = this.time + M.rand(20, 40);
+        const free = this.cursors.find((c) => !c.leaving && c.behavior instanceof Wander);
+        if (free) {
+          const top = { x: M.rand(0.3, 0.7) * this.stage.width, y: M.rand(0.08, 0.18) * this.stage.height };
+          free.setBehavior(new Anticipate(this, { isConnected: true, localName: "scroll-hint", getAttribute: () => null, contains: () => false, getBoundingClientRect: () => ({ left: top.x, top: top.y, width: 8, height: 8, right: top.x + 8, bottom: top.y + 8 }) }, "scroll"));
+        }
+      }
+
       for (const c of this.cursors) {
         if (c.leaving) continue;
         const s = c.scroll;

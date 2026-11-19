@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Six ambient features, memory and performance
+## 1.2.0 — Six ambient features, memory and performance
 
 ### New ambient features (all visual only, nothing sent to the page)
 - **Reading ambiance**: element interest adapts to page kind — headings on articles, fields on forms (`Stage.pageKind`).

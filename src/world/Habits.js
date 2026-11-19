@@ -136,12 +136,14 @@
     }
 
     // ---------- R&D axis 2: simulated cognition ----------
+    // NOTE: visits live in a separate in-memory map, NOT in data.v —
+    // data.v is the persisted format version number (data = { v: 1, ... }).
 
     /** Records a cursor visit (not a user click): feeds satiety and novelty. */
     visit(key, now) {
       if (!key) return;
-      const v = this.data.v || (this.data.v = {});
-      const e = v[key] || (v[key] = { n: 0, at: 0 });
+      if (!this._visits) this._visits = {};
+      const e = this._visits[key] || (this._visits[key] = { n: 0, at: 0 });
       e.n++;
       e.at = now;
     }
@@ -151,7 +153,7 @@
      * decays over ~10 minutes. Cursor visits feed it, not user clicks.
      */
     satiety(key, now) {
-      const e = this.data.v && this.data.v[key];
+      const e = this._visits && this._visits[key];
       if (!e) return 0;
       const age = Math.max(0, now - e.at) / 600; // 10 min memory
       const grown = 1 - Math.exp(-e.n / 2); // 1 visit ~0.4, 3 visits ~0.8

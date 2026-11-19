@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Balade",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "default_locale": "en",
   "description": "__MSG_ext_description__",
   "permissions": [
@@ -10,7 +10,8 @@
     "storage",
     "tabCapture",
     "offscreen",
-    "downloads"
+    "downloads",
+    "webNavigation"
   ],
   "background": {
     "service_worker": "background.js"

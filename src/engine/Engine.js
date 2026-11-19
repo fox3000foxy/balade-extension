@@ -107,7 +107,13 @@
 
     // ---------- Lifecycle ----------
 
-    start() {
+    /**
+     * @param {object} [snapshot] - optional cross-page state from chrome.storage.session
+     *   { cursors: [{ name, colorIndex, rx, ry }] }
+     *   Cursors are placed at relative positions (0-1) on the new page instead of
+     *   spawning from the edges, so they appear to "survive" the navigation.
+     */
+    start(snapshot) {
       if (this.running) return;
       this.running = true;
       this.stopping = false;
@@ -128,6 +134,23 @@
       document.addEventListener("fullscreenchange", this._onFullscreenChange);
       window.addEventListener("resize", this._onFullscreenChange);
       this._checkFullscreen();
+      // Restore cursors from a previous page if a fresh snapshot was passed.
+      if (snapshot && snapshot.cursors && snapshot.cursors.length) {
+        const W = this.stage.width, H = this.stage.height;
+        for (const sc of snapshot.cursors) {
+          const c = new Cursor({
+            id: this._nextId++,
+            x: sc.rx * W,
+            y: sc.ry * H,
+            viewX: window.scrollX,
+            viewY: window.scrollY,
+            name: sc.name,
+            colorIndex: sc.colorIndex
+          });
+          c.setBehavior(new Arrive(this));
+          this.cursors.push(c);
+        }
+      }
       this._last = performance.now();
       this._raf = requestAnimationFrame(this._frame);
     }

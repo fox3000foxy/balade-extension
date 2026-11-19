@@ -14,6 +14,34 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
   }
 });
 
+// Cross-page persistence: when a tab navigates, re-inject and restart if Balade
+// was running. The page itself saves cursor state to chrome.storage.session before
+// unloading; Engine.start() reads it and places cursors at their last positions.
+chrome.webNavigation.onCommitted.addListener(async ({ tabId, frameId, transitionType }) => {
+  if (frameId !== 0) return; // top frame only
+  // Only follow link clicks and typed URLs — not reloads or back/forward.
+  const persist = ["link", "typed", "auto_bookmark", "generated", "keyword"].includes(transitionType);
+  if (!persist) return;
+  try {
+    const st = await self.BaladeInject.status(tabId);
+    if (st.state === "running") {
+      // Page is about to reload. Mark this tab so onCompleted re-starts Balade.
+      await chrome.storage.session.set({ [`balade.nav.${tabId}`]: true });
+    }
+  } catch (_) {}
+});
+
+chrome.webNavigation.onCompleted.addListener(async ({ tabId, frameId }) => {
+  if (frameId !== 0) return;
+  const key = `balade.nav.${tabId}`;
+  const result = await chrome.storage.session.get(key);
+  if (!result[key]) return;
+  await chrome.storage.session.remove(key);
+  try {
+    await self.BaladeInject.toggle(tabId);
+  } catch (_) {}
+});
+
 // Auto-start: keep the registration in sync with settings and granted permissions.
 const syncAuto = () => self.BaladeInject.syncAutoStart().catch((err) => console.warn("[Balade]", err.message));
 chrome.runtime.onInstalled.addListener(syncAuto);

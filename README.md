@@ -67,6 +67,11 @@ Chaque curseur regarde le fond sous lui et adapte son pointeur s'il est sombre
 
 Deux interrupteurs du menu les règlent : « Bavarder entre eux » et « Réagir à ce que je fais ».
 
+## Personnalisation
+
+Lien « Personnaliser… » en bas du menu (ou clic droit sur l'icône → Options) : vos prénoms,
+un thème perso (habillage de départ, couleurs, pointeur SVG importé et nettoyé), avec aperçu.
+
 ## Défilement
 
 Les curseurs vivent sur la page, pas sur l'écran. Quand vous faites défiler, ils partent avec le
@@ -84,6 +89,8 @@ dans l'ordre de `FILES` (`lib/inject.js`), qui est aussi celui des `<script>` de
 | `background.js` | raccourci Alt+B |
 | `lib/inject.js` | injection des scripts, lancer/ranger, état de l'onglet |
 | `popup/` | le menu (HTML, CSS aux quatre habillages, JS) |
+| `options/` | la page de personnalisation |
+| `core/SvgSanitizer.js` | nettoyage des pointeurs SVG importés |
 | `core/Config.js` | réglages internes du mouvement |
 | `core/Settings.js` | réglages de l'utilisateur : stockage et traduction en paramètres |
 | `entities/Cursor.js` | position, vue de la page, tempérament, micro-signaux |

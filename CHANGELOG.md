@@ -1,5 +1,19 @@
 # Journal des versions
 
+## 0.7.0 — Personnalisation
+
+- **Page « Personnalisation »** (lien dans le menu, ou clic droit sur l'icône → Options) :
+  - **Prénoms** : votre liste (40 au plus), appliquée aux curseurs qui arrivent.
+  - **Mon thème** : un cinquième thème « Perso » qui reprend l'habillage d'un thème de départ,
+    avec vos couleurs (jusqu'à 10) et, si vous voulez, votre propre flèche.
+  - **Pointeur importé** : un fichier SVG, nettoyé à l'import (liste blanche de formes et
+    d'attributs ; scripts, liens, styles, images et `url()` retirés) puis re-nettoyé avant
+    d'entrer dans une page. `currentColor` reprend la couleur de chaque curseur. On place la
+    pointe d'un clic sur le dessin (ou aux flèches du clavier).
+  - **Aperçu** des curseurs, dessiné exactement comme dans les pages.
+- Le texte des étiquettes du thème perso s'adapte à vos couleurs pour rester lisible.
+- Le menu affiche le thème « Perso » quand il est activé, avec l'habillage de son thème de départ.
+
 ## 0.6.0 — Anticipation du geste, apprentissage des habitudes
 
 - **Deviner mes gestes** : pendant que vous déplacez la souris, Balade cherche l'élément

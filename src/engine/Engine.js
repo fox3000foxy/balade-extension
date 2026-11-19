@@ -103,7 +103,7 @@
       if (this.running) return;
       this.running = true;
       this.stopping = false;
-      this.renderer.setTheme(this.config.theme);
+      this.renderer.setTheme(this.config.theme, this.config.custom);
       this.renderer.setShowNames(this.config.showNames);
       this.renderer.mount();
       this.sound.start();
@@ -159,7 +159,7 @@
       Settings.applyToConfig(settings, this.config);
       const p = this.config.population;
       this._wanted = p.target;
-      this.renderer.setTheme(this.config.theme);
+      this.renderer.setTheme(this.config.theme, this.config.custom);
       this.renderer.setShowNames(this.config.showNames);
       this.sound.setVolume(this.config.sound.volume);
       if (!this.config.adaptDark) for (const c of this.cursors) c.onDark = false;

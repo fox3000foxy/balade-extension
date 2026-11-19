@@ -1,7 +1,7 @@
 // Le menu : lit et enregistre les réglages (appliqués en direct sur la page),
 // lance ou range la balade dans l'onglet actif, et prend l'apparence du thème choisi.
 (() => {
-  const { Settings, Themes } = window.Balade;
+  const { Settings, Themes, makePerso } = window.Balade;
   const $ = (id) => document.getElementById(id);
 
   const inExtension = typeof chrome !== "undefined" && chrome.tabs && chrome.scripting;
@@ -89,8 +89,17 @@
 
   // ---------- Affichage ----------
 
+  /** Habillage effectif : celui du thème, ou celui de départ du thème perso. */
+  function skin() {
+    return settings.theme === "perso" && settings.custom ? settings.custom.base : settings.theme;
+  }
+
+  function themeObj(id) {
+    return id === "perso" ? makePerso(settings.custom) : Themes[id];
+  }
+
   function words() {
-    return { ...DEFAULT_WORDS, ...WORDING[settings.theme] };
+    return { ...DEFAULT_WORDS, ...WORDING[skin()] };
   }
 
   function renderStatus() {
@@ -115,7 +124,7 @@
   }
 
   function iconSvg(themeId, size) {
-    const t = Themes[themeId];
+    const t = themeObj(themeId);
     const color = t.palette[themeId === "classique" ? 3 : 0];
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${t.svg("arrow", color)}</svg>`;
   }
@@ -123,20 +132,22 @@
   function renderThemes() {
     const box = $("themes");
     box.innerHTML = "";
-    for (const id of Settings.THEMES) {
+    const ids = settings.custom && settings.custom.enabled ? [...Settings.THEMES, "perso"] : Settings.THEMES;
+    box.style.gridTemplateColumns = `repeat(${ids.length}, minmax(0, 1fr))`;
+    for (const id of ids) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "theme";
       b.setAttribute("role", "radio");
       b.setAttribute("aria-checked", String(settings.theme === id));
-      b.innerHTML = `${iconSvg(id, 18)}<span>${Themes[id].label}</span>`;
+      b.innerHTML = `${iconSvg(id, 18)}<span>${themeObj(id).label}</span>`;
       b.addEventListener("click", () => update({ theme: id }));
       box.appendChild(b);
     }
   }
 
   function render() {
-    document.body.dataset.theme = settings.theme;
+    document.body.dataset.theme = skin();
     $("logo").innerHTML = iconSvg(settings.theme, 28);
     renderThemes();
 
@@ -272,6 +283,10 @@
     for (const id of TOGGLES) {
       $(id).addEventListener("change", (e) => update({ [id]: e.target.checked }));
     }
+    $("customize").addEventListener("click", () => {
+      if (inExtension && chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
+      else window.open("../options/options.html", "_blank");
+    });
     $("shortcuts").addEventListener("click", () => {
       if (inExtension) chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
     });

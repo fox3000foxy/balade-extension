@@ -49,7 +49,7 @@
       },
       tag: (c) => c.name,
       css: `
-        .theme-classique .tag { background: var(--c); color: #fff; border-radius: 9px 9px 9px 3px;
+        .theme-classique .tag { background: var(--c); color: var(--ct, #fff); border-radius: 9px 9px 9px 3px;
           font: 600 11px/16px system-ui, -apple-system, "Segoe UI", sans-serif; padding: 2px 7px;
           box-shadow: 0 1px 3px rgba(0,0,0,.2); }
         .theme-classique .focus { border: 1.5px solid var(--c); border-radius: 5px; }
@@ -89,7 +89,7 @@
       },
       tag: (c) => `${c.name} · n°${String(c.id + 1).padStart(2, "0")}`,
       css: `
-        .theme-zine .tag { background: var(--c); color: #F3EEE4; border-radius: 0; padding: 3px 8px;
+        .theme-zine .tag { background: var(--c); color: var(--ct, #F3EEE4); border-radius: 0; padding: 3px 8px;
           font: 600 11px/14px "Balade Chivo Mono", ui-monospace, monospace; box-shadow: 3px 3px 0 var(--c2); }
         .theme-zine .cur.dark svg { filter: drop-shadow(0 0 .8px #F3EEE4) drop-shadow(0 0 .8px #F3EEE4) brightness(1.25); }
         .theme-zine .focus { border: 1.5px dashed var(--c); border-radius: 0; box-shadow: 3px 3px 0 var(--c2); }
@@ -128,7 +128,7 @@
       },
       tag: (c) => c.name,
       css: `
-        .theme-galets .tag { background: var(--c); color: #2B241F; border-radius: 14px 14px 14px 5px;
+        .theme-galets .tag { background: var(--c); color: var(--ct, #2B241F); border-radius: 14px 14px 14px 5px;
           padding: 3px 10px; font: 600 12px/16px "Balade Fredoka", system-ui, sans-serif; }
         .theme-galets .cur.dark svg { filter: drop-shadow(0 0 2px rgba(251,247,241,.55)); }
         .theme-galets .focus { border: 2.5px solid var(--c); border-radius: 14px; opacity: .85; }
@@ -179,5 +179,58 @@
     }
   };
 
+  /**
+   * Thème perso : l'habillage (étiquettes, bulles, pointeurs secondaires) d'un thème de base,
+   * avec votre palette et, si vous en avez importé un, votre pointeur à la place de la flèche.
+   * Le pointeur est imbriqué dans le repère 24×24 en gardant ses proportions ; son point
+   * chaud est converti dans ce repère.
+   */
+  function makePerso(custom) {
+    const base = THEMES[(custom && custom.base) || "classique"] || THEMES.classique;
+    const t = Object.create(base);
+    t.label = "Perso";
+    t.cssId = (custom && custom.base) || "classique";
+    if (custom && custom.palette) t.palette = custom.palette;
+    let p = custom && custom.pointer;
+    // Par prudence, le pointeur est re-nettoyé avant d'entrer dans la page.
+    if (p && window.Balade.SvgSanitizer) {
+      try {
+        const again = window.Balade.SvgSanitizer.clean(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${p.viewBox.join(" ")}">${p.markup}</svg>`);
+        p = { ...p, markup: again.markup };
+      } catch (err) {
+        p = null;
+      }
+    }
+    if (p) {
+      const [vx, vy, vw, vh] = p.viewBox;
+      const k = 24 / Math.max(vw, vh);
+      const ox = (24 - vw * k) / 2;
+      const oy = (24 - vh * k) / 2;
+      const hot = { x: ox + (p.hot.x - vx) * k, y: oy + (p.hot.y - vy) * k };
+      t.hot = { ...base.hot, arrow: hot, wait: base.hot.wait === base.hot.arrow ? hot : base.hot.wait };
+      t.svg = function (shape, color) {
+        if (shape !== "arrow") return base.svg.call(this, shape, color);
+        return `<svg x="0" y="0" width="24" height="24" viewBox="${p.viewBox.join(" ")}" color="${color}" overflow="visible">${p.markup}</svg>`;
+      };
+    }
+    return t;
+  }
+
+  /** Couleur de texte lisible sur un fond #rrggbb (contraste WCAG le meilleur des deux). */
+  function textOn(hex, dark = "#1B1D21", light = "#FFFFFF") {
+    const m = /^#([0-9a-f]{6})$/i.exec(hex || "");
+    if (!m) return dark;
+    const n = parseInt(m[1], 16);
+    const lin = (v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+    // Contraste avec le blanc : 1,05 / (L + 0,05) ; avec le foncé (L ≈ 0,012) : (L + 0,05) / 0,062.
+    return 1.05 / (L + 0.05) >= (L + 0.05) / 0.062 ? light : dark;
+  }
+
   window.Balade.Themes = THEMES;
+  window.Balade.makePerso = makePerso;
+  window.Balade.textOn = textOn;
 })();

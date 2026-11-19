@@ -84,11 +84,17 @@
       this.views.clear();
     }
 
-    /** Change de thème ; la police du thème est chargée à la volée. */
-    setTheme(id) {
-      if (!Themes[id]) id = "classique";
+    /** Change de thème (ou de thème perso) ; la police du thème est chargée à la volée. */
+    setTheme(id, custom) {
+      if (id === "perso" && custom && custom.enabled) {
+        this.theme = window.Balade.makePerso(custom);
+      } else {
+        if (!Themes[id]) id = "classique";
+        this.theme = Themes[id];
+      }
       this.themeId = id;
-      this.theme = Themes[id];
+      this.cssId = this.theme.cssId || id;
+      this.version = (this.version || 0) + 1;
       FontLoader.load(this.theme.font);
       for (const v of this.views.values()) v.key = null; // force le redessin des pointeurs
       this._applyLayerClass();
@@ -109,7 +115,7 @@
       if (!this.layer) return;
       const on = this.layer.classList.contains("on");
       this.layer.className =
-        `layer theme-${this.themeId}` +
+        `layer theme-${this.cssId || this.themeId}` +
         (on ? " on" : "") +
         (this.hidden ? " hidden" : "") +
         (this.showNames ? "" : " nonames");
@@ -165,9 +171,17 @@
       v.bubble.style.left = `${size * 0.55}px`;
       v.bubble.style.bottom = `${size * 0.35}px`;
       v.root.style.setProperty("--c", color);
+      // Avec vos couleurs (thème perso), le texte des étiquettes s'adapte pour rester lisible.
+      if (this.themeId === "perso") {
+        v.root.style.setProperty("--ct", window.Balade.textOn(color, this.cssId === "galets" ? "#2B241F" : "#1B1D21",
+          this.cssId === "zine" ? "#F3EEE4" : "#FFFFFF"));
+      } else {
+        v.root.style.removeProperty("--ct");
+      }
       v.root.style.setProperty("--c2", t.second ? t.second(color) : color);
       // Curseur de texte : à la couleur du curseur (au crayon rouge dans le carnet).
-      v.caret.style.background = this.themeId === "carnet" ? "#C2412D" : this.themeId === "classique" ? "#1B1D21" : color;
+      const css = this.cssId || this.themeId;
+      v.caret.style.background = css === "carnet" ? "#C2412D" : css === "classique" && this.themeId !== "perso" ? "#1B1D21" : color;
     }
 
     /** Copie la typographie et la boîte de contenu du champ, une fois par mot fantôme. */
@@ -227,7 +241,7 @@
         seen.add(c.id);
         const v = this.views.get(c.id) || this._create(c);
         const color = t.palette[c.colorIndex % t.palette.length];
-        const key = `${this.themeId}|${c.shape}|${color}`;
+        const key = `${this.version}|${c.shape}|${color}`;
         if (v.key !== key) {
           this._applyShape(v, c, color);
           v.key = key;

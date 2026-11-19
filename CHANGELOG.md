@@ -1,5 +1,15 @@
 # Journal des versions
 
+## Documentation en anglais
+
+- `README.md` passe en anglais, avec les images des quatre thèmes ; la version française
+  devient `README.fr.md`, avec un lien de l'une à l'autre.
+- Images des thèmes (en anglais) dans `docs/images/`.
+- Notes d'étude sur CursorSwarm en Markdown : `docs/research.fr.md` et `docs/research.en.md`
+  (formules en LaTeX, affichées par GitHub).
+- `demo.html` traduite en anglais.
+- L'interface de l'extension (menu, options, bulles) reste en français pour l'instant.
+
 ## 0.8.0 — Jeu du chat, concentration, enregistrement vidéo
 
 - **Jouer au chat** (menu, « Jeux et outils ») : tous les curseurs fuient votre souris

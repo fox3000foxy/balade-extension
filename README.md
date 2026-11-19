@@ -1,134 +1,155 @@
 # Balade
 
-Des curseurs qui se baladent sur n'importe quelle page, comme une équipe connectée.
-JavaScript pur, orienté objet, sans bundler ni dépendance.
+*Français : [README.fr.md](README.fr.md)*
 
-## Installer
+Cursors that stroll around any web page, like a team of colleagues working alongside you.
+Plain JavaScript, object-oriented, no bundler, no dependencies.
 
-`chrome://extensions` → activer le mode développeur → « Charger l'extension non empaquetée » → choisir ce dossier.
+![Classic theme](docs/images/theme-classic.png)
 
-- **Alt+B** lance ou range les curseurs sur la page active (modifiable dans `chrome://extensions/shortcuts`).
-- **Clic sur l'icône** : le menu, avec le bouton Lancer/Ranger, le thème et les réglages.
-  Les réglages sont enregistrés (`chrome.storage.sync`) et s'appliquent en direct sur la page.
-- **Échap** fait repartir les curseurs.
+## Install
 
-Les sons démarrent après votre premier clic ou première touche sur la page (règle des navigateurs).
-L'extension ne fonctionne pas sur les pages protégées de Chrome (`chrome://`, Chrome Web Store).
+`chrome://extensions` → turn on Developer mode → "Load unpacked" → pick this folder.
 
-## Essayer sans installer
+- **Alt+B** starts or puts away the cursors on the current tab (change it in `chrome://extensions/shortcuts`).
+- **Click the icon** to open the menu: Start/Put away button, theme and settings.
+  Settings are saved (`chrome.storage.sync`) and apply live on the page.
+- **Esc** sends the cursors back to wandering.
 
-`demo.html` charge les mêmes scripts et affiche le menu à côté de la page. Pour que le menu pilote
-la page, servez le dossier en local (par exemple `python3 -m http.server`) et ouvrez
-`http://localhost:8000/demo.html` ; en ouvrant le fichier directement, les curseurs marchent mais
-le menu reste décoratif.
+Sounds start after your first click or key press on the page (a browser rule).
+The extension can't run on Chrome's protected pages (`chrome://`, Chrome Web Store).
 
-## Thèmes
+> The extension's interface (menu, options, speech bubbles) is currently in French.
 
-| Thème | Esprit |
+## Try it without installing
+
+`demo.html` loads the same scripts and shows the menu next to the page. For the menu to drive
+the page, serve the folder locally (for example `python3 -m http.server`) and open
+`http://localhost:8000/demo.html`. Opened directly as a file, the cursors work but the menu
+is decorative.
+
+## Themes
+
+| Theme | Spirit |
 | --- | --- |
-| Classique (par défaut) | pointeurs aux proportions d'un système : corps blanc, contour noir |
-| Zine | deux encres risographiées, légèrement décalées |
-| Galets | formes dodues et mates, couleurs d'argile |
-| Carnet | trait d'encre, spécimens numérotés, crayon rouge |
+| Classic (default) | pointers with the proportions of an operating system: white body, black outline |
+| Riso zine | two risograph inks, slightly off-register |
+| Clay pebbles | plump, matte shapes in clay colors |
+| Field notebook | inked lines, numbered specimens, red pencil |
 
-Chaque thème dessine cinq pointeurs (flèche, main, texte, viseur, attente), tous en SVG.
-Le pointeur change comme dans un vrai navigateur : main sur les liens et boutons,
-barre en I sur les champs, viseur sur les images, attente pendant certaines pauses.
-
-## Anticipation et habitudes
-
-- **Deviner mes gestes** : d'après la direction et le freinage de votre souris, un curseur
-  file vers l'élément que vous visez, souvent avant vous.
-- **Apprendre mes habitudes** : Balade retient vos enchaînements de clics sur chaque site et
-  vient vous attendre sur l'étape suivante quand elle est assez prévisible.
-
-Tout reste sur cet ordinateur ; seule l'identité des éléments cliqués est retenue, jamais ce
-que vous tapez. Le menu affiche ce qui a été appris sur le site et permet de l'oublier.
-Pensez à exclure les sites sensibles (section « Ce site »).
-
-## Réglages par site
-
-Dans le menu, la section « Ce site » permet de ne jamais lancer Balade sur un site (utile pour
-les outils internes ou les pages qui affichent des données sensibles), ou de l'y lancer
-automatiquement. Le lancement automatique demande l'accès au site concerné, et à lui seul.
-
-## Pages sombres
-
-Chaque curseur regarde le fond sous lui et adapte son pointeur s'il est sombre
-(interrupteur « Adapter aux pages sombres »).
-
-## Vie sociale et réactions
-
-- **Attention partagée** : souris immobile environ une seconde, ou saisie dans un champ, et les
-  curieux viennent voir ; ils repartent quand vous vous éloignez.
-- **Rencontres** : salut, petit son, parfois l'un suit l'autre.
-- **Réactions** : élan vers vos clics, hourra quand vous envoyez un formulaire.
-- **Essaim à la demande** : Maj, puis Maj maintenu.
-
-Deux interrupteurs du menu les règlent : « Bavarder entre eux » et « Réagir à ce que je fais ».
-
-## Jeux et outils
-
-Dans le menu :
-- **Jouer au chat** : attrapez les curseurs avec votre souris (Échap pour arrêter).
-- **Concentration · 25 min** : les curseurs s'en vont, puis reviennent pour la pause.
-- **Enregistrer une vidéo de l'onglet** : un fichier WebM téléchargé à l'arrêt (2 minutes au plus).
-
-## Personnalisation
-
-Lien « Personnaliser… » en bas du menu (ou clic droit sur l'icône → Options) : vos prénoms,
-un thème perso (habillage de départ, couleurs, pointeur SVG importé et nettoyé), avec aperçu.
-
-## Défilement
-
-Les curseurs vivent sur la page, pas sur l'écran. Quand vous faites défiler, ils partent avec le
-contenu, puis chacun vous rattrape après un temps de réaction (0,3 à 1,5 s selon sa patience ;
-parfois plus longtemps s'il est « occupé »). Un curseur hors de vue apparaît comme un repère
-avec son prénom en haut ou en bas de l'écran.
-
-## Organisation
-
-Tous les fichiers déclarent leurs classes dans `window.Balade`. Sans bundler, ils sont injectés
-dans l'ordre de `FILES` (`lib/inject.js`), qui est aussi celui des `<script>` de `demo.html`.
-
-| Fichier | Rôle |
+| | |
 | --- | --- |
-| `background.js` | raccourci Alt+B |
-| `lib/inject.js` | injection des scripts, lancer/ranger, état de l'onglet |
-| `popup/` | le menu (HTML, CSS aux quatre habillages, JS) |
-| `options/` | la page de personnalisation |
-| `offscreen/` | enregistrement vidéo (document hors écran) |
-| `core/SvgSanitizer.js` | nettoyage des pointeurs SVG importés |
-| `core/Config.js` | réglages internes du mouvement |
-| `core/Settings.js` | réglages de l'utilisateur : stockage et traduction en paramètres |
-| `entities/Cursor.js` | position, vue de la page, tempérament, micro-signaux |
-| `motion/Path.js` | trajets en arcs de cercle enchaînés |
-| `motion/Motion.js` | gestes : loi de Fitts, minimum jerk, visée + correction, clic |
-| `world/Stage.js` | écran, éléments de la page, où viser, fond, plein écran |
-| `world/Predictor.js` | anticipation du geste |
-| `world/Habits.js` | apprentissage des enchaînements de clics (local) |
-| `behaviors/*.js` | arrivée, départ, flânerie, attention (`Gather`), suivre (`Follow`), essaim (`Swarm`), anticiper (`Anticipate`), fuir (`Flee`) |
-| `render/Themes.js` | les quatre thèmes et leurs pointeurs |
-| `render/FontLoader.js` | polices embarquées pour l'overlay |
-| `render/Renderer.js` | overlay en Shadow DOM, étiquettes, repères de bord, texte fantôme |
-| `audio/Sound.js` | petits sons synthétisés (Web Audio) |
-| `engine/Engine.js` | boucle, population, défilement, souris, plein écran |
-| `main.js` | `Balade.toggle()` et suivi des réglages |
-| `autostart.js` | lancement automatique sur les sites choisis |
+| ![Classic](docs/images/theme-classic.png) | ![Riso zine](docs/images/theme-riso-zine.png) |
+| ![Clay pebbles](docs/images/theme-clay-pebbles.png) | ![Field notebook](docs/images/theme-field-notebook.png) |
 
-## Ajouter un comportement
+Each theme draws five pointers (arrow, hand, text, crosshair, busy), all in SVG.
+The pointer changes like in a real browser: a hand over links and buttons, an I-beam over
+fields, a crosshair over images, busy during some pauses.
 
-1. Créer `src/behaviors/MonComportement.js` : une classe qui étend `Behavior` et implémente `*run(cursor)`.
-2. L'ajouter à `FILES` (`lib/inject.js`) et aux `<script>` de `demo.html`, avant `Engine.js`.
-3. Le choisir dans `Engine.chooseBehavior(cursor)`.
+## How they move
 
-## Ce qui n'est jamais touché
+- **Curved paths**: chained circular arcs rather than straight lines.
+- **Human timing**: duration from Fitts's law, a minimum-jerk speed profile, an aim followed by a small correction, then a click that presses down.
+- **Moods**: each cursor has a temperament (calm, curious, busy…) and alternates strolling, fidgeting and inspecting the page.
+- **Jostling**: your mouse pushes the cursors away; a damped spring brings them back.
+- **Typing**: curious cursors type ghost text into empty fields (drawn on top, the field's value never changes).
+- **Sounds**: one voice per cursor, in a pentatonic scale, panned to where the cursor is.
 
-Les clics sont simulés (le curseur s'enfonce, un son), aucun événement n'est envoyé à la page.
-Le texte fantôme est dessiné par-dessus le champ : la valeur du champ ne change pas.
-Les champs mot de passe, désactivés, en lecture seule, déjà remplis ou en cours d'utilisation sont ignorés.
+## Anticipation and habits
 
-## Polices
+- **Guess my moves**: from the direction and braking of your mouse, a cursor heads for the element you're aiming at, often before you get there.
+- **Learn my habits**: Balade remembers your click sequences on each site and waits for you on the next step when it is predictable enough.
 
-Bricolage Grotesque, Chivo Mono, Fredoka, Figtree, Young Serif et Spline Sans Mono, sous licence
-SIL Open Font License 1.1 (voir `fonts/licences/`).
+Everything stays on this computer; only the identity of clicked elements is stored, never what
+you type. The menu shows what has been learned on the site and lets you forget it.
+Consider excluding sensitive sites ("This site" section).
+
+## Per-site settings
+
+In the menu, the "This site" section lets you never run Balade on a site (useful for internal
+tools or pages showing sensitive data), or start it there automatically. Auto-start asks for
+access to that site, and that site only.
+
+## Dark pages
+
+Each cursor looks at the background under it and adapts its pointer when it is dark
+("Adapt to dark pages" switch).
+
+## Social life and reactions
+
+- **Shared attention**: keep your mouse still for about a second, or type in a field, and the curious ones come to look; they leave when you move away.
+- **Encounters**: a wave, a little sound, sometimes one follows the other.
+- **Reactions**: a rush toward your clicks, a cheer when you submit a form.
+- **Swarm on demand**: press Shift, then hold Shift.
+
+Two menu switches control these: "Chat with each other" and "React to what I do".
+
+## Games and tools
+
+From the menu:
+- **Play tag**: catch the cursors with your mouse (Esc to stop).
+- **Focus · 25 min**: the cursors leave, then come back for the break.
+- **Record a video of the tab**: a WebM file downloaded when you stop (2 minutes max).
+
+## Customization
+
+"Customize…" link at the bottom of the menu (or right-click the icon → Options): your own
+names, a custom theme (starting style, colors, imported SVG pointer, sanitized), with a preview.
+
+## Scrolling
+
+The cursors live on the page, not on the screen. When you scroll, they move with the content,
+then each one catches up after a reaction time (0.3 to 1.5 s depending on its patience;
+sometimes longer if it is "busy"). A cursor out of view shows up as a marker with its name at
+the top or bottom of the screen.
+
+## Project layout
+
+Every file declares its classes on `window.Balade`. With no bundler, they are injected in the
+order of `FILES` (`lib/inject.js`), which is also the order of the `<script>` tags in `demo.html`.
+
+| File | Role |
+| --- | --- |
+| `background.js` | Alt+B shortcut, auto-start, recording messages |
+| `lib/inject.js` | script injection, start/put away, tab state |
+| `popup/` | the menu (HTML, CSS with the four styles, JS) |
+| `options/` | the customization page |
+| `offscreen/` | video recording (offscreen document) |
+| `core/SvgSanitizer.js` | sanitizes imported SVG pointers |
+| `core/Config.js` | internal motion settings |
+| `core/Settings.js` | user settings: storage and mapping to parameters |
+| `entities/Cursor.js` | position, page view, temperament, micro-signals |
+| `motion/Path.js` | chained circular-arc paths |
+| `motion/Motion.js` | gestures: Fitts's law, minimum jerk, aim + correction, click |
+| `world/Stage.js` | screen, page elements, where to aim, background, full screen |
+| `world/Predictor.js` | gesture anticipation |
+| `world/Habits.js` | learning click sequences (local) |
+| `behaviors/*.js` | arrive, leave, wander, attention (`Gather`), follow (`Follow`), swarm (`Swarm`), anticipate (`Anticipate`), flee (`Flee`) |
+| `render/Themes.js` | the four themes and their pointers |
+| `render/FontLoader.js` | fonts bundled for the overlay |
+| `render/Renderer.js` | Shadow DOM overlay, name tags, edge markers, ghost text |
+| `audio/Sound.js` | small synthesized sounds (Web Audio) |
+| `engine/Engine.js` | loop, population, scrolling, mouse, full screen |
+| `main.js` | `Balade.toggle()` and settings tracking |
+| `autostart.js` | auto-start on chosen sites |
+
+## Adding a behavior
+
+1. Create `src/behaviors/MyBehavior.js`: a class that extends `Behavior` and implements `*run(cursor)`.
+2. Add it to `FILES` (`lib/inject.js`) and to the `<script>` tags in `demo.html`, before `Engine.js`.
+3. Pick it in `Engine.chooseBehavior(cursor)`.
+
+## What is never touched
+
+Clicks are simulated (the cursor presses down, a sound plays); no event is sent to the page.
+Ghost text is drawn on top of the field: the field's value never changes.
+Password, disabled, read-only, already filled or in-use fields are skipped.
+
+## Going further
+
+The principles and formulas studied before writing Balade: [docs/research.en.md](docs/research.en.md).
+
+## Fonts
+
+Bricolage Grotesque, Chivo Mono, Fredoka, Figtree, Young Serif and Spline Sans Mono, under the
+SIL Open Font License 1.1 (see `fonts/licences/`).

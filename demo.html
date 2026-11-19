@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Balade — page de démo</title>
+  <title>Balade — demo page</title>
   <style>
     body { font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; color: #1d1d1f; background: #fafafa; }
     header { display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; background: #fff; border-bottom: 1px solid #e6e6e6; }
@@ -28,56 +28,56 @@
 <body>
   <header>
     <strong>Atelier</strong>
-    <nav><input type="search" placeholder="Rechercher…" style="padding:6px 10px"><a href="#">Produits</a><a href="#">Équipe</a><a href="#">Tarifs</a><a href="#">Contact</a></nav>
+    <nav><input type="search" placeholder="Search…" style="padding:6px 10px"><a href="#">Products</a><a href="#">Team</a><a href="#">Pricing</a><a href="#">Contact</a></nav>
   </header>
   <main>
-    <h1>Une page pour regarder les curseurs se balader</h1>
-    <p class="lead">Faites défiler : les curseurs restent sur la page, puis vous rattrapent. Ceux qui traînent apparaissent au bord de l'écran. Le menu à droite est celui de l'extension.</p>
+    <h1>A page to watch the cursors stroll around</h1>
+    <p class="lead">Scroll: the cursors stay on the page, then catch up with you. The ones lagging behind show up at the edge of the screen. The menu on the right is the extension's own.</p>
     <div class="actions">
-      <button class="primary">Commencer</button>
-      <button>En savoir plus</button>
+      <button class="primary">Get started</button>
+      <button>Learn more</button>
     </div>
     <div class="grid">
-      <div class="card"><h3>Trajets en arcs</h3><p>Arcs de cercle enchaînés, loi de Fitts, visée puis correction.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Pauses et humeurs</h3><p>Flâner, gigoter, inspecter : chaque curseur a son tempérament.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Bousculade</h3><p>Votre souris pousse les curseurs ; un ressort amorti les ramène.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Défilement</h3><p>Les curseurs vivent sur la page et vous rattrapent quand vous défilez.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Thèmes</h3><p>Classique, Zine, Galets ou Carnet, au choix dans le menu.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Petits bruits</h3><p>Une voix par curseur, dans une gamme qui ne sonne jamais faux.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Curved paths</h3><p>Chained circular arcs, Fitts's law, aim then correct.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Pauses and moods</h3><p>Stroll, fidget, inspect: every cursor has its own temperament.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Jostling</h3><p>Your mouse pushes the cursors; a damped spring brings them back.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Scrolling</h3><p>The cursors live on the page and catch up when you scroll.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Themes</h3><p>Classic, Riso zine, Clay pebbles or Field notebook, picked from the menu.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Little sounds</h3><p>One voice per cursor, in a scale that never sounds off.</p><a href="#">Details</a></div>
     </div>
-    <h2>Une image</h2>
-    <img class="photo" alt="Paysage de démonstration" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='860' height='220'%3E%3Crect width='860' height='220' fill='%23dfe7f1'/%3E%3Cpath d='M0 180 L200 90 L340 160 L520 60 L860 170 L860 220 L0 220Z' fill='%23b6c7dc'/%3E%3C/svg%3E" style="width:100%">
-    <h2>Écrivez-nous</h2>
+    <h2>A picture</h2>
+    <img class="photo" alt="Demo landscape" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='860' height='220'%3E%3Crect width='860' height='220' fill='%23dfe7f1'/%3E%3Cpath d='M0 180 L200 90 L340 160 L520 60 L860 170 L860 220 L0 220Z' fill='%23b6c7dc'/%3E%3C/svg%3E" style="width:100%">
+    <h2>Write to us</h2>
     <form onsubmit="return false">
-      <label>Nom <input placeholder="Votre nom"></label>
-      <label>Courriel <input type="email" placeholder="vous@exemple.fr"></label>
-      <label>Sujet
+      <label>Name <input placeholder="Your name"></label>
+      <label>Email <input type="email" placeholder="you@example.com"></label>
+      <label>Subject
         <select><option>Question</option><option>Suggestion</option></select>
       </label>
       <textarea rows="3" placeholder="Message"></textarea>
-      <button class="primary">Envoyer</button>
+      <button class="primary">Send</button>
     </form>
     <section style="margin-top:72px;background:#14161a;color:#e8e8ea;padding:40px;border-radius:16px">
-      <h2 style="margin-top:0;color:#fff">Une zone sombre</h2>
-      <p style="color:#b9bcc4;max-width:560px">Sur un fond sombre, les pointeurs s'adaptent : le Classique s'inverse, le Carnet passe en mode « tableau noir », le Zine et les Galets gagnent un halo.</p>
-      <p><a href="#" style="color:#8ab4ff">Un lien dans le noir</a> · <button style="background:#2a2d33;color:#fff;border-color:#444">Un bouton sombre</button></p>
-      <input placeholder="Un champ sombre" style="background:#1f2228;color:#eee;border-color:#444">
+      <h2 style="margin-top:0;color:#fff">A dark area</h2>
+      <p style="color:#b9bcc4;max-width:560px">On a dark background the pointers adapt: Classic inverts, Field notebook switches to a chalkboard look, Riso zine and Clay pebbles get a glow.</p>
+      <p><a href="#" style="color:#8ab4ff">A link in the dark</a> · <button style="background:#2a2d33;color:#fff;border-color:#444">A dark button</button></p>
+      <input placeholder="A dark field" style="background:#1f2228;color:#eee;border-color:#444">
     </section>
-    <h2>Encore un peu de page</h2>
+    <h2>A bit more page</h2>
     <div class="grid">
-      <div class="card"><h3>Trajets en arcs</h3><p>Arcs de cercle enchaînés, loi de Fitts, visée puis correction.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Pauses et humeurs</h3><p>Flâner, gigoter, inspecter : chaque curseur a son tempérament.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Bousculade</h3><p>Votre souris pousse les curseurs ; un ressort amorti les ramène.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Défilement</h3><p>Les curseurs vivent sur la page et vous rattrapent quand vous défilez.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Thèmes</h3><p>Classique, Zine, Galets ou Carnet, au choix dans le menu.</p><a href="#">Détails</a></div>
-      <div class="card"><h3>Petits bruits</h3><p>Une voix par curseur, dans une gamme qui ne sonne jamais faux.</p><a href="#">Détails</a></div>
+      <div class="card"><h3>Curved paths</h3><p>Chained circular arcs, Fitts's law, aim then correct.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Pauses and moods</h3><p>Stroll, fidget, inspect: every cursor has its own temperament.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Jostling</h3><p>Your mouse pushes the cursors; a damped spring brings them back.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Scrolling</h3><p>The cursors live on the page and catch up when you scroll.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Themes</h3><p>Classic, Riso zine, Clay pebbles or Field notebook, picked from the menu.</p><a href="#">Details</a></div>
+      <div class="card"><h3>Little sounds</h3><p>One voice per cursor, in a scale that never sounds off.</p><a href="#">Details</a></div>
     </div>
   </main>
 
-  <!-- Le menu de l'extension, affiché à côté pour l'essayer sans installer. -->
-  <iframe class="menu" src="popup/popup.html" title="Menu de Balade"></iframe>
+  <!-- The extension's menu, shown alongside so you can try it without installing. -->
+  <iframe class="menu" src="popup/popup.html" title="Balade menu"></iframe>
 
-  <!-- Mêmes fichiers, dans le même ordre que dans lib/inject.js -->
+  <!-- Same files, in the same order as lib/inject.js -->
   <script src="src/core/namespace.js"></script>
   <script src="src/core/MathUtils.js"></script>
   <script src="src/core/Config.js"></script>

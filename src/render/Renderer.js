@@ -35,6 +35,9 @@
     .ghost.on { display: flex; }
     .ghost .caret { display: inline-block; width: 1.5px; height: 1.15em; margin-left: 1px;
                     animation: blink 1s steps(1) infinite; }
+    .ghost-sel { position: absolute; left: 0; top: 0; display: none; box-sizing: border-box;
+                 border-radius: 2px; pointer-events: none; }
+    .ghost-sel.on { display: block; }
     .spin { animation: spin 1.1s linear infinite; }
     .cur svg { transition: filter .25s ease; }
     @keyframes blink { 50% { opacity: 0; } }
@@ -155,7 +158,10 @@
       ghost.className = "ghost";
       ghost.innerHTML = `<span class="txt"></span><span class="caret"></span>`;
 
-      this.layer.append(focus, ghost, root);
+      const ghostSel = document.createElement("div");
+      ghostSel.className = "ghost-sel";
+
+      this.layer.append(focus, ghostSel, ghost, root);
       const view = {
         root,
         svg: root.firstChild,
@@ -166,6 +172,7 @@
         ghost,
         ghostText: ghost.firstChild,
         caret: ghost.lastChild,
+        ghostSel,
         ghostFor: null,
         key: null,
         tagText: null
@@ -233,6 +240,28 @@
         b: parseFloat(cs.borderBottomWidth) + parseFloat(cs.paddingBottom)
       };
       v.ghostFor = el;
+    }
+
+    /**
+     * Shows a selection highlight over the ghost text (Ctrl+A visual).
+     * @param {object} v  - view object from _create
+     * @param {string} color - the cursor's color
+     */
+    showGhostSel(v, color) {
+      if (!v.ghostFor) return;
+      const p = v.ghostPad;
+      const r = v.ghostFor.getBoundingClientRect();
+      const s = v.ghostSel;
+      s.style.transform = `translate(${r.left + p.l}px, ${r.top + p.t}px)`;
+      s.style.width = `${Math.max(0, r.width - p.l - p.r)}px`;
+      s.style.height = `${Math.max(0, r.height - p.t - p.b)}px`;
+      s.style.background = color;
+      s.style.opacity = "0.28";
+      s.classList.add("on");
+    }
+
+    hideGhostSel(v) {
+      v.ghostSel.classList.remove("on");
     }
 
     /**
@@ -341,6 +370,7 @@
           v.ghost.classList.add("on");
         } else if (v.ghostFor) {
           v.ghost.classList.remove("on");
+          v.ghostSel.classList.remove("on");
           v.ghostText.textContent = "";
           v.ghostFor = null;
         }
@@ -353,6 +383,7 @@
           v.root.remove();
           v.focus.remove();
           v.ghost.remove();
+          v.ghostSel.remove();
           this.views.delete(id);
         }
       }

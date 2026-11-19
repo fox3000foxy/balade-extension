@@ -148,9 +148,14 @@
         if (M.chance(0.6)) {
           yield* this.eraseGhost(cursor, el, aside); // key by key
         } else {
-          // Select all and delete in one go.
-          yield* this.hover(cursor, aside, M.rand(0.15, 0.3));
+          // Select all: show highlight, pause, then wipe.
+          yield* this.hover(cursor, aside, M.rand(0.1, 0.2));
+          const renderer = this.engine.renderer;
+          const view = renderer && renderer.views && renderer.views.get(cursor.id);
+          if (view) renderer.showGhostSel(view, cursor.color);
+          yield* this.hover(cursor, aside, M.rand(0.18, 0.28)); // "did I really want that?"
           if (this.engine.sound) this.engine.sound.erase(cursor);
+          if (view) renderer.hideGhostSel(view);
         }
       }
       cursor.ghost = null;

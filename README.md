@@ -2,6 +2,8 @@
 
 *Français : [README.fr.md](README.fr.md)*
 
+![Balade — Ghost theme](docs/images/promo-ghost-2x.gif)
+
 Cursors that stroll around any web page, like a team of colleagues working alongside you.
 Plain JavaScript, object-oriented, no bundler, no dependencies.
 

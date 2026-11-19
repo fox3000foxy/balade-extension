@@ -28,15 +28,16 @@ le menu reste décoratif.
 
 | Thème | Esprit |
 | --- | --- |
-| Classique (par défaut) | pointeurs aux proportions d'un système : corps blanc, contour noir |
+| **Fantôme** (par défaut) | curseur dans sa propre couleur, contour blanc — le look original v0.1 |
+| Classique | pointeurs aux proportions d'un système : corps blanc, contour noir |
 | Zine | deux encres risographiées, légèrement décalées |
 | Galets | formes dodues et mates, couleurs d'argile |
 | Carnet | trait d'encre, spécimens numérotés, crayon rouge |
 
-| | |
-| --- | --- |
-| ![Classique](docs/images/theme-classic.png) | ![Zine](docs/images/theme-riso-zine.png) |
-| ![Galets](docs/images/theme-clay-pebbles.png) | ![Carnet](docs/images/theme-field-notebook.png) |
+| | | |
+| --- | --- | --- |
+| ![Fantôme](docs/images/theme-ghost.png) | ![Classique](docs/images/theme-classic.png) | ![Zine](docs/images/theme-riso-zine.png) |
+| ![Galets](docs/images/theme-clay-pebbles.png) | ![Carnet](docs/images/theme-field-notebook.png) | |
 
 Chaque thème dessine cinq pointeurs (flèche, main, texte, viseur, attente), tous en SVG.
 Le pointeur change comme dans un vrai navigateur : main sur les liens et boutons,
@@ -136,6 +137,8 @@ Le texte fantôme est dessiné par-dessus le champ : la valeur du champ ne chang
 Les champs mot de passe, désactivés, en lecture seule, déjà remplis ou en cours d'utilisation sont ignorés.
 
 ## Pour aller plus loin
+
+Explicatif interactif avec démos animées en direct : [docs/how-it-works.html](docs/how-it-works.html).
 
 Les principes et formules étudiés avant d'écrire Balade : [docs/research.fr.md](docs/research.fr.md).
 

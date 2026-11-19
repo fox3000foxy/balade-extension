@@ -32,15 +32,16 @@ is decorative.
 
 | Theme | Spirit |
 | --- | --- |
-| Classic (default) | pointers with the proportions of an operating system: white body, black outline |
+| **Ghost** (default) | cursor filled with its own color, white outline — the original v0.1 look |
+| Classic | pointers with the proportions of an operating system: white body, black outline |
 | Riso zine | two risograph inks, slightly off-register |
 | Clay pebbles | plump, matte shapes in clay colors |
 | Field notebook | inked lines, numbered specimens, red pencil |
 
-| | |
-| --- | --- |
-| ![Classic](docs/images/theme-classic.png) | ![Riso zine](docs/images/theme-riso-zine.png) |
-| ![Clay pebbles](docs/images/theme-clay-pebbles.png) | ![Field notebook](docs/images/theme-field-notebook.png) |
+| | | |
+| --- | --- | --- |
+| ![Ghost](docs/images/theme-ghost.png) | ![Classic](docs/images/theme-classic.png) | ![Riso zine](docs/images/theme-riso-zine.png) |
+| ![Clay pebbles](docs/images/theme-clay-pebbles.png) | ![Field notebook](docs/images/theme-field-notebook.png) | |
 
 Each theme draws five pointers (arrow, hand, text, crosshair, busy), all in SVG.
 The pointer changes like in a real browser: a hand over links and buttons, an I-beam over
@@ -146,6 +147,8 @@ Ghost text is drawn on top of the field: the field's value never changes.
 Password, disabled, read-only, already filled or in-use fields are skipped.
 
 ## Going further
+
+Interactive explainer with live animated demos: [docs/how-it-works.html](docs/how-it-works.html).
 
 The principles and formulas studied before writing Balade: [docs/research.en.md](docs/research.en.md).
 

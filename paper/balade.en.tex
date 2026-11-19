@@ -1,0 +1,75 @@
+% Balade: lifelike cursor behavior from state machines and mathematics.
+% No neural networks: generators, steering, Fitts, minimum jerk.
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single}
+\title{Balade: Lifelike Cursor Behavior from State Machines and Mathematics}
+\author{Balade contributors}
+\date{\today}
+\begin{document}
+\maketitle
+\begin{abstract}
+Balade is a browser extension that places autonomous animated cursors on web
+pages. They wander, inspect elements, type ghost text, greet each other, and
+anticipate the user. No neural network is involved: every behavior is a
+coroutine (a generator used as a state machine) driven by classical
+mathematics --- Fitts's law, minimum-jerk profiles, arc geometry, damped
+springs, Reynolds steering, Markov chains, and Bayesian-style scoring.
+This paper documents the formulas, the engineering trade-offs, and the
+benchmarks that replaced naive implementations with faster exact ones.
+\end{abstract}
+
+\section{Behaviors as coroutines}
+Each cursor runs a generator: \texttt{*run(cursor)} yields the frame time step
+and resumes. The engine pumps all cursors from a single requestAnimationFrame
+loop with one shared clock, so reads and writes stay batched and the
+simulation time is coherent. Composition uses \texttt{yield*}:
+\texttt{moveTo}, \texttt{wait}, \texttt{click} are reusable subroutines.
+
+\section{Movement mathematics}
+
+\subsection{Duration: Fitts's law}
+\begin{equation}
+T = \frac{a + b \log_2\left(1 + D/W\right)}{v}, \quad \text{clamped to } [T_{\min}, T_{\max}]
+\end{equation}
+$D$ is the distance, $W$ the target width, $v$ a speed multiplier.
+
+\subsection{Profile: minimum jerk with time warp}
+\begin{equation}
+s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q), \; q \in [0.68, 0.85]
+\end{equation}
+Each cursor keeps its own warp $q$ for life: a recognizable motor signature.
+
+\subsection{Paths: turtle arcs and similarity}
+Paths are traced turtle-style along circular arcs of constant curvature, then
+mapped by a similarity (rotation, scale, translation) onto the target.
+
+\subsection{Settling: semi-implicit Euler spring}
+\begin{equation}
+a = -k\,x - c\,v
+\end{equation}
+
+\subsection{Swarm: Reynolds steering}
+Orbit with breathing radius, 3-lobe rosace, and a swirl factor.
+
+\section{Measured optimizations}
+Iterative heading rotation ($4\times$), sampled progress curves (zero
+\texttt{pow} per frame), triple-angle expansion without \texttt{atan2}
+($3\times$), squared-distance scans ($2\times$). Rejected after measurement:
+sine tables ($3\times$ slower), order-5 Taylor (wrong), cosine pre-filters.
+
+\section{Simulated cognition}
+First-order Markov habits, satiety with exponential decay, novelty pressure,
+gesture anticipation, social roles (leader, follower, loner), and moods.
+
+\section{Conclusion}
+Lifelike behavior needs no learning: composable state machines plus the
+right classical formulas are enough.
+\end{document}

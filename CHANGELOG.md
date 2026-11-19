@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.3.0 — Motor signatures, simulated cognition, social roles, moods
+
+### Per-cursor motor signatures
+- Each cursor keeps its own time warp and first-try precision for life.
+- Patient cursors aim true; impatient ones overshoot along the motion and correct.
+- Correction chance now follows the trait instead of a flat draw.
+
+### Simulated cognition
+- Satiety: visited elements get boring (weight down to 20 percent), decaying over 10 minutes.
+- Novelty: unseen elements get a curiosity bonus while much of the page is unexplored.
+- Satiated cursors say "seen it" lines and move on instead of marveling.
+
+### Social roles and teasing
+- Roles: leader (15%), follower (30%), loner (15%), plain (40%).
+- Followers tag along eagerly, leaders recruit, loners never follow.
+- Loners tease on greeting (cooldown, the victim sulks); leaders arrive first, loners hang back, jealousy keeps busy watchers put.
+
+### Moods and expressive typing
+- Moods: chill/grumpy/playful baseline from temperament, proud/grumpy flashes on prediction verdicts.
+- Ghost typing picks a real word from the page heading 30 percent of the time (overlay only, field untouched).
+- New bubble lines in English and French: teasing and already-seen.
+
 ## 1.2.0 — Six ambient features, memory and performance
 
 ### New ambient features (all visual only, nothing sent to the page)

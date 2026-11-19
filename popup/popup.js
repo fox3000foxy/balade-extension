@@ -132,12 +132,15 @@
   }
 
   async function toggle() {
-    $("toggle").disabled = true;
+    const btn = $("toggle");
+    btn.disabled = true;
     try {
       if (inExtension) await self.BaladeInject.toggle(tabId);
       else if (hostBalade()) await hostBalade().toggle();
     } catch (err) {
       state = { state: "unavailable", count: 0 };
+    } finally {
+      btn.disabled = false;
     }
     setTimeout(refreshStatus, 150);
   }
@@ -353,6 +356,7 @@
     await refreshStatus();
     renderShortcut();
     // The cursor count changes while the menu is open.
-    setInterval(refreshStatus, 1000);
+    const _statusTimer = setInterval(refreshStatus, 2000);
+    window.addEventListener("unload", () => clearInterval(_statusTimer));
   })();
 })();

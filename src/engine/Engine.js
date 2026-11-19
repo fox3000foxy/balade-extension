@@ -123,6 +123,7 @@
       this.sound.start();
       this.habits.enabled = this.config.predict.learn;
       this.habits.load();
+      this._onScroll = () => this.stage.invalidateCache();
       window.addEventListener("pointermove", this._onPointerMove, { passive: true });
       window.addEventListener("keydown", this._onKeyDown, true);
       window.addEventListener("keyup", this._onKeyUp, true);
@@ -133,6 +134,8 @@
       document.addEventListener("focusout", this._onFocusOut, true);
       document.addEventListener("fullscreenchange", this._onFullscreenChange);
       window.addEventListener("resize", this._onFullscreenChange);
+      window.addEventListener("scroll", this._onScroll, { passive: true, capture: true });
+      window.addEventListener("resize", this._onScroll, { passive: true });
       this._checkFullscreen();
       // Restore cursors from a previous page if a fresh snapshot was passed.
       if (snapshot && snapshot.cursors && snapshot.cursors.length) {
@@ -175,11 +178,16 @@
       document.removeEventListener("focusout", this._onFocusOut, true);
       document.removeEventListener("fullscreenchange", this._onFullscreenChange);
       window.removeEventListener("resize", this._onFullscreenChange);
+      window.removeEventListener("scroll", this._onScroll, { capture: true });
+      window.removeEventListener("resize", this._onScroll);
       this.renderer.unmount();
       this.sound.close();
       this.habits.save();
       this.habits.dispose();
       this.cursors = [];
+      this._timers = [];
+      this._pairs.clear();
+      this._userClicks = [];
       this.running = false;
       this.stopping = false;
       if (this.onDestroy) this.onDestroy();
@@ -242,7 +250,10 @@
       const sy = window.scrollY;
       for (const c of this.cursors) c.updateScreen(sx, sy);
       if (!this.game) this._avoidMouse(dt);
-      if (!this.stopping && !this.game) this._meetings();
+      if (!this.stopping && !this.game && this.time - (this._lastMeetings || -Infinity) > 0.25) {
+        this._lastMeetings = this.time;
+        this._meetings();
+      }
       this._sampleBackgrounds();
       for (const c of this.cursors) c.updateSignals(dt, this.config.cursor, this.time);
 
@@ -264,6 +275,7 @@
     // ---------- Small scheduler (delays in engine time) ----------
 
     _later(delay, fn) {
+      if (this._timers.length > 100) this._timers.shift();
       this._timers.push({ at: this.time + delay, fn });
     }
 
@@ -271,7 +283,9 @@
       if (this._timers.length === 0) return;
       const due = this._timers.filter((t) => t.at <= this.time);
       this._timers = this._timers.filter((t) => t.at > this.time);
-      for (const t of due) t.fn();
+      for (const t of due) {
+        try { t.fn(); } catch (err) { /* one bad timer must not break the frame */ }
+      }
     }
 
     _alive(c) {
@@ -356,6 +370,7 @@
         for (const [k, t] of this._pairs) if (t < cutoff) this._pairs.delete(k);
       }
       const list = this.cursors.filter((c) => !c.leaving && !c.ghost && c.screenY > 0 && c.screenY < window.innerHeight);
+      if (list.length > 30) list.length = 30; // cap the O(n^2) scan on crowded pages
       // Pick a random starting pair offset so we don't always scan from the same corner.
       const start = Math.floor(Math.random() * Math.max(1, list.length));
       for (let ii = 0; ii < list.length; ii++) {
@@ -439,7 +454,7 @@
       const next = this.habits.predictNext(key);
       if (!next) return;
       this._later(M.rand(0.4, 1.0), () => {
-        const el = this.stage.visibleElements(this.time + 2).find((e) => Habits.keyOf(e) === next.key);
+        const el = this.stage.visibleElements(this.time).find((e) => Habits.keyOf(e) === next.key);
         if (el) this._anticipate(el, "habit");
       });
     }

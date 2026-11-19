@@ -13,6 +13,9 @@
   // Fields where text is typed (not passwords, for privacy).
   const TEXT_INPUT_TYPES = new Set(["", "text", "search", "email", "url", "tel", "number"]);
 
+  // Name/id/placeholder hints that mark a search or filter field.
+  const HINT_RE = /search|filter|query|find|cherch|filtr/;
+
   class Stage {
     constructor(config, hostTag) {
       this.interest = config.wander.interest;
@@ -106,7 +109,7 @@
         el.getAttribute("placeholder") || "",
         el.getAttribute("aria-label") || ""
       ].join(" ").toLowerCase();
-      if (/search|filter|query|find|cherch|filtr/.test(hint)) return false;
+      if (HINT_RE.test(hint)) return false;
       // Reject if the element lives inside a search landmark.
       if (el.closest('[role="search"]')) return false;
       return true;
@@ -124,6 +127,10 @@
     }
 
     /** Visible elements on screen (cached for 1 s, to stay lightweight). */
+    invalidateCache() {
+      this._cacheAt = -Infinity;
+    }
+
     visibleElements(now) {
       if (now - this._cacheAt < 1) return this._cache;
       this._cacheAt = now;

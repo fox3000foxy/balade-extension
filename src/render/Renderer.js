@@ -468,12 +468,11 @@
           v.ghost.classList.add("on");
           // Ghost selection: position inside RAF so no forced layout outside frame.
           if (v.ghostSelActive && v.ghostPad) {
-            const rg = c.ghost.el.getBoundingClientRect();
             const pg = v.ghostPad;
             const s = v.ghostSel;
-            s.style.transform = `translate(${rg.left + pg.l}px, ${rg.top + pg.t}px)`;
-            s.style.width = `${Math.max(0, rg.width - pg.l - pg.r)}px`;
-            s.style.height = `${Math.max(0, rg.height - pg.t - pg.b)}px`;
+            s.style.transform = `translate(${r.left + pg.l}px, ${r.top + pg.t}px)`;
+            s.style.width = `${Math.max(0, r.width - pg.l - pg.r)}px`;
+            s.style.height = `${Math.max(0, r.height - pg.t - pg.b)}px`;
             s.style.background = v.ghostSelColor || color;
             s.style.opacity = "0.28";
             s.classList.add("on");

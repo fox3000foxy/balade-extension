@@ -13,19 +13,21 @@
 \author{\IEEEauthorblockN{Fox3000foxy}\IEEEauthorblockA{Independent Researcher\\fox3000foxy@users.noreply.github.com}}
 \maketitle
 \begin{abstract}
-Balade est une extension de navigateur qui pose de petits curseurs autonomes
-sur les pages web. Ils se baladent, regardent les choses, tapent des mots
-fantomes, se saluent et boudent parfois. Aucun reseau de neurones : que des
-mathematiques classiques et de petites machines a etats. Cet article explique,
-en images, comment quatre ingredients font la difference entre un robot et une
-main.
+Balade is a browser extension that places small autonomous cursors on web
+pages. They stroll, look at things, type ghost words, greet each other, sulk,
+and sometimes shoo each other away. No neural network is involved: everything
+is classical mathematics plus small state machines. This paper explains, with
+pictures, how four ingredients make the difference between a robot and a hand,
+gives every shipped law with its constants, tells the behaviors added from
+v0.1 to v1.3.1, reports measured optimizations including the ones that failed,
+and lists the engineering lessons paid for in bugs.
 \end{abstract}
 
 \section{Inutile --- et fier de l'etre}
 Balade ne vous fait gagner zero seconde. Ca n'organise rien et ne mesure
 rien. Ca fait juste vivre des petites fleches sur vos pages. C'est tout
 l'interet : un terrain de jeu pour demander jusqu'ou les mathematiques peuvent
-approcher un geste humain, et la reponse est : etonnamment pres.
+approcher un geste humain. Et la reponse est : etonnamment pres.
 
 \section{Quatre ingredients, partout}
 Aucune animation dans Balade n'est lineaire, constante ou synchronisee.
@@ -46,13 +48,14 @@ montre le premier : une vraie main trace des arcs, jamais de lignes droites.
 
 \section{Combien de temps ? La loi de Fitts}
 Atteindre une cible prend plus de temps si elle est loin, mais moins si elle
-est grande :
+est grande. Balade embarque la loi des manuels avec des constantes ajustees :
 \begin{equation}
-T = \frac{0.08 + 0.085\,\log_2(1 + D/W)}{v}
+T = \frac{0.08 + 0.085\,\log_2(1 + D/W)}{v}, \quad 0.12 \le T\cdot v \le 0.75
 \end{equation}
-Une cible deux fois plus loin prend bien moins de deux fois plus de temps :
-la main fait un lancer balistique rapide, puis ralentit pour viser. La
-fig.~\ref{fig:fitts} montre la forme : raide au debut, qui s'aplatit.
+avec $W \ge 4$\,px pour ne jamais diviser par rien. A $v=1$, $W=24$\,px :
+$D=100 \Rightarrow 0.27$\,s et $D=800 \Rightarrow 0.51$\,s. Doubler la
+distance ne double jamais le temps (fig.~\ref{fig:fitts}) : la main fait un
+lancer balistique rapide, puis ralentit pour viser.
 
 \begin{figure}[h]
 \centering
@@ -61,16 +64,24 @@ fig.~\ref{fig:fitts} montre la forme : raide au debut, qui s'aplatit.
 ymin=0,ymax=0.7,domain=0:900,samples=60,thick]
 \addplot[blue] {0.08+0.085*ln(1+x/24)/ln(2)};
 \end{axis}
-\end{tikzpicture}
-\caption{Loi de Fitts : doubler la distance ne double jamais le temps.}
+\caption{La loi de Fitts telle qu'embarquee : raide au debut, qui s'aplatit.}
 \label{fig:fitts}
 \end{figure}
 
 \section{La forme de la vitesse : secousse minimale}
 Une main humaine minimise les a-coups. Le profil de position est le celebre
 polynome a secousse minimale, deforme dans le temps pour que le pic de vitesse
-arrive avant la moitie : un depart franc, un long atterrissage en douceur
-(fig.~\ref{fig:jerk}).
+arrive a 36--44\% au lieu du milieu :
+\begin{equation}
+s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
+\end{equation}
+Chaque curseur garde son $q$ a vie --- une signature motrice qu'on peut
+apprendre a reconnaitre. Les patients visent juste du premier coup
+(probabilite de correction 0.15) ; les impatients depassent le long du
+mouvement jusqu'a 5\% et corrigent a $0.8\times$ apres un coup d'oeil de
+$0.02$--$0.08$\,s (correction de base 0.75 au-dela de 60\,px, erreur
+longitudinale dans $[-3\%, +7\%]$ bornee a $\pm34$\,px, laterale $\pm2.5\%$
+bornee a $\pm14$\,px). La fig.~\ref{fig:jerk} montre la deformation.
 
 \begin{figure}[h]
 \centering
@@ -81,26 +92,43 @@ ymin=0,ymax=1.1,domain=0:1,samples=60,thick,legend pos=south east]
 \addplot[red,dashed] {(10*(x^0.75)^3-15*(x^0.75)^4+6*(x^0.75)^5)};
 \legend{symmetric,warped $q=0.75$}
 \end{axis}
-\end{tikzpicture}
 \caption{Secousse minimale, symetrique et deformee. La courbe deformee se rue tot et
 atterrit en douceur.}
 \label{fig:jerk}
 \end{figure}
 
-\section{Se poser : le ressort}
-Une fois pres de la cible, le curseur se comporte comme une masse sur un
-ressort avec amortissement :
+\section{Trajectoires : arcs tortue, pas sinus}
+Un premier prototype utilisait un decalage en demi-sinus $P(e) = A + e(B-A) +
+\sin(\pi e)\,\mathrm{bend}\,\hat{n}$. Ca rendait bien mais la version
+embarquee trace des arcs de cercle facon tortue, puis les projette sur la
+cible par une similitude (rotation, echelle, translation) --- les arcs restent
+des arcs et le curseur atterrit exactement. Trajets courts ($<90$\,px) presque
+droits ; courbure pleine a 420\,px. Styles : arc 0.45, S 0.25, crochet 0.2,
+vague 0.1, traces en 24 points. Les cibles mobiles sont reevaluees a chaque
+image.
+
+\section{Se poser : des ressorts partout}
+Pres de la cible, le curseur est une masse sur un ressort avec amortissement,
+integre en Euler semi-implicite (la vitesse d'abord, puis la position --- ca ne
+peut jamais exploser) :
 \begin{equation}
 a = -k\,x - c\,v
 \end{equation}
-Integre en Euler semi-implicite (la vitesse d'abord, puis la position), ca ne
-peut jamais exploser : le curseur finit toujours par se poser.
+avec $k=70$, $c=12$ pour le retour de bousculade (une poussee de souris
+s'equilibre vers 64\,px). Les clics s'enfoncent de 12\% et relachent a
+6\,s$^{-1}$ ; l'inclinaison suit la vitesse horizontale a $0.01$ par px/s
+bornee a $\pm10^{\circ}$. Votre souris repousse les curseurs sous 80\,px avec
+une chute quadratique $a = 4500\,(1-d/80)^2$.
 
 \section{Voler ensemble : l'essaim}
 Maj maintenu rassemble tous les curseurs autour de votre pointeur en pilotage
-de Reynolds : une orbite qui respire ($\pm18\%$), une rosace a 3 lobes et un
-tourbillon qui inverse le sens environ toutes les 29~s. La fig.~\ref{fig:rosace}
-montre l'anneau que l'oeil ne surprend jamais tout a fait circulaire.
+de Reynolds : une orbite qui respire ($\pm15$--$18\%$), une rosace a 3 lobes
+et un tourbillon $\tanh(3\cos(0.13\,t))$ qui inverse le sens environ toutes
+les 29\,s. La fig.~\ref{fig:rosace} montre l'anneau que l'oeil ne surprend
+jamais tout a fait circulaire. Les voisins sous 80\,px se melangent 70/30
+dans la vitesse voulue ; les plafonds de vitesse et de force croissent avec la
+distance pour que les perdus reviennent vite pendant que les inities restent
+doux.
 
 \begin{figure}[h]
 \centering
@@ -113,27 +141,80 @@ montre l'anneau que l'oeil ne surprend jamais tout a fait circulaire.
 \label{fig:rosace}
 \end{figure}
 
+\section{Un son qui ne peut pas sonner faux}
+Tous les sons sont synthetises en Web Audio. Chaque curseur a une voix ; la
+hauteur suit une gamme pentatonique majeure (0, 2, 4, 7, 9 demi-tons depuis
+MIDI 72, do5), pour que toute combinaison reste consonante. Le panoramique
+stereo suit la position horizontale, $1.6\,x/L - 0.8$ borne a $\pm0.8$. 18 sons
+par seconde au plus.
+
 \section{Petits cerveaux : habitudes, humeurs, manieres}
 Les curseurs apprennent les sequences de clics par site (chaines de Markov
-d'ordre un, tout en local). Ils s'ennuient : la satiete croit avec les visites
-et decroit sur dix minutes, donc un element tres visite devient ennuyeux et
-les jamais-vus attirent. Ils ont des roles (meneur, suiveur, solitaire) et des
-humeurs (calme, grognon, joueur, fier). Un solitaire qui bouscule un curseur en
-train de taper recoit un << he, ma place ! >> et se fait pousser gentiment.
-Rien n'est envoye a aucune page : le texte fantome est un overlay, la valeur
-du champ ne change jamais.
+d'ordre un, tout en local : 5 bonnes predictions sur 6 aux tests, 0 mauvaise).
+Ils s'ennuient : la satiete croit avec les visites et decroit sur dix minutes,
+donc un element tres visite devient ennuyeux et les jamais-vus attirent
+(pression de nouveaute). Ils anticipent votre geste depuis la balistique de
+la souris scoree avec les habitudes. Ils ont des roles (meneur 15\%, suiveur
+30\%, solitaire 15\%) et des humeurs (calme, grognon, joueur, fier). Un
+solitaire qui bouscule un curseur en train de taper recoit un << he, ma
+place ! >> et se fait pousser gentiment. Rien n'est jamais envoye a aucune
+page : le texte fantome est un overlay, la valeur du champ ne change jamais,
+mots de passe et champs remplis sautes.
+
+\section{Onze comportements, six versions}
+Balade (flanerie, gigotement, inspection), Arrivee, Depart, Rassemblement
+(attention partagee), Suivi, Essaim, Anticipation, Fuite (jeu du chat), Guide
+(visite guidee), Compagnon (copain de concentration). De v0.1 (premiere
+flanerie) a v1.3.1 : themes, attention, reglages par site, adaptation sombre,
+anticipation, personnalisation, jeux, enregistrement, i18n (145 cles EN/FR),
+persistance inter-pages, six fonctions d'ambiance (ambiance de lecture, indice
+de defilement, guide, compagnon, inspecteur de contraste, meteo du site),
+signatures motrices, roles sociaux, humeurs et correctifs de figement.
 
 \section{Rapide, et mesure}
-Chaque optimisation a ete mesuree. Rotation iterative du cap ($4\times$,
-exacte au bit), courbes de progression echantillonnees (zero \texttt{pow} par
-image), developpement triple-angle sans \texttt{atan2} ($3\times$), distances
-au carre ($2\times$). Rejete apres mesure : une table de sinus ($3\times$ plus
-lente), Taylor ordre 5 (faux), un pre-filtre en cosinus (plus lent que
-\texttt{acos}). Details dans le README du depot.
+Chaque substitution a ete mesuree sur 200\,000 gestes $\times$ 24 pas.
+Rotation iterative du cap : $4\times$, exacte au bit. Courbes de progression
+de 64 entrees : zero \texttt{pow} par image (erreur $<5\times10^{-4}$).
+Triple-angle sans \texttt{atan2} : $3\times$. Distances au carre : $2\times$.
+Rejete apres mesure : une table de sinus ($3\times$ plus lente --- la memoire
+coute plus que le FPU), Taylor ordre 5 (faux, erreur 0.5), un pre-filtre en
+cosinus (plus lent que \texttt{acos} direct). Deliberement non optimise : le
+\texttt{log2} de Fitts une fois par geste --- des nanosecondes sur un budget
+de 16\,ms, la lisibilite gagne.
+
+\begin{table}[h]
+\centering
+\caption{Substitutions : garder ou rejeter (200\,000 gestes $\times$ 24 pas).}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Substitution & Resultat & Garde \\
+\midrule
+Rotation iterative du cap & $4\times$, exacte au bit & oui \\
+Courbes 64 entrees & zero \texttt{pow}/image & oui \\
+Triple-angle, sans \texttt{atan2} & $3\times$ & oui \\
+Distances au carre & $2\times$ & oui \\
+Table de sinus (256) & $3\times$ plus lente & non \\
+Taylor ordre 5 & faux (err 0.5) & non \\
+Pre-filtre cosinus & plus lent & non \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Lecons payees en bogues}
+Un cache d'elements empoisonne par un timestamp futur ; une course a la
+double injection reparee par une promesse partagee ; des visites de curseurs
+stockees dans le champ de version de format (le nombre 1) plantant chaque
+inspection ; des champs sans label partageant une cle et saturant la satiete
+du site ; des placeholders laisses caches apres une frappe fantome interrompue ;
+une exception d'image tuant la boucle d'animation pour toujours. Methode :
+hypothese, banc cible, garder ou rejeter avec des chiffres, documenter les deux
+issues --- y compris les rejets.
 
 \section{Conclusion}
-Quatre ingredients, des formules classiques, de petites machines a etats --- et
-des fleches qui semblent tenues par quelqu'un. Aucun apprentissage requis.
+Quatre ingredients, des formules classiques, de petites machines a etats ---
+et des fleches qui semblent tenues par quelqu'un. Aucun apprentissage requis.
+Essayez, lisez le code, lancez le banc :
+\texttt{github.com/fox3000foxy/balade-extension}.
 \begin{thebibliography}{9}
 \bibitem{fitts} P.~M.~Fitts, ``La capacite d'information du systeme moteur humain,'' 1954.
 \bibitem{flash} T.~Flash and N.~Hogan, ``La coordination des mouvements du bras,'' 1985.

@@ -14,17 +14,20 @@
 \maketitle
 \begin{abstract}
 Balade is a browser extension that places small autonomous cursors on web
-pages. They stroll, look at things, type ghost words, greet each other, and
-sometimes sulk. No neural network is involved: everything is classical
-mathematics plus small state machines. This paper explains, with pictures,
-how four ingredients make the difference between a robot and a hand.
+pages. They stroll, look at things, type ghost words, greet each other, sulk,
+and sometimes shoo each other away. No neural network is involved: everything
+is classical mathematics plus small state machines. This paper explains, with
+pictures, how four ingredients make the difference between a robot and a hand,
+gives every shipped law with its constants, tells the behaviors added from
+v0.1 to v1.3.1, reports measured optimizations including the ones that failed,
+and lists the engineering lessons paid for in bugs.
 \end{abstract}
 
 \section{Useless---and proud of it}
 Balade saves you zero seconds. It does not organize anything or measure
-anything. It simply makes little arrows live on your pages. That is the
-whole point: a playground for asking how close mathematics can get to a
-human gesture, and the answer turns out to be: surprisingly close.
+anything. It simply makes little arrows live on your pages. That is the whole
+point: a playground for asking how close mathematics can get to a human
+gesture. The answer turns out to be: surprisingly close.
 
 \section{Four ingredients, everywhere}
 No animation in Balade is linear, constant, or synchronized. Every gesture
@@ -44,13 +47,15 @@ real hand draws arcs, never straight lines.
 \end{figure}
 
 \section{How long does it take? Fitts's law}
-Reaching a target takes longer when it is far, but shorter when it is big:
+Reaching a target takes longer when it is far, but shorter when it is big.
+Balade ships the textbook law with fitted constants:
 \begin{equation}
-T = \frac{0.08 + 0.085\,\log_2(1 + D/W)}{v}
+T = \frac{0.08 + 0.085\,\log_2(1 + D/W)}{v}, \quad 0.12 \le T\cdot v \le 0.75
 \end{equation}
-A target twice as far takes much less than twice the time: the hand makes a
-fast ballistic throw, then slows down to aim. Fig.~\ref{fig:fitts} shows the
-shape: steep at first, flattening out.
+with $W \ge 4$\,px to avoid dividing by nothing. At $v=1$, $W=24$\,px:
+$D=100 \Rightarrow 0.27$\,s and $D=800 \Rightarrow 0.51$\,s. Doubling the
+distance never doubles the time (Fig.~\ref{fig:fitts}): the hand makes a fast
+ballistic throw, then slows down to aim.
 
 \begin{figure}[h]
 \centering
@@ -59,15 +64,23 @@ shape: steep at first, flattening out.
 ymin=0,ymax=0.7,domain=0:900,samples=60,thick]
 \addplot[blue] {0.08+0.085*ln(1+x/24)/ln(2)};
 \end{axis}
-\end{tikzpicture}
-\caption{Fitts's law: doubling the distance never doubles the time.}
+\caption{Fitts's law as shipped: steep at first, flattening out.}
 \label{fig:fitts}
 \end{figure}
 
 \section{The shape of speed: minimum jerk}
 A human hand minimizes sudden jolts. The position profile is the famous
-minimum-jerk polynomial, warped in time so the speed peak lands before the
-middle: a sharp start, a long gentle landing (Fig.~\ref{fig:jerk}).
+minimum-jerk polynomial, warped in time so the speed peak lands at 36--44\%
+instead of the middle:
+\begin{equation}
+s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
+\end{equation}
+Each cursor keeps its own $q$ for life---a motor signature you can learn to
+recognize. Patient cursors aim true on the first try (correction chance 0.15);
+impatient ones overshoot along the motion by up to 5\% and correct at
+$0.8\times$ speed after a $0.02$--$0.08$\,s glance (base correction chance 0.75
+past 60\,px, longitudinal error in $[-3\%, +7\%]$ clamped to $\pm34$\,px,
+lateral $\pm2.5\%$ clamped to $\pm14$\,px). Fig.~\ref{fig:jerk} shows the warp.
 
 \begin{figure}[h]
 \centering
@@ -78,25 +91,40 @@ ymin=0,ymax=1.1,domain=0:1,samples=60,thick,legend pos=south east]
 \addplot[red,dashed] {(10*(x^0.75)^3-15*(x^0.75)^4+6*(x^0.75)^5)};
 \legend{symmetric,warped $q=0.75$}
 \end{axis}
-\end{tikzpicture}
 \caption{Minimum jerk, symmetric and time-warped. The warped curve rushes
 early and lands softly.}
 \label{fig:jerk}
 \end{figure}
 
-\section{Settling down: the spring}
-Once near the target, the cursor behaves like a mass on a spring with damping:
+\section{Paths: turtle arcs, not sines}
+An early prototype used a half-sine offset $P(e) = A + e(B-A) + \sin(\pi
+e)\,\mathrm{bend}\,\hat{n}$. It looked fine but the shipped version draws
+circular arcs turtle-style, then maps them onto the target by a similarity
+(rotation, scale, translation)---so arcs stay arcs and the cursor lands
+exactly. Short trips ($<90$\,px) stay nearly straight; curvature reaches full
+amplitude at 420\,px. Styles: arc 0.45, S 0.25, hook 0.2, wave 0.1, drawn at
+24 points. Moving targets are re-evaluated every frame.
+
+\section{Settling down: springs everywhere}
+Near the target, the cursor is a mass on a spring with damping, integrated
+with semi-implicit Euler (velocity first, then position---it can never
+explode):
 \begin{equation}
 a = -k\,x - c\,v
 \end{equation}
-Integrated with semi-implicit Euler (velocity first, then position), it can
-never explode: the cursor always settles.
+with $k=70$, $c=12$ for nudge recovery (a mouse shove equilibrates around
+64\,px away). Clicks press down 12\% and release at 6\,s$^{-1}$; tilt follows
+horizontal speed at $0.01$ per px/s clamped to $\pm10^{\circ}$. Your mouse
+pushes cursors away within 80\,px with a quadratic falloff
+$a = 4500\,(1-d/80)^2$.
 
 \section{Flying together: the swarm}
 Held Shift gathers every cursor around your pointer with Reynolds steering:
-an orbit that breathes ($\pm18\%$), a 3-lobe rosace, and a swirl that flips
-direction about every 29~s. Fig.~\ref{fig:rosace} shows the ring the eye
-never quite catches as a perfect circle.
+an orbit that breathes ($\pm15$--$18\%$), a 3-lobe rosace, and a swirl
+$\tanh(3\cos(0.13\,t))$ that flips direction every $\sim$29\,s.
+Fig.~\ref{fig:rosace} shows the ring the eye never quite catches as a circle.
+Neighbors within 80\,px blend 70/30 into the desired velocity; speed and force
+caps grow with distance so lost cursors hurry back while insiders stay gentle.
 
 \begin{figure}[h]
 \centering
@@ -109,26 +137,75 @@ never quite catches as a perfect circle.
 \label{fig:rosace}
 \end{figure}
 
+\section{Sound you cannot get wrong}
+All sounds are synthesized with Web Audio. Each cursor has a voice; pitch
+follows a major pentatonic scale (0, 2, 4, 7, 9 semitones from MIDI 72, C5),
+so any combination stays consonant. Stereo pan follows horizontal position,
+$1.6\,x/L - 0.8$ clamped to $\pm0.8$. At most 18 sounds per second.
+
 \section{Small brains: habits, moods, manners}
 Cursors learn click sequences per site (first-order Markov chains, all
-local). They get bored: satiety grows with visits and decays over ten
-minutes, so a much-visited element becomes boring and unseen ones attract.
-They have roles (leader, follower, loner) and moods (chill, grumpy, playful,
-proud). A loner that bumps into a typing cursor gets a ``hey, my spot!''
-and shoves it gently aside. Nothing is sent to any page: the ghost text is
-an overlay, the field value never changes.
+local: 5 correct predictions out of 6 in testing, 0 wrong). They get bored:
+satiety grows with visits and decays over ten minutes, so a much-visited
+element becomes boring and unseen ones attract (novelty pressure). They
+anticipate your gesture from mouse ballistics scored with habit priors. They
+have roles (leader 15\%, follower 30\%, loner 15\%) and moods (chill, grumpy,
+playful, proud). A loner that bumps into a typing cursor gets a ``hey, my
+spot!'' and shoves it gently aside. Nothing is ever sent to any page: ghost
+text is an overlay, the field value never changes, passwords and filled
+fields are skipped.
+
+\section{Eleven behaviors, six versions}
+Wander (stroll, fidget, inspect), Arrive, Leave, Gather (shared attention),
+Follow, Swarm, Anticipate, Flee (tag game), Guide (first-visit tour),
+Companion (focus buddy). From v0.1 (first stroll) to v1.3.1: themes,
+attention, per-site settings, dark adaptation, anticipation, customization,
+games, recording, i18n (145 keys EN/FR), cross-page persistence, six ambient
+features (reading ambiance, scroll hint, guide, companion, contrast
+inspector, site weather), motor signatures, social roles, moods, and freeze
+fixes.
 
 \section{Fast, and measured}
-Every optimization was benchmarked. Iterative heading rotation ($4\times$,
-bit-exact), sampled progress curves (zero \texttt{pow} per frame), the
-triple-angle expansion without \texttt{atan2} ($3\times$), squared distances
-($2\times$). Rejected after measurement: a sine table ($3\times$ slower),
-Taylor order 5 (wrong), a cosine pre-filter (slower than \texttt{acos}).
-Details in the repository README.
+Every substitution was benchmarked on 200\,000 gestures $\times$ 24 steps.
+Iterative heading rotation: $4\times$, bit-exact. Sampled 64-entry progress
+curves: zero \texttt{pow} per frame (error $<5\times10^{-4}$). Triple-angle
+without \texttt{atan2}: $3\times$. Squared distances: $2\times$. Rejected
+after measurement: a sine table ($3\times$ slower---memory costs more than
+the FPU), order-5 Taylor (wrong, error 0.5), a cosine pre-filter (slower than
+plain \texttt{acos}). Deliberately not optimized: Fitts's \texttt{log2} once
+per gesture---nanoseconds on a 16\,ms budget, readability wins.
+
+\begin{table}[h]
+\centering
+\caption{Substitutions: keep or reject (200\,000 gestures $\times$ 24 steps).}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Substitution & Result & Kept \\
+\midrule
+Iterative heading rotation & $4\times$, bit-exact & yes \\
+Sampled 64-entry curves & zero \texttt{pow}/frame & yes \\
+Triple-angle, no \texttt{atan2} & $3\times$ & yes \\
+Squared distances & $2\times$ & yes \\
+Sine table (256) & $3\times$ slower & no \\
+Taylor order 5 & wrong (err 0.5) & no \\
+Cosine pre-filter & slower & no \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Lessons paid for in bugs}
+An element cache poisoned by a future timestamp; a double-injection race
+fixed with one shared promise; cursor visits stored in the format-version
+field (the number 1) crashing every inspection; label-less fields sharing one
+key and saturating satiety site-wide; placeholders left hidden after
+interrupted ghost typing; a frame exception killing the animation loop
+forever. Method: hypothesis, targeted benchmark, keep or reject with numbers,
+document both outcomes---including the rejections.
 
 \section{Conclusion}
 Four ingredients, classical formulas, small state machines---and arrows that
-feel held by someone. No learning required.
+feel held by someone. No learning required. Try it, read the code, run the
+bench: \texttt{github.com/fox3000foxy/balade-extension}.
 \begin{thebibliography}{9}
 \bibitem{fitts} P.~M.~Fitts, ``The information capacity of the human motor system,'' 1954.
 \bibitem{flash} T.~Flash and N.~Hogan, ``The coordination of arm movements,'' 1985.

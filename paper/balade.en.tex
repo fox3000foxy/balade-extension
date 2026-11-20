@@ -6,8 +6,6 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{tikz}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
 \begin{document}
 \title{Balade: How Little Arrows Learned to Feel Alive}
 \author{\IEEEauthorblockN{Fox3000foxy}\IEEEauthorblockA{Independent Researcher\\fox3000foxy@users.noreply.github.com}}
@@ -59,11 +57,11 @@ ballistic throw, then slows down to aim.
 
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}
-\begin{axis}[width=7cm,height=4.2cm,xlabel={distance D (px)},ylabel={time (s)},
-ymin=0,ymax=0.7,domain=0:900,samples=60,thick]
-\addplot[blue] {0.08+0.085*ln(1+x/24)/ln(2)};
-\end{axis}
+\begin{tikzpicture}[xscale=0.007,yscale=5]
+\draw[->] (0,0) -- (950,0) node[below] {distance D (px)};
+\draw[->] (0,0) -- (0,0.75) node[left] {time (s)};
+\draw[thick,blue,domain=0:900,samples=60] plot (\x,{0.08+0.085*ln(1+\x/24)/ln(2)});
+\end{tikzpicture}
 \caption{Fitts's law as shipped: steep at first, flattening out.}
 \label{fig:fitts}
 \end{figure}
@@ -84,13 +82,13 @@ lateral $\pm2.5\%$ clamped to $\pm14$\,px). Fig.~\ref{fig:jerk} shows the warp.
 
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}
-\begin{axis}[width=7cm,height=4.2cm,xlabel={time},ylabel={position},
-ymin=0,ymax=1.1,domain=0:1,samples=60,thick,legend pos=south east]
-\addplot[blue] {10*x^3-15*x^4+6*x^5};
-\addplot[red,dashed] {(10*(x^0.75)^3-15*(x^0.75)^4+6*(x^0.75)^5)};
-\legend{symmetric,warped $q=0.75$}
-\end{axis}
+\begin{tikzpicture}[xscale=6,yscale=3.5]
+\draw[->] (0,0) -- (1.05,0) node[below] {time};
+\draw[->] (0,0) -- (0,1.15) node[left] {position};
+\draw[thick,blue,domain=0:1,samples=60] plot (\x,{10*\x^3-15*\x^4+6*\x^5});
+\draw[thick,red,dashed,domain=0:1,samples=60] plot (\x,{10*\x^2.25-15*\x^3+6*\x^3.75});
+\node at (0.5,-0.25) {symmetric (blue) vs.\ warped $q=0.75$ (red)};
+\end{tikzpicture}
 \caption{Minimum jerk, symmetric and time-warped. The warped curve rushes
 early and lands softly.}
 \label{fig:jerk}

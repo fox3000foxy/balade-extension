@@ -1,1 +1,4 @@
-.git-signing
+.git-signingpaper/*.aux
+paper/*.log
+paper/*.out
+paper/*.pdf

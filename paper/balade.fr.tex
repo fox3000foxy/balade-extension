@@ -57,81 +57,10 @@ lancer balistique rapide, puis ralentit pour viser.
 
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}[xscale=0.007,yscale=5]
-\draw[->] (0,0) -- (950,0) node[below] {distance D (px)};
-\draw[->] (0,0) -- (0,0.75) node[left] {temps (s)};
-\draw[thick,blue,domain=0:900,samples=60] plot (\x,{0.08+0.085*ln(1+\x/24)/ln(2)});
-\caption{La loi de Fitts telle qu'embarquee : raide au debut, qui s'aplatit.}
-\label{fig:fitts}
-\end{figure}
-
-\section{La forme de la vitesse : secousse minimale}
-Une main humaine minimise les a-coups. Le profil de position est le celebre
-polynome a secousse minimale, deforme dans le temps pour que le pic de vitesse
-arrive a 36--44\% au lieu du milieu :
-\begin{equation}
-s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
-\end{equation}
-Chaque curseur garde son $q$ a vie --- une signature motrice qu'on peut
-apprendre a reconnaitre. Les patients visent juste du premier coup
-(probabilite de correction 0.15) ; les impatients depassent le long du
-mouvement jusqu'a 5\% et corrigent a $0.8\times$ apres un coup d'oeil de
-$0.02$--$0.08$\,s (correction de base 0.75 au-dela de 60\,px, erreur
-longitudinale dans $[-3\%, +7\%]$ bornee a $\pm34$\,px, laterale $\pm2.5\%$
-bornee a $\pm14$\,px). La fig.~\ref{fig:jerk} montre la deformation.
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[xscale=6,yscale=3.5]
-\draw[->] (0,0) -- (1.05,0) node[below] {temps};
-\draw[->] (0,0) -- (0,1.15) node[left] {position};
-\draw[thick,blue,domain=0:1,samples=60] plot (\x,{10*\x^3-15*\x^4+6*\x^5});
-\draw[thick,red,dashed,domain=0:1,samples=60] plot (\x,{10*\x^2.25-15*\x^3+6*\x^3.75});
-\node at (0.5,-0.25) {symetrique (bleu) contre deformee $q=0.75$ (rouge)};
-\caption{Secousse minimale, symetrique et deformee. La courbe deformee se rue tot et
-atterrit en douceur.}
-\label{fig:jerk}
-\end{figure}
-
-\section{Trajectoires : arcs tortue, pas sinus}
-Un premier prototype utilisait un decalage en demi-sinus $P(e) = A + e(B-A) +
-\sin(\pi e)\,\mathrm{bend}\,\hat{n}$. Ca rendait bien mais la version
-embarquee trace des arcs de cercle facon tortue, puis les projette sur la
-cible par une similitude (rotation, echelle, translation) --- les arcs restent
-des arcs et le curseur atterrit exactement. Trajets courts ($<90$\,px) presque
-droits ; courbure pleine a 420\,px. Styles : arc 0.45, S 0.25, crochet 0.2,
-vague 0.1, traces en 24 points. Les cibles mobiles sont reevaluees a chaque
-image.
-
-\section{Se poser : des ressorts partout}
-Pres de la cible, le curseur est une masse sur un ressort avec amortissement,
-integre en Euler semi-implicite (la vitesse d'abord, puis la position --- ca ne
-peut jamais exploser) :
-\begin{equation}
-a = -k\,x - c\,v
-\end{equation}
-avec $k=70$, $c=12$ pour le retour de bousculade (une poussee de souris
-s'equilibre vers 64\,px). Les clics s'enfoncent de 12\% et relachent a
-6\,s$^{-1}$ ; l'inclinaison suit la vitesse horizontale a $0.01$ par px/s
-bornee a $\pm10^{\circ}$. Votre souris repousse les curseurs sous 80\,px avec
-une chute quadratique $a = 4500\,(1-d/80)^2$.
-
-\section{Voler ensemble : l'essaim}
-Maj maintenu rassemble tous les curseurs autour de votre pointeur en pilotage
-de Reynolds : une orbite qui respire ($\pm15$--$18\%$), une rosace a 3 lobes
-et un tourbillon $\tanh(3\cos(0.13\,t))$ qui inverse le sens environ toutes
-les 29\,s. La fig.~\ref{fig:rosace} montre l'anneau que l'oeil ne surprend
-jamais tout a fait circulaire. Les voisins sous 80\,px se melangent 70/30
-dans la vitesse voulue ; les plafonds de vitesse et de force croissent avec la
-distance pour que les perdus reviennent vite pendant que les inities restent
-doux.
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.9]
-\draw[gray] (0,0) circle (1.5);
-\draw[thick,blue,domain=0:360,samples=120] plot ({(1.5+0.45*sin(3*\x)) * cos(\x)},{(1.5+0.45*sin(3*\x)) * sin(\x)});
-\node[below] at (0,-2.2) {l'anneau n'est jamais un cercle};
+\begin{tikzpicture}
+\draw[->] (0,0) -- (6.4,0) node[below] {distance D (px)};
+\draw[->] (0,0) -- (0,3.7) node[left] {temps (s)};
+\draw[thick,blue] (0.000,0.400) -- (0.500,1.269) -- (1.000,1.615) -- (1.500,1.834) -- (2.000,1.996) -- (2.500,2.123) -- (3.000,2.229) -- (3.500,2.319) -- (4.000,2.398) -- (4.500,2.467) -- (5.000,2.530) -- (5.500,2.586) -- (6.000,2.638);
 \end{tikzpicture}
 \caption{La rosace a 3 lobes : trois renflements en rotation lente.}
 \label{fig:rosace}

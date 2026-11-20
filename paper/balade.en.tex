@@ -57,10 +57,10 @@ ballistic throw, then slows down to aim.
 
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}[xscale=0.007,yscale=5]
-\draw[->] (0,0) -- (950,0) node[below] {distance D (px)};
-\draw[->] (0,0) -- (0,0.75) node[left] {time (s)};
-\draw[thick,blue,domain=0:900,samples=60] plot (\x,{0.08+0.085*ln(1+\x/24)/ln(2)});
+\begin{tikzpicture}
+\draw[->] (0,0) -- (6.4,0) node[below] {distance D (px)};
+\draw[->] (0,0) -- (0,3.7) node[left] {time (s)};
+\draw[thick,blue] (0.000,0.400) -- (0.500,1.269) -- (1.000,1.615) -- (1.500,1.834) -- (2.000,1.996) -- (2.500,2.123) -- (3.000,2.229) -- (3.500,2.319) -- (4.000,2.398) -- (4.500,2.467) -- (5.000,2.530) -- (5.500,2.586) -- (6.000,2.638);
 \end{tikzpicture}
 \caption{Fitts's law as shipped: steep at first, flattening out.}
 \label{fig:fitts}
@@ -82,12 +82,12 @@ lateral $\pm2.5\%$ clamped to $\pm14$\,px). Fig.~\ref{fig:jerk} shows the warp.
 
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}[xscale=6,yscale=3.5]
-\draw[->] (0,0) -- (1.05,0) node[below] {time};
-\draw[->] (0,0) -- (0,1.15) node[left] {position};
-\draw[thick,blue,domain=0:1,samples=60] plot (\x,{10*\x^3-15*\x^4+6*\x^5});
-\draw[thick,red,dashed,domain=0:1,samples=60] plot (\x,{10*\x^2.25-15*\x^3+6*\x^3.75});
-\node at (0.5,-0.25) {symmetric (blue) vs.\ warped $q=0.75$ (red)};
+\begin{tikzpicture}
+\draw[->] (0,0) -- (6.4,0) node[below] {time};
+\draw[->] (0,0) -- (0,3.7) node[left] {position};
+\draw[thick,blue] (0.000,0.000) -- (0.500,0.016) -- (1.000,0.113) -- (1.500,0.329) -- (2.000,0.668) -- (2.500,1.103) -- (3.000,1.591) -- (3.500,2.079) -- (4.000,2.514) -- (4.500,2.852) -- (5.000,3.069) -- (5.500,3.166) -- (6.000,3.182);
+\draw[thick,red,dashed] (0.000,0.000) -- (0.500,0.093) -- (1.000,0.367) -- (1.500,0.766) -- (2.000,1.229) -- (2.500,1.702) -- (3.000,2.142) -- (3.500,2.518) -- (4.000,2.810) -- (4.500,3.012) -- (5.000,3.127) -- (5.500,3.175) -- (6.000,3.182);
+\node at (3,-0.5) {symmetric (blue) vs.\ warped $q=0.75$ (red)};
 \end{tikzpicture}
 \caption{Minimum jerk, symmetric and time-warped. The warped curve rushes
 early and lands softly.}
@@ -128,7 +128,7 @@ caps grow with distance so lost cursors hurry back while insiders stay gentle.
 \centering
 \begin{tikzpicture}[scale=0.9]
 \draw[gray] (0,0) circle (1.5);
-\draw[thick,blue,domain=0:360,samples=120] plot ({(1.5+0.45*sin(3*\x)) * cos(\x)},{(1.5+0.45*sin(3*\x)) * sin(\x)});
+\draw[thick,blue] (1.500,0.000) -- (1.699,0.300) -- (1.776,0.646) -- (1.689,0.975) -- (1.448,1.215) -- (1.109,1.321) -- (0.750,1.299) -- (0.436,1.198) -- (0.193,1.093) -- (0.000,1.050) -- (-0.193,1.093) -- (-0.436,1.198) -- (-0.750,1.299) -- (-1.109,1.321) -- (-1.448,1.215) -- (-1.689,0.975) -- (-1.776,0.646) -- (-1.699,0.300) -- (-1.500,0.000) -- (-1.256,-0.221) -- (-1.043,-0.380) -- (-0.909,-0.525) -- (-0.851,-0.714) -- (-0.820,-0.977) -- (-0.750,-1.299) -- (-0.590,-1.621) -- (-0.328,-1.861) -- (-0.000,-1.950) -- (0.328,-1.861) -- (0.590,-1.621) -- (0.750,-1.299) -- (0.820,-0.977) -- (0.851,-0.714) -- (0.909,-0.525) -- (1.043,-0.380) -- (1.256,-0.221) -- (1.500,-0.000);
 \node[below] at (0,-2.2) {the ring is never a circle};
 \end{tikzpicture}
 \caption{The 3-lobe rosace: three slowly rotating bulges.}

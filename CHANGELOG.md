@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.2 — Ghost emails, intruder shooing, modal dimming
+
+### New
+- Email fields get goofy fake addresses when ghost typing
+  (`meow@catmail.com`, `oups@faute.fr`...), EN and FR lists.
+- Ghost words back to the v1 spirit (`coucou`, `ca marche ?`, `does it work?`).
+- Typing cursor teases and shoves away siblings standing on the field.
+- Cursors dim behind native modals (dialog, popover) instead of fighting z-index.
+- Demo menu stays above the cursor overlay.
+
+### Docs
+- Popular-science paper rewritten with TikZ figures (EN + FR), built as PDF
+  by CI and attached to tag releases. New `paper/` sources.
+
 ## 1.3.1 — Ghost typing and interaction freeze fixes
 
 ### Bug fixes

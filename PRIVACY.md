@@ -47,6 +47,7 @@ Balade does not collect, read, or transmit:
 | `offscreen` | Run the video encoder in a background context (required by Chrome MV3) |
 | `downloads` | Save the recorded WebM file to your computer |
 | `optional_host_permissions` | Allow auto-start on sites you explicitly opt in to; requested per site, never in bulk |
+| `webNavigation` | After a navigation completes, check whether Balade was running in that tab and re-inject the cursors if so. Only the completion event (tab ID) is used; no URLs or browsing history are read or stored |
 
 ## Third parties
 

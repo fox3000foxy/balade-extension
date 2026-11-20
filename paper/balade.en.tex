@@ -5,99 +5,130 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \begin{document}
-\title{Balade: Lifelike Cursor Behavior from State Machines and Mathematics}
+\title{Balade: How Little Arrows Learned to Feel Alive}
 \author{\IEEEauthorblockN{Fox3000foxy}\IEEEauthorblockA{Independent Researcher\\fox3000foxy@users.noreply.github.com}}
 \maketitle
 \begin{abstract}
-Balade is a browser extension that places autonomous animated cursors on web
-pages. No neural network is involved: every behavior is a coroutine (a
-generator used as a state machine) driven by classical mathematics. This paper
-documents the exact laws and constants shipped in the code (I--III), the
-behaviors from v0.1 to v1.3.1 (IV), the formula substitutions that made them
-fast (V), negative results (VI) and engineering lessons (VII). All constants
-are the shipped values from \texttt{src/core/Config.js}.
+Balade is a browser extension that places small autonomous cursors on web
+pages. They stroll, look at things, type ghost words, greet each other, and
+sometimes sulk. No neural network is involved: everything is classical
+mathematics plus small state machines. This paper explains, with pictures,
+how four ingredients make the difference between a robot and a hand.
 \end{abstract}
 
-\section{Behaviors as Coroutines}
-Each cursor runs a generator \texttt{*run(cursor)} yielding the frame time
-step. One requestAnimationFrame loop pumps all cursors with a shared clock.
-Composition uses \texttt{yield*}; state lives in generator locals. One bad
-frame never kills the loop: try/catch around step and render, rAF always
-re-armed.
+\section{Useless---and proud of it}
+Balade saves you zero seconds. It does not organize anything or measure
+anything. It simply makes little arrows live on your pages. That is the
+whole point: a playground for asking how close mathematics can get to a
+human gesture, and the answer turns out to be: surprisingly close.
 
-\section{Duration: Fitts's Law}
-\begin{equation}
-T = \frac{\mathrm{clamp}(0.08 + 0.085\,\log_2(1 + D/W),\, 0.12,\, 0.75)}{v}
-\end{equation}
-$D$ distance, $W$ target width ($\max(4, W)$ floor), $v$ speed multiplier.
-Example at $v=1$, $W=24$: $D=100 \Rightarrow 0.27$\,s; $D=800 \Rightarrow 0.51$\,s.
+\section{Four ingredients, everywhere}
+No animation in Balade is linear, constant, or synchronized. Every gesture
+combines a curve, an easing, a duration that is not proportional to distance,
+and a little bounded randomness. Fig.~\ref{fig:arc} shows the first one: a
+real hand draws arcs, never straight lines.
 
-\section{Profile: Minimum Jerk with Time Warp}
-\begin{equation}
-s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
-\end{equation}
-Each cursor keeps its own $q$ and first-try precision for life (motor
-signature). Correction probability 0.75 (0.15 for precise cursors), pause
-$[0.02, 0.08]$\,s, correction speed $0.8\times$.
-
-\section{Paths: Turtle Arcs and Similarity}
-Traced turtle-style along circular arcs, then similarity-mapped onto the
-target. Short trips ($<90$\,px) stay nearly straight; curvature reaches full
-amplitude at 420\,px. Styles: arc 0.45, S 0.25, hook 0.2, wave 0.1. Resolution
-24 points. Progress sampled into 64-entry curves per gesture ($u=\mathrm{minjerk}(t^q)$,
-error $<5\times10^{-4}$).
-
-\section{Swarm, Sound, Cognition}
-Reynolds steering: breathing orbit, 3-lobe rosace, swirl
-$\tanh(3\cos(0.11\,t))$; neighbor alignment 70/30 within 80\,px. Sound:
-pentatonic (0, 2, 4, 7, 9) from MIDI 72 (C5), pan $1.6\,x/L-0.8$ clamped to
-$\pm0.8$. Habits: first-order Markov chains per site; satiety decays over
-10\,min; novelty pressure. Social roles: leader 15\%, follower 30\%,
-loner 15\%.
-
-\section{Behaviors v0.1 to v1.3.1}
-Wandering, ghost typing, voices; themes (Ghost default), attention, meetings;
-per-site settings, dark adaptation, anticipation; customization, tag game,
-focus mode, WebM recording; i18n EN/FR (145 keys), cross-page persistence;
-ambient features (reading ambiance, scroll hint, guided tour, companion,
-contrast inspector, site weather); cognition, roles, moods, teasing;
-freeze fixes and modal dimming.
-
-\section{Formula Substitutions}
-\begin{table}[h]
+\begin{figure}[h]
 \centering
-\caption{Measured on 200\,000 gestures $\times$ 24 steps.}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-Substitution & Result & Kept \\
-\midrule
-Iterative heading rotation & $4\times$, bit-exact & yes \\
-Sampled 64-entry curves & zero \texttt{pow}/frame & yes \\
-Triple-angle, no \texttt{atan2} & $3\times$ & yes \\
-Squared distances & $2\times$ & yes \\
-Sine table (256) & $3\times$ slower & no \\
-Taylor order 5 & wrong (err 0.5) & no \\
-Cosine pre-filter & slower & no \\
-\bottomrule
-\end{tabular}
-\end{table}
-Deliberately not optimized: Fitts \texttt{log2} once per gesture.
+\begin{tikzpicture}[scale=0.85]
+\draw[gray,dashed] (0,0) -- (4,0);
+\draw[thick,blue] (0,0) .. controls (2,1.2) .. (4,0);
+\node[below] at (2,-0.2) {straight (robot) vs.\ arc (hand)};
+\end{tikzpicture}
+\caption{A straight line reads as mechanical; a slight arc reads as alive.}
+\label{fig:arc}
+\end{figure}
 
-\section{Negative Results}
-Sine table lost $3\times$ (memory $>$ FPU). Taylor-5 slower and wrong.
-Cosine pre-filter lost (48 vs 38\,ms). Satiety early-return reverted to a
-remark weight. Visits in the version field crashed inspections: separate map.
+\section{How long does it take? Fitts's law}
+Reaching a target takes longer when it is far, but shorter when it is big:
+\begin{equation}
+T = \frac{0.08 + 0.085\,\log_2(1 + D/W)}{v}
+\end{equation}
+A target twice as far takes much less than twice the time: the hand makes a
+fast ballistic throw, then slows down to aim. Fig.~\ref{fig:fitts} shows the
+shape: steep at first, flattening out.
 
-\section{Engineering Lessons}
-Cache poisoning, double-injection race, key collisions, dead placeholders,
-the loop must survive. Method: hypothesis, benchmark, keep or reject with
-numbers, document both.
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=7cm,height=4.2cm,xlabel={distance D (px)},ylabel={time (s)},
+ymin=0,ymax=0.7,domain=0:900,samples=60,thick]
+\addplot[blue] {0.08+0.085*ln(1+x/24)/ln(2)};
+\end{axis}
+\end{tikzpicture}
+\caption{Fitts's law: doubling the distance never doubles the time.}
+\label{fig:fitts}
+\end{figure}
+
+\section{The shape of speed: minimum jerk}
+A human hand minimizes sudden jolts. The position profile is the famous
+minimum-jerk polynomial, warped in time so the speed peak lands before the
+middle: a sharp start, a long gentle landing (Fig.~\ref{fig:jerk}).
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=7cm,height=4.2cm,xlabel={time},ylabel={position},
+ymin=0,ymax=1.1,domain=0:1,samples=60,thick,legend pos=south east]
+\addplot[blue] {10*x^3-15*x^4+6*x^5};
+\addplot[red,dashed] {(10*(x^0.75)^3-15*(x^0.75)^4+6*(x^0.75)^5)};
+\legend{symmetric,warped $q=0.75$}
+\end{axis}
+\end{tikzpicture}
+\caption{Minimum jerk, symmetric and time-warped. The warped curve rushes
+early and lands softly.}
+\label{fig:jerk}
+\end{figure}
+
+\section{Settling down: the spring}
+Once near the target, the cursor behaves like a mass on a spring with damping:
+\begin{equation}
+a = -k\,x - c\,v
+\end{equation}
+Integrated with semi-implicit Euler (velocity first, then position), it can
+never explode: the cursor always settles.
+
+\section{Flying together: the swarm}
+Held Shift gathers every cursor around your pointer with Reynolds steering:
+an orbit that breathes ($\pm18\%$), a 3-lobe rosace, and a swirl that flips
+direction about every 29~s. Fig.~\ref{fig:rosace} shows the ring the eye
+never quite catches as a perfect circle.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+\draw[gray] (0,0) circle (1.5);
+\draw[thick,blue,domain=0:360,samples=120] plot ({(1.5+0.45*sin(3*\x)) * cos(\x)},{(1.5+0.45*sin(3*\x)) * sin(\x)});
+\node[below] at (0,-2.2) {the ring is never a circle};
+\end{tikzpicture}
+\caption{The 3-lobe rosace: three slowly rotating bulges.}
+\label{fig:rosace}
+\end{figure}
+
+\section{Small brains: habits, moods, manners}
+Cursors learn click sequences per site (first-order Markov chains, all
+local). They get bored: satiety grows with visits and decays over ten
+minutes, so a much-visited element becomes boring and unseen ones attract.
+They have roles (leader, follower, loner) and moods (chill, grumpy, playful,
+proud). A loner that bumps into a typing cursor gets a ``hey, my spot!''
+and shoves it gently aside. Nothing is sent to any page: the ghost text is
+an overlay, the field value never changes.
+
+\section{Fast, and measured}
+Every optimization was benchmarked. Iterative heading rotation ($4\times$,
+bit-exact), sampled progress curves (zero \texttt{pow} per frame), the
+triple-angle expansion without \texttt{atan2} ($3\times$), squared distances
+($2\times$). Rejected after measurement: a sine table ($3\times$ slower),
+Taylor order 5 (wrong), a cosine pre-filter (slower than \texttt{acos}).
+Details in the repository README.
 
 \section{Conclusion}
-Lifelike behavior needs no learning: composable state machines plus the
-right classical formulas---with exact, benchmarked substitutions---are
-enough.
+Four ingredients, classical formulas, small state machines---and arrows that
+feel held by someone. No learning required.
 \begin{thebibliography}{9}
 \bibitem{fitts} P.~M.~Fitts, ``The information capacity of the human motor system,'' 1954.
 \bibitem{flash} T.~Flash and N.~Hogan, ``The coordination of arm movements,'' 1985.

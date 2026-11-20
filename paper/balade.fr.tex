@@ -5,102 +5,135 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \begin{document}
-\title{Balade: Comportement de curseurs vivant par machines a etats et mathematiques}
+\title{Balade: Comment de petites fleches ont appris a sembler vivantes}
 \author{\IEEEauthorblockN{Fox3000foxy}\IEEEauthorblockA{Independent Researcher\\fox3000foxy@users.noreply.github.com}}
 \maketitle
 \begin{abstract}
-Balade est une extension de navigateur qui pose des curseurs animes autonomes
-sur les pages web. Aucun reseau de neurones : chaque comportement est une
-coroutine (un generateur utilise comme machine a etats) pilotee par des
-mathematiques classiques. Cet article documente les lois et constantes exactes
-embarquees dans le code (I--III), les comportements de v0.1 a v1.3.1 (IV), les
-substitutions qui les ont rendus rapides (V), les resultats negatifs (VI) et
-les lecons d'ingenierie (VII). Toutes les constantes sont les valeurs
-embarquees de \texttt{src/core/Config.js}.
+Balade est une extension de navigateur qui pose de petits curseurs autonomes
+sur les pages web. Ils se baladent, regardent les choses, tapent des mots
+fantomes, se saluent et boudent parfois. Aucun reseau de neurones : que des
+mathematiques classiques et de petites machines a etats. Cet article explique,
+en images, comment quatre ingredients font la difference entre un robot et une
+main.
 \end{abstract}
 
-\section{Comportements comme coroutines}
-Chaque curseur execute un generateur \texttt{*run(cursor)} qui rend la main
-avec le pas de temps. Une seule boucle requestAnimationFrame pompe tous les
-curseurs avec une horloge partagee. La composition utilise \texttt{yield*} ;
-l'etat vit dans les variables locales du generateur. Une mauvaise image ne tue
-jamais la boucle : try/catch autour de step et render, rAF toujours re-arme.
+\section{Inutile --- et fier de l'etre}
+Balade ne vous fait gagner zero seconde. Ca n'organise rien et ne mesure
+rien. Ca fait juste vivre des petites fleches sur vos pages. C'est tout
+l'interet : un terrain de jeu pour demander jusqu'ou les mathematiques peuvent
+approcher un geste humain, et la reponse est : etonnamment pres.
 
-\section{Duree : loi de Fitts}
-\begin{equation}
-T = \frac{\mathrm{clamp}(0.08 + 0.085\,\log_2(1 + D/W),\, 0.12,\, 0.75)}{v}
-\end{equation}
-$D$ distance, $W$ largeur de cible (plancher $\max(4, W)$), $v$ multiplicateur
-de vitesse. Exemple a $v=1$, $W=24$ : $D=100 \Rightarrow 0.27$\,s ; $D=800
-\Rightarrow 0.51$\,s.
+\section{Quatre ingredients, partout}
+Aucune animation dans Balade n'est lineaire, constante ou synchronisee.
+Chaque geste combine une courbe, un assouplissement, une duree non
+proportionnelle a la distance et un petit alea borne. La fig.~\ref{fig:arc}
+montre le premier : une vraie main trace des arcs, jamais de lignes droites.
 
-\section{Profil : secousse minimale avec deformation du temps}
-\begin{equation}
-s(t) = 10t^3 - 15t^4 + 6t^5, \qquad u = s(t^q),\; q \in [0.68, 0.85]
-\end{equation}
-Chaque curseur garde son $q$ et sa precision du premier coup a vie (signature
-motrice). Probabilite de correction 0.75 (0.15 pour les precis), pause
-$[0.02, 0.08]$\,s, vitesse de correction $0.8\times$.
-
-\section{Trajectoires : arcs tortue et similitude}
-Tracees facon tortue le long d'arcs de cercle, puis projetees par similitude
-sur la cible. Trajets courts ($<90$\,px) presque droits ; courbure pleine a
-420\,px. Styles : arc 0.45, S 0.25, crochet 0.2, vague 0.1. Resolution 24
-points. Progression echantillonnee en courbes de 64 entrees par geste
-($u=\mathrm{minjerk}(t^q)$, erreur $<5\times10^{-4}$).
-
-\section{Essaim, son, cognition}
-Pilotage de Reynolds : orbite respirante, rosace a 3 lobes, tourbillon
-$\tanh(3\cos(0.11\,t))$ ; alignement 70/30 sous 80\,px. Son : pentatonique
-(0, 2, 4, 7, 9) depuis MIDI 72 (do5), panoramique $1.6\,x/L-0.8$ borne a
-$\pm0.8$. Habitudes : chaines de Markov d'ordre un par site ; satiete sur
-10\,min ; pression de nouveaute. Roles sociaux : meneur 15\%, suiveur 30\%,
-solitaire 15\%.
-
-\section{Comportements v0.1 a v1.3.1}
-Balade, frappe fantome, voix ; themes (Ghost par defaut), attention, rencontres ;
-reglages par site, adaptation sombre, anticipation ; personnalisation, jeu du chat,
-mode concentration, enregistrement WebM ; i18n EN/FR (145 cles), persistance inter-pages ;
-fonctions d'ambiance (ambiance de lecture, indice de defilement, visite guidee, compagnon,
-inspecteur de contraste, meteo du site) ; cognition, roles, humeurs, taquineries ;
-correctifs de figement et attenutation des modales.
-
-\section{Substitutions de formules}
-\begin{table}[h]
+\begin{figure}[h]
 \centering
-\caption{Mesure sur 200\,000 gestes $\times$ 24 pas.}
-\begin{tabular}{@{}lcc@{}}
-\toprule
-Substitution & Resultat & Garde \\
-\midrule
-Rotation iterative du cap & $4\times$, exacte au bit & oui \\
-Courbes 64 entrees & zero \texttt{pow}/image & oui \\
-Triple-angle, sans \texttt{atan2} & $3\times$ & oui \\
-Distances au carre & $2\times$ & oui \\
-Table de sinus (256) & $3\times$ plus lente & non \\
-Taylor ordre 5 & faux (err 0.5) & non \\
-Pre-filtre cosinus & plus lent & non \\
-\bottomrule
-\end{tabular}
-\end{table}
-Deliberement non optimise : \texttt{log2} de Fitts une fois par geste.
+\begin{tikzpicture}[scale=0.85]
+\draw[gray,dashed] (0,0) -- (4,0);
+\draw[thick,blue] (0,0) .. controls (2,1.2) .. (4,0);
+\node[below] at (2,-0.2) {droite (robot) contre arc (main)};
+\end{tikzpicture}
+\caption{Une ligne droite se lit comme mecanique ; un leger arc se lit comme vivant.}
+\label{fig:arc}
+\end{figure}
 
-\section{Resultats negatifs}
-La table de sinus a perdu $3\times$ (memoire $>$ FPU). Taylor-5 plus lent et
-faux. Pre-filtre cosinus perdu (48 contre 38\,ms). Retour de satiete revenu a
-une ponderation de remarque. Visites dans le champ de version plantaient les
-inspections : carte separee.
+\section{Combien de temps ? La loi de Fitts}
+Atteindre une cible prend plus de temps si elle est loin, mais moins si elle
+est grande :
+\begin{equation}
+T = \frac{0.08 + 0.085\,\log_2(1 + D/W)}{v}
+\end{equation}
+Une cible deux fois plus loin prend bien moins de deux fois plus de temps :
+la main fait un lancer balistique rapide, puis ralentit pour viser. La
+fig.~\ref{fig:fitts} montre la forme : raide au debut, qui s'aplatit.
 
-\section{Lecons d'ingenierie}
-Empoisonnement de cache, course a la double injection, collisions de cles,
-placeholders morts, la boucle doit survivre. Methode : hypothese, banc,
-garder ou rejeter avec des chiffres, documenter les deux.
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=7cm,height=4.2cm,xlabel={distance D (px)},ylabel={time (s)},
+ymin=0,ymax=0.7,domain=0:900,samples=60,thick]
+\addplot[blue] {0.08+0.085*ln(1+x/24)/ln(2)};
+\end{axis}
+\end{tikzpicture}
+\caption{Loi de Fitts : doubler la distance ne double jamais le temps.}
+\label{fig:fitts}
+\end{figure}
+
+\section{La forme de la vitesse : secousse minimale}
+Une main humaine minimise les a-coups. Le profil de position est le celebre
+polynome a secousse minimale, deforme dans le temps pour que le pic de vitesse
+arrive avant la moitie : un depart franc, un long atterrissage en douceur
+(fig.~\ref{fig:jerk}).
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=7cm,height=4.2cm,xlabel={time},ylabel={position},
+ymin=0,ymax=1.1,domain=0:1,samples=60,thick,legend pos=south east]
+\addplot[blue] {10*x^3-15*x^4+6*x^5};
+\addplot[red,dashed] {(10*(x^0.75)^3-15*(x^0.75)^4+6*(x^0.75)^5)};
+\legend{symmetric,warped $q=0.75$}
+\end{axis}
+\end{tikzpicture}
+\caption{Secousse minimale, symetrique et deformee. La courbe deformee se rue tot et
+atterrit en douceur.}
+\label{fig:jerk}
+\end{figure}
+
+\section{Se poser : le ressort}
+Une fois pres de la cible, le curseur se comporte comme une masse sur un
+ressort avec amortissement :
+\begin{equation}
+a = -k\,x - c\,v
+\end{equation}
+Integre en Euler semi-implicite (la vitesse d'abord, puis la position), ca ne
+peut jamais exploser : le curseur finit toujours par se poser.
+
+\section{Voler ensemble : l'essaim}
+Maj maintenu rassemble tous les curseurs autour de votre pointeur en pilotage
+de Reynolds : une orbite qui respire ($\pm18\%$), une rosace a 3 lobes et un
+tourbillon qui inverse le sens environ toutes les 29~s. La fig.~\ref{fig:rosace}
+montre l'anneau que l'oeil ne surprend jamais tout a fait circulaire.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+\draw[gray] (0,0) circle (1.5);
+\draw[thick,blue,domain=0:360,samples=120] plot ({(1.5+0.45*sin(3*\x)) * cos(\x)},{(1.5+0.45*sin(3*\x)) * sin(\x)});
+\node[below] at (0,-2.2) {l'anneau n'est jamais un cercle};
+\end{tikzpicture}
+\caption{La rosace a 3 lobes : trois renflements en rotation lente.}
+\label{fig:rosace}
+\end{figure}
+
+\section{Petits cerveaux : habitudes, humeurs, manieres}
+Les curseurs apprennent les sequences de clics par site (chaines de Markov
+d'ordre un, tout en local). Ils s'ennuient : la satiete croit avec les visites
+et decroit sur dix minutes, donc un element tres visite devient ennuyeux et
+les jamais-vus attirent. Ils ont des roles (meneur, suiveur, solitaire) et des
+humeurs (calme, grognon, joueur, fier). Un solitaire qui bouscule un curseur en
+train de taper recoit un << he, ma place ! >> et se fait pousser gentiment.
+Rien n'est envoye a aucune page : le texte fantome est un overlay, la valeur
+du champ ne change jamais.
+
+\section{Rapide, et mesure}
+Chaque optimisation a ete mesuree. Rotation iterative du cap ($4\times$,
+exacte au bit), courbes de progression echantillonnees (zero \texttt{pow} par
+image), developpement triple-angle sans \texttt{atan2} ($3\times$), distances
+au carre ($2\times$). Rejete apres mesure : une table de sinus ($3\times$ plus
+lente), Taylor ordre 5 (faux), un pre-filtre en cosinus (plus lent que
+\texttt{acos}). Details dans le README du depot.
 
 \section{Conclusion}
-Un comportement vivant n'a pas besoin d'apprentissage : des machines a etats
-composables et les bonnes formules classiques --- avec des substitutions
-exactes et mesurees --- suffisent.
+Quatre ingredients, des formules classiques, de petites machines a etats --- et
+des fleches qui semblent tenues par quelqu'un. Aucun apprentissage requis.
 \begin{thebibliography}{9}
 \bibitem{fitts} P.~M.~Fitts, ``La capacite d'information du systeme moteur humain,'' 1954.
 \bibitem{flash} T.~Flash and N.~Hogan, ``La coordination des mouvements du bras,'' 1985.

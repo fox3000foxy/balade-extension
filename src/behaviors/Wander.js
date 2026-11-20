@@ -176,9 +176,11 @@
         return;
       }
       const wordType = (el.getAttribute && (el.getAttribute("type") || "").toLowerCase()) || "";
+      // Email fields get goofy fake emails; other constrained types are skipped.
+      const isEmail = el.localName === "input" && wordType === "email";
       const freeText = el.isContentEditable || el.localName === "textarea" ||
         (el.localName === "input" && window.Balade.Stage.GHOST_WORD_TYPES.has(wordType));
-      if (!freeText) {
+      if (!freeText && !isEmail) {
         yield* this.hover(cursor, aim, M.rand(0.3, 0.7));
         return;
       }
@@ -193,14 +195,19 @@
 
       cursor.ghost = { el, text: "" };
       cursor.shape = "ibeam"; // keep the text shape while typing, even aside
-      // R&D: sometimes type a word from the page's own heading — it looks
-      // like the cursor actually read something. Read locally, stays in the
-      // overlay, never touches the field value.
-      let word = M.pick(w.ghostWords);
-      if (M.chance(0.3)) {
-        const h1 = document.querySelector("h1");
-        const pageWord = h1 && h1.textContent.trim().split(/\s+/).find((s) => /^[A-Za-zÀ-ÿ]{3,12}$/.test(s));
-        if (pageWord) word = pageWord.toLowerCase();
+      // Email fields get a goofy fake address; free-text fields get a word,
+      // sometimes picked from the page's own heading (it looks like the cursor
+      // actually read something). Overlay only, field value never touched.
+      let word;
+      if (isEmail && w.ghostEmails && w.ghostEmails.length) {
+        word = M.pick(w.ghostEmails);
+      } else {
+        word = M.pick(w.ghostWords);
+        if (M.chance(0.3)) {
+          const h1 = document.querySelector("h1");
+          const pageWord = h1 && h1.textContent.trim().split(/\s+/).find((s) => /^[A-Za-zÀ-ÿ]{3,12}$/.test(s));
+          if (pageWord) word = pageWord.toLowerCase();
+        }
       }
       const ok = yield* this.typeGhost(cursor, el, word, aside);
 

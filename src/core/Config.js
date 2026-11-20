@@ -76,7 +76,9 @@
       interest: { field: 3, button: 1.5, link: 1, heading: 1, media: 0.6, other: 0.8 },
       // Chance of typing ghost text into an empty field.
       ghostTypeChance: 0.75,
-      ghostWords: L("ghost_words")
+      ghostWords: L("ghost_words"),
+      // Goofy fake emails for ghost typing in email fields (v1 spirit).
+      ghostEmails: L("ghost_emails")
     },
 
     cursor: {

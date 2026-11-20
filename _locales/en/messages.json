@@ -300,7 +300,11 @@
     "message": "Break · $1"
   },
   "ghost_words": {
-    "message": "hi|meow|hmm…|hello!|testing|ok ok|hey|so cool|does it work?|yay|bonjour|pew pew|beep boop"
+    "message": "hi|meow|coucou|hmm|hello!|testing|ok ok|hey|so cool|does it work?|yay|bonjour|ca marche ?|pew pew|beep boop"
+  },
+  "ghost_emails": {
+    "message": "meow@catmail.com|hello@void.test|oops@typo.com|not-a-real@email.com|ghost@haunted.dev",
+    "description": "Goofy fake emails for ghost typing in email fields"
   },
   "bubbles_caught": {
     "message": "caught!|darn|hey!|not fair|well played"

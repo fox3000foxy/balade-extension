@@ -300,7 +300,11 @@
     "message": "Pause · $1"
   },
   "ghost_words": {
-    "message": "coucou|miaou|hmm…|bonjour !|on teste|ok ok|salut|trop bien|ça marche ?|youpi|hello|piou piou|bip boup"
+    "message": "coucou|miaou|hmm|bonjour !|on teste|ok ok|salut|trop bien|ca marche ?|youpi|hello|piou piou|bip boup|coucou toi"
+  },
+  "ghost_emails": {
+    "message": "miaou@chatmail.fr|salut@vide.test|oups@faute.fr|pas-un-vrai@email.fr|fantome@hante.dev",
+    "description": "Goofy fake emails for ghost typing in email fields"
   },
   "bubbles_caught": {
     "message": "attrapé !|zut|eh !|pas juste|bien joué"
